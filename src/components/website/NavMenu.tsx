@@ -160,17 +160,15 @@ export const NavMenu = () => {
 
       {/* Overlay Background */}
       <div
-        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-500 ${
-          isOpen ? "opacity-100" : "pointer-events-none opacity-0"
-        }`}
+        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-500 ${isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+          }`}
         onClick={toggleMenu}
       />
 
       {/* Sidebar Menu */}
       <nav
-        className={`fixed left-0 top-0 z-50 h-full w-full max-w-110 bg-[#032a0d] text-white transition-transform duration-500 ease-in-out ${
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        }`}
+        className={`fixed left-0 top-0 z-50 h-full w-full max-w-110 bg-[#032a0d] text-white transition-transform duration-500 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"
+          }`}
       >
         <div className="flex h-full flex-col">
           {/* Main Navigation Links */}
@@ -256,41 +254,43 @@ export const NavMenu = () => {
             </div>
           </div>
           <div className="mt-auto px-8 py-8">
-            {!isSignedIn && (
+            {!isSignedIn ? (
               <a
                 href="/sign-in"
                 className="flex items-center gap-1 hover:gap-3 transition-all hover:underline"
               >
                 Sign in with your account <ArrowRightIcon className="size-3" />
               </a>
+            ) : (
+              <Link href="#" className="flex bg-[#051b0b] px-3 py-3 rounded-md transition-colors items-center gap-2">
+                <div className="relative w-fit">
+                  <Avatar className="size-10">
+                    <AvatarImage
+                      src={user?.imageUrl}
+                      alt={user?.fullName || "User Name"}
+                    />
+                    <AvatarFallback className="text-xs">
+                      {user?.firstName?.charAt(0)}
+                      {user?.lastName?.charAt(0)}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="absolute -top-1.5 -right-1.5">
+                    <span className="sr-only">Verified</span>
+                    <BadgeCheckIcon className="text-background size-5 fill-green-500" />
+                  </span>
+                </div>
+
+                <div>
+                  <p className="text-sm">{user?.fullName ?? "User Name"}</p>
+                  <p className="text-xs">
+                    {user?.emailAddresses[0].emailAddress ?? "User Email"}
+                  </p>
+                </div>
+
+                <ChevronDownIcon className='ml-auto size-4' />
+              </Link>
             )}
-            <Link href="#" className="flex bg-[#051b0b] px-3 py-3 rounded-md transition-colors items-center gap-2">
-              <div className="relative w-fit">
-                <Avatar className="size-10">
-                  <AvatarImage
-                    src={user?.imageUrl}
-                    alt={user?.fullName || "User Name"}
-                  />
-                  <AvatarFallback className="text-xs">
-                    {user?.firstName?.charAt(0)}
-                    {user?.lastName?.charAt(0)}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="absolute -top-1.5 -right-1.5">
-                  <span className="sr-only">Verified</span>
-                  <BadgeCheckIcon className="text-background size-5 fill-green-500" />
-                </span>
-              </div>
 
-              <div>
-                <p className="text-sm">{user?.fullName ?? "User Name"}</p>
-                <p className="text-xs">
-                  {user?.emailAddresses[0].emailAddress ?? "User Email"}
-                </p>
-              </div>
-
-              <ChevronDownIcon className='ml-auto size-4' />
-            </Link>
           </div>
         </div>
       </nav>
