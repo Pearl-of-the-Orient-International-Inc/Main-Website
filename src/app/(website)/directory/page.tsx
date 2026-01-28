@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { MapPin, Mail, Phone, Clock, IdCardIcon } from "lucide-react";
+import { MapPin, Clock, IdCardIcon } from "lucide-react";
 
 const DirectoryPage = () => {
   return (

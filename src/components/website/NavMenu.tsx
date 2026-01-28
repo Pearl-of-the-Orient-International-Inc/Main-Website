@@ -1,13 +1,23 @@
 "use client";
 
+import { useUser } from "@clerk/clerk-react";
+import { ArrowRightIcon, ChevronDownIcon, Loader2Icon } from "lucide-react";
 import { useState } from "react";
+import { BadgeCheckIcon } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import Link from 'next/link';
 
 export const NavMenu = () => {
+  const { isLoaded, isSignedIn, user } = useUser();
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
+
+  if (!isLoaded) {
+    return <Loader2Icon className="animate-spin size-8" />;
+  }
 
   return (
     <>
@@ -200,7 +210,7 @@ export const NavMenu = () => {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/become-a-member"
                   className="block text-2xl tracking-wide transition-colors hover:underline"
                 >
                   Become a Member
@@ -210,13 +220,19 @@ export const NavMenu = () => {
 
             {/* Secondary Links */}
             <div className="mt-16 space-y-4 border-t border-white/10 pt-8">
-              <a href="/about-pearl-of-the-orient" className="block transition-colors hover:underline">
+              <a
+                href="/about-pearl-of-the-orient"
+                className="block transition-colors hover:underline"
+              >
                 About Pearl of the Orient
               </a>
               <a href="#" className="block transition-colors hover:underline">
                 Office of the Chief Chaplain
               </a>
-              <a href="/organizational-structure" className="block transition-colors hover:underline">
+              <a
+                href="/organizational-structure"
+                className="block transition-colors hover:underline"
+              >
                 Organizational Structure
               </a>
               <a href="#" className="block transition-colors hover:underline">
@@ -231,10 +247,50 @@ export const NavMenu = () => {
               <a href="#" className="block transition-colors hover:underline">
                 Frequently Asked Questions
               </a>
-              <a href="/directory" className="block transition-colors hover:underline">
+              <a
+                href="/directory"
+                className="block transition-colors hover:underline"
+              >
                 Directory
               </a>
             </div>
+          </div>
+          <div className="mt-auto px-8 py-8">
+            {!isSignedIn && (
+              <a
+                href="/sign-in"
+                className="flex items-center gap-1 hover:gap-3 transition-all hover:underline"
+              >
+                Sign in with your account <ArrowRightIcon className="size-3" />
+              </a>
+            )}
+            <Link href="#" className="flex bg-[#051b0b] px-3 py-3 rounded-md transition-colors items-center gap-2">
+              <div className="relative w-fit">
+                <Avatar className="size-10">
+                  <AvatarImage
+                    src={user?.imageUrl}
+                    alt={user?.fullName || "User Name"}
+                  />
+                  <AvatarFallback className="text-xs">
+                    {user?.firstName?.charAt(0)}
+                    {user?.lastName?.charAt(0)}
+                  </AvatarFallback>
+                </Avatar>
+                <span className="absolute -top-1.5 -right-1.5">
+                  <span className="sr-only">Verified</span>
+                  <BadgeCheckIcon className="text-background size-5 fill-green-500" />
+                </span>
+              </div>
+
+              <div>
+                <p className="text-sm">{user?.fullName ?? "User Name"}</p>
+                <p className="text-xs">
+                  {user?.emailAddresses[0].emailAddress ?? "User Email"}
+                </p>
+              </div>
+
+              <ChevronDownIcon className='ml-auto size-4' />
+            </Link>
           </div>
         </div>
       </nav>
