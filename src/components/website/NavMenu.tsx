@@ -1,14 +1,16 @@
 "use client";
 
-import { useUser } from "@clerk/clerk-react";
-import { ArrowRightIcon, ChevronDownIcon, Loader2Icon } from "lucide-react";
+import { useClerk, useUser } from "@clerk/clerk-react";
+import { ArrowRightIcon, BellIcon, ChevronRightIcon, Loader2Icon, LogOutIcon, SettingsIcon } from "lucide-react";
 import { useState } from "react";
 import { BadgeCheckIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from 'next/link';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 export const NavMenu = () => {
   const { isLoaded, isSignedIn, user } = useUser();
+  const { signOut } = useClerk()
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => {
@@ -262,33 +264,90 @@ export const NavMenu = () => {
                 Sign in with your account <ArrowRightIcon className="size-3" />
               </a>
             ) : (
-              <Link href="#" className="flex bg-[#051b0b] px-3 py-3 rounded-md transition-colors items-center gap-2">
-                <div className="relative w-fit">
-                  <Avatar className="size-10">
-                    <AvatarImage
-                      src={user?.imageUrl}
-                      alt={user?.fullName || "User Name"}
-                    />
-                    <AvatarFallback className="text-xs">
-                      {user?.firstName?.charAt(0)}
-                      {user?.lastName?.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="absolute -top-1.5 -right-1.5">
-                    <span className="sr-only">Verified</span>
-                    <BadgeCheckIcon className="text-background size-5 fill-green-500" />
-                  </span>
-                </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="flex w-full bg-[#051b0b] px-3 py-3 rounded-md transition-colors items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#032a0d] focus-visible:ring-white/70">
+                    <div className="relative w-fit">
+                      <Avatar className="size-10">
+                        <AvatarImage
+                          src={user?.imageUrl}
+                          alt={user?.fullName || "User Name"}
+                        />
+                        <AvatarFallback className="text-xs">
+                          {user?.firstName?.charAt(0)}
+                          {user?.lastName?.charAt(0)}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="absolute -top-1.5 -right-1.5">
+                        <span className="sr-only">Verified</span>
+                        <BadgeCheckIcon className="text-background size-5 fill-green-500" />
+                      </span>
+                    </div>
 
-                <div>
-                  <p className="text-sm">{user?.fullName ?? "User Name"}</p>
-                  <p className="text-xs">
-                    {user?.emailAddresses[0].emailAddress ?? "User Email"}
-                  </p>
-                </div>
+                    <div className="text-left">
+                      <p className="text-sm">{user?.fullName ?? "User Name"}</p>
+                      <p className="text-xs">
+                        {user?.emailAddresses[0]?.emailAddress ?? "User Email"}
+                      </p>
+                    </div>
 
-                <ChevronDownIcon className='ml-auto size-4' />
-              </Link>
+                    <ChevronRightIcon className="ml-auto size-4" />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  className="w-60"
+                  align="end"
+                  side="right"
+                  sideOffset={8}
+                >
+                  <DropdownMenuLabel className="flex items-center gap-2">
+                    <Avatar>
+                      <AvatarImage
+                        src={user?.imageUrl}
+                        alt={user?.fullName || "User Name"}
+                      />
+                      <AvatarFallback className="text-xs">
+                        {user?.firstName?.charAt(0)}
+                        {user?.lastName?.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-1 flex-col">
+                      <span className="text-popover-foreground">
+                        {user.fullName ?? "User Name"}
+                      </span>
+                      <span className="text-muted-foreground text-xs">
+                        {user?.emailAddresses[0]?.emailAddress ?? "User Email"}
+                      </span>
+                    </div>
+                  </DropdownMenuLabel>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/account"
+                      className="flex w-full items-center gap-2"
+                    >
+                      <SettingsIcon className="size-4" />
+                      <span>Account settings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem asChild>
+                    <Link
+                      href="/notifications"
+                      className="flex w-full items-center gap-2"
+                    >
+                      <BellIcon className="size-4" />
+                      <span>Notifications</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem
+                    onClick={() => signOut({ redirectUrl: "/" })}
+                  >
+                    <LogOutIcon className="size-4" />
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             )}
 
           </div>

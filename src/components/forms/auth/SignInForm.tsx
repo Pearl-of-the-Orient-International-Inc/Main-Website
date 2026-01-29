@@ -2,7 +2,7 @@
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from '@/components/ui/badge';
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -244,7 +244,7 @@ export const SignInForm = () => {
                     </Label>
                     <Button asChild variant="link" size="sm">
                       <Link
-                        href="#"
+                        href="/forgot-password"
                         className="link intent-info variant-ghost text-sm"
                       >
                         Forgot your Password?
@@ -297,7 +297,7 @@ export const SignInForm = () => {
                     onClick={() => signInWith(provider.strategy)}
                     type="button"
                     variant="outline"
-					className='relative'
+                    className="relative"
                   >
                     <Image
                       src={provider.icon}
@@ -306,7 +306,11 @@ export const SignInForm = () => {
                       height={20}
                     />
                     <span>{provider.name}</span>
-					{lastStrategy === provider.strategy && <Badge className='absolute -top-2 -right-2 text-[10px] bg-linear-to-r from-[#032a0d] to-green-700 border-none'>Last Used</Badge>}
+                    {lastStrategy === provider.strategy && (
+                      <Badge className="absolute -top-2 -right-2 text-[10px] bg-linear-to-r from-[#032a0d] to-green-700 border-none">
+                        Last Used
+                      </Badge>
+                    )}
                   </Button>
                 ))}
               </div>
@@ -316,7 +320,7 @@ export const SignInForm = () => {
               <p className="text-accent-foreground text-center text-sm">
                 Don&apos;t have an account ?
                 <Button asChild variant="link" className="px-2">
-                  <Link href="#" className="text-[#032a0d]">
+                  <Link href="/sign-up" className="text-[#032a0d]">
                     Become a member
                   </Link>
                 </Button>
