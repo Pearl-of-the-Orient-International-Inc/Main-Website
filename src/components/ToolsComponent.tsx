@@ -24,7 +24,7 @@ import { IoSparklesSharp } from "react-icons/io5";
 import { FaMicrophoneAlt } from "react-icons/fa";
 import { MdOutlineSupportAgent } from "react-icons/md";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Tooltip,
   TooltipContent,
@@ -92,6 +92,13 @@ export const ToolsComponent = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [assistantMode, setAssistantMode] = useState<"chat" | "voice">("chat");
+  const chatScrollContainerRef = useRef<HTMLDivElement>(null);
+  const chatContentRef = useRef<HTMLDivElement>(null);
+
+  const scrollChatToBottom = () => {
+    const el = chatScrollContainerRef.current;
+    if (el) el.scrollTo({ top: el.scrollHeight, behavior: "smooth" });
+  };
 
   const {
     isConnected: isVoiceCallActive,
@@ -116,6 +123,19 @@ export const ToolsComponent = () => {
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (assistantMode === "chat" && messengerOpen) scrollChatToBottom();
+  }, [messages, isLoading, assistantMode, messengerOpen]);
+
+  useEffect(() => {
+    const content = chatContentRef.current;
+    const container = chatScrollContainerRef.current;
+    if (!content || !container) return;
+    const observer = new ResizeObserver(() => scrollChatToBottom());
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, [messages]);
 
   const scrollToTop = () => {
     window.scrollTo({
@@ -244,6 +264,7 @@ export const ToolsComponent = () => {
 
   return (
     <div className="fixed top-1/2 right-0 z-40">
+      {/* TODO: Refactor and simplify the code to a seperate component. */}
       {isScrolled && (
         <Card className="p-0! rounded-r-none border-r-none shadow-r-none">
           <CardContent className="p-0!">
@@ -456,7 +477,11 @@ export const ToolsComponent = () => {
                   </div>
 
                   {/* Chat area */}
-                  <div className="flex-1 overflow-y-auto min-h-80 max-h-full p-3 space-y-3">
+                  <div
+                    ref={chatScrollContainerRef}
+                    className="flex-1 overflow-y-auto min-h-80 max-h-full scroll-smooth p-3"
+                  >
+                    <div ref={chatContentRef} className="space-y-3">
                     <p className="text-center text-xs text-muted-foreground py-1">
                       Today
                     </p>
@@ -533,6 +558,7 @@ export const ToolsComponent = () => {
                       is constantly learning. Do not share personal or sensitive
                       information in this chat.
                     </p>
+                    </div>
                   </div>
 
                   {/* Input footer */}
