@@ -1,7 +1,25 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
+/** Onboarding step after application submission */
+export const onboardingStepValidator = v.union(
+  v.literal("application"),
+  v.literal("requirements"),
+  v.literal("pre_orientation"),
+  v.literal("chaplaincy_101"),
+  v.literal("oath_taking"),
+  v.literal("id_generation")
+);
+
 export default defineSchema({
+  /** Draft of membership application form (per user, before submit) */
+  membershipDrafts: defineTable({
+    clerkUserId: v.string(),
+    formJson: v.string(),
+    step: v.number(),
+    updatedAt: v.number(),
+  }).index("by_clerk_user", ["clerkUserId"]),
+
   personalInformation: defineTable({
     uniqueId: v.string(),
     firstName: v.string(),
@@ -16,8 +34,8 @@ export default defineSchema({
         v.literal("Pastor"),
         v.literal("Rev."),
         v.literal("Bishop"),
-        v.literal("Others"),
-      ),
+        v.literal("Others")
+      )
     ),
     positionOthers: v.optional(v.string()), // For "Others" specification
 
@@ -30,7 +48,7 @@ export default defineSchema({
       v.literal("Single"),
       v.literal("Married"),
       v.literal("Widowed"),
-      v.literal("Separated"),
+      v.literal("Separated")
     ),
     gender: v.union(v.literal("Male"), v.literal("Female")),
     nationality: v.string(),
@@ -69,8 +87,8 @@ export default defineSchema({
         v.object({
           jobDescription: v.string(),
           years: v.string(),
-        }),
-      ),
+        })
+      )
     ),
 
     // Skills/Talents
@@ -90,9 +108,9 @@ export default defineSchema({
           v.literal("Security"),
           v.literal("Government"),
           v.literal("DSWD"),
-          v.literal("Others"),
-        ),
-      ),
+          v.literal("Others")
+        )
+      )
     ),
     branchOfServiceOthers: v.optional(v.string()),
 
@@ -103,8 +121,8 @@ export default defineSchema({
           name: v.string(),
           position: v.string(),
           contactNumber: v.string(),
-        }),
-      ),
+        })
+      )
     ),
 
     // Metadata
@@ -118,13 +136,18 @@ export default defineSchema({
         v.literal("Submitted"),
         v.literal("Under Review"),
         v.literal("Approved"),
-        v.literal("Rejected"),
-      ),
+        v.literal("Rejected")
+      )
     ),
 
     // Endorsement
     endorsedBy: v.optional(v.string()),
     endorsedAt: v.optional(v.number()),
+
+    // Onboarding (post-submission steps)
+    onboardingStep: v.optional(onboardingStepValidator),
+    /** Requirement key -> Convex storage ID */
+    requirementAttachments: v.optional(v.record(v.string(), v.id("_storage"))),
 
     updatedAt: v.number(),
   })

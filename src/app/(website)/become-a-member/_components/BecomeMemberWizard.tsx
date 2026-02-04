@@ -1,89 +1,68 @@
 "use client";
 
 import type { ChangeEvent } from "react";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { ChevronRight, ExpandIcon, XIcon } from "lucide-react";
+import { useAuth } from "@clerk/nextjs";
+import { useMutation, useQuery } from "convex/react";
 
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 
 import { GuidancePanel } from "./GuidancePanel";
 import { MembershipPreview } from "./MembershipPreview";
-import { emptyFormState, steps } from "./constants";
+import { steps } from "./constants";
 import { loadDraft, saveDraft } from "./draftStorage";
+import { emptyFormState } from "./constants";
 import type { ApplicationFormState, StepIndex } from "./types";
 
 import { StepPersonalDetails } from "./steps/StepPersonalDetails";
 import { StepChurchBackground } from "./steps/StepChurchBackground";
 import { StepEducationMinistry } from "./steps/StepEducationMinistry";
 import { StepReferencesReview } from "./steps/StepReferencesReview";
+import { api } from '../../../../../convex/_generated/api';
 
 const DRAFT_SAVE_DEBOUNCE_MS = 500;
 
-export function BecomeMemberWizard() {
-  const [step, setStep] = useState<StepIndex>(() => loadDraft().step);
-  const [form, setForm] = useState<ApplicationFormState>(
-    () => loadDraft().form,
-  );
-  const [isPreview, setIsPreview] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isFullscreen, setIsFullscreen] = useState(false);
-
-  useEffect(() => {
-    const id = setTimeout(() => saveDraft(form, step), DRAFT_SAVE_DEBOUNCE_MS);
-    return () => clearTimeout(id);
-  }, [form, step]);
-
-  const currentStep = steps[step];
-  const progress = useMemo(() => ((step + 1) / steps.length) * 100, [step]);
-
-  const updateField = <K extends keyof ApplicationFormState>(
+type FormCardProps = {
+  isFullscreenView: boolean;
+  step: StepIndex;
+  progress: number;
+  form: ApplicationFormState;
+  isFullscreen: boolean;
+  isSubmitting: boolean;
+  submitError: string | null;
+  onSetFullscreen: (value: boolean | ((prev: boolean) => boolean)) => void;
+  updateField: <K extends keyof ApplicationFormState>(
     key: K,
     value: ApplicationFormState[K],
-  ) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
+  ) => void;
+  onPhotoChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onSignatureChange: (signature: string | null) => void;
+  onPrevStep: () => void;
+  onNextStep: () => void;
+  onSubmit: () => void;
+};
 
-  const nextStep = () => {
-    if (step < steps.length - 1) {
-      setStep((prev) => (prev + 1) as StepIndex);
-    }
-  };
-
-  const prevStep = () => {
-    if (step > 0) {
-      setStep((prev) => (prev - 1) as StepIndex);
-    }
-  };
-
-  const handleSubmit = async () => {
-    setIsSubmitting(true);
-    try {
-      // TODO: wire this up to your Convex mutation.
-      console.log("Membership application draft:", form);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
-  const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === "string") {
-        updateField("photoUrl", reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleSignatureChange = (signature: string | null) => {
-    updateField("signatureUrl", signature ?? "");
-  };
-
-  const FormCard = ({ isFullscreenView }: { isFullscreenView: boolean }) => (
+function FormCard({
+  isFullscreenView,
+  step,
+  progress,
+  form,
+  isFullscreen,
+  isSubmitting,
+  submitError,
+  onSetFullscreen,
+  updateField,
+  onPhotoChange,
+  onSignatureChange,
+  onPrevStep,
+  onNextStep,
+  onSubmit,
+}: FormCardProps) {
+  const currentStep = steps[step];
+  return (
     <div
       className={
         isFullscreenView
@@ -107,7 +86,7 @@ export function BecomeMemberWizard() {
               type="button"
               variant="outline"
               size="sm"
-              onClick={() => setIsFullscreen((prev) => !prev)}
+              onClick={() => onSetFullscreen((prev: boolean) => !prev)}
               className="border-[#032a0d]/30 text-[#032a0d] hover:bg-[#032a0d]/5"
             >
               {isFullscreen ? (
@@ -152,7 +131,7 @@ export function BecomeMemberWizard() {
             <StepPersonalDetails
               form={form}
               updateField={updateField}
-              handlePhotoChange={handlePhotoChange}
+              handlePhotoChange={onPhotoChange}
             />
           )}
           {step === 1 && (
@@ -165,8 +144,14 @@ export function BecomeMemberWizard() {
             <StepReferencesReview
               form={form}
               updateField={updateField}
-              handleSignatureChange={handleSignatureChange}
+              handleSignatureChange={onSignatureChange}
             />
+          )}
+
+          {submitError && (
+            <p className="text-sm text-red-600" role="alert">
+              {submitError}
+            </p>
           )}
 
           <div className="flex items-center justify-between pt-2">
@@ -174,7 +159,7 @@ export function BecomeMemberWizard() {
               type="button"
               variant="outline"
               disabled={step === 0}
-              onClick={prevStep}
+              onClick={onPrevStep}
               className="border-[#032a0d]/40 text-[#032a0d] hover:bg-[#032a0d]/5"
             >
               Back
@@ -183,7 +168,7 @@ export function BecomeMemberWizard() {
             {step < steps.length - 1 ? (
               <Button
                 type="button"
-                onClick={nextStep}
+                onClick={onNextStep}
                 className="bg-[#032a0d] hover:bg-[#032a0d]/90"
               >
                 Next
@@ -192,7 +177,7 @@ export function BecomeMemberWizard() {
             ) : (
               <Button
                 type="button"
-                onClick={handleSubmit}
+                onClick={onSubmit}
                 disabled={isSubmitting}
                 className="bg-[#032a0d] hover:bg-[#032a0d]/90"
               >
@@ -205,6 +190,149 @@ export function BecomeMemberWizard() {
       </div>
     </div>
   );
+}
+
+function mergeFormFromJson(formJson: string): ApplicationFormState {
+  try {
+    const partial = JSON.parse(formJson) as Partial<ApplicationFormState>;
+    const form: ApplicationFormState = { ...emptyFormState };
+    for (const key of Object.keys(emptyFormState) as (keyof ApplicationFormState)[]) {
+      const value = partial[key];
+      if (value !== undefined && value !== null) {
+        (form as Record<string, unknown>)[key] = value;
+      }
+    }
+    return form;
+  } catch {
+    return emptyFormState;
+  }
+}
+
+export function BecomeMemberWizard() {
+  const router = useRouter();
+  const { isSignedIn } = useAuth();
+  const draftFromConvex = useQuery(
+    api.backend.membership.getDraft,
+    isSignedIn ? {} : "skip",
+  );
+  const saveDraftMutation = useMutation(api.backend.membership.saveDraft);
+  const submitApplicationMutation = useMutation(
+    api.backend.membership.submitApplication,
+  );
+
+  const [step, setStep] = useState<StepIndex>(() => loadDraft().step);
+  const [form, setForm] = useState<ApplicationFormState>(
+    () => loadDraft().form,
+  );
+  const [isPreview, setIsPreview] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const hasSyncedFromConvex = useRef(false);
+
+  // When user signs out, allow syncing from Convex again on next sign-in
+  useEffect(() => {
+    if (!isSignedIn) hasSyncedFromConvex.current = false;
+  }, [isSignedIn]);
+
+  // Sync initial state from Convex draft once when it first loads (signed-in users)
+  useEffect(() => {
+    if (!isSignedIn || !draftFromConvex || hasSyncedFromConvex.current) return;
+    hasSyncedFromConvex.current = true;
+    setForm(mergeFormFromJson(draftFromConvex.formJson));
+    const s = draftFromConvex.step;
+    setStep((s >= 0 && s <= 3 ? s : 0) as StepIndex);
+  }, [isSignedIn, draftFromConvex]);
+
+  // Persist draft: Convex when signed in, localStorage otherwise
+  useEffect(() => {
+    if (!isSignedIn) {
+      const id = setTimeout(() => saveDraft(form, step), DRAFT_SAVE_DEBOUNCE_MS);
+      return () => clearTimeout(id);
+    }
+  }, [isSignedIn, form, step]);
+
+  useEffect(() => {
+    if (!isSignedIn) return;
+    const id = setTimeout(() => {
+      saveDraftMutation({
+        formJson: JSON.stringify(form),
+        step,
+      }).catch(() => {});
+    }, DRAFT_SAVE_DEBOUNCE_MS);
+    return () => clearTimeout(id);
+  }, [isSignedIn, form, step, saveDraftMutation]);
+
+  const progress = useMemo(() => ((step + 1) / steps.length) * 100, [step]);
+
+  const updateField = <K extends keyof ApplicationFormState>(
+    key: K,
+    value: ApplicationFormState[K],
+  ) => {
+    setForm((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const nextStep = () => {
+    if (step < steps.length - 1) {
+      setStep((prev) => (prev + 1) as StepIndex);
+    }
+  };
+
+  const prevStep = () => {
+    if (step > 0) {
+      setStep((prev) => (prev - 1) as StepIndex);
+    }
+  };
+
+  const handleSubmit = async () => {
+    if (!isSignedIn) {
+      setSubmitError("Please sign in to submit your application.");
+      return;
+    }
+    setSubmitError(null);
+    setIsSubmitting(true);
+    try {
+      await submitApplicationMutation();
+      router.push("/become-a-member/onboarding");
+    } catch (err) {
+      setSubmitError(err instanceof Error ? err.message : "Submission failed.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        updateField("photoUrl", reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleSignatureChange = (signature: string | null) => {
+    updateField("signatureUrl", signature ?? "");
+  };
+
+  const formCardProps = {
+    step,
+    progress,
+    form,
+    isFullscreen,
+    isSubmitting,
+    submitError,
+    onSetFullscreen: setIsFullscreen,
+    updateField,
+    onPhotoChange: handlePhotoChange,
+    onSignatureChange: handleSignatureChange,
+    onPrevStep: prevStep,
+    onNextStep: nextStep,
+    onSubmit: handleSubmit,
+  };
 
   return (
     <section className="py-10 sm:py-12 lg:py-16">
@@ -217,13 +345,13 @@ export function BecomeMemberWizard() {
         {!isPreview ? (
           <>
             <div className={isFullscreen ? "hidden" : "block"}>
-              <FormCard isFullscreenView={false} />
+              <FormCard {...formCardProps} isFullscreenView={false} />
             </div>
 
             <Dialog open={isFullscreen} onOpenChange={setIsFullscreen}>
               <DialogContent className="max-w-none! w-screen h-dvh p-0 gap-0">
                 <div className="h-full w-full bg-white overflow-y-auto">
-                  <FormCard isFullscreenView />
+                  <FormCard {...formCardProps} isFullscreenView />
                 </div>
               </DialogContent>
             </Dialog>

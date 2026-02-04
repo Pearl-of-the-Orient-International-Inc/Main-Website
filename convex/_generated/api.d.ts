@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as backend_membership from "../backend/membership.js";
 import type * as backend_personalInformation from "../backend/personalInformation.js";
 
 import type {
@@ -17,6 +18,7 @@ import type {
 } from "convex/server";
 
 declare const fullApi: ApiFromModules<{
+  "backend/membership": typeof backend_membership;
   "backend/personalInformation": typeof backend_personalInformation;
 }>;
 
