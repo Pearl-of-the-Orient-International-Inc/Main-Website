@@ -318,7 +318,7 @@ export default function Page() {
             </h1>
             <Button
               size="lg"
-              className="mt-4 sm:mt-5 bg-[#032a0d] rounded-full items-center flex hover:bg-[#032a0d]/95 text-sm sm:text-base"
+              className="mt-4 sm:mt-5 bg-[#032a0d] text-white rounded-full items-center flex hover:bg-[#032a0d]/95 text-sm sm:text-base"
             >
               Become a member <ArrowRightIcon className="size-4 sm:size-5" />
             </Button>

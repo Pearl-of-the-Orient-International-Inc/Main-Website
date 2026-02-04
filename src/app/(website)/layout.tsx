@@ -7,7 +7,7 @@ import { ReactNode } from "react";
 
 const WebsiteLayout = ({ children }: { children: ReactNode }) => {
   return (
-    <main className="min-h-screen">
+    <main className="min-h-screen bg-white">
       <ScrollProgress className="top-0 z-60" />
       <Navbar />
       {children}
