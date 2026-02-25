@@ -32,8 +32,8 @@ interface OfficeData {
 const officesData: Record<string, OfficeData> = {
   "chief-chaplain": {
     title: "Chief Chaplain",
-    head: "Rev. [Name]",
-    image: "/placeholder-person.jpg",
+    head: "Bishop Dr. Rodel Manzo",
+    image: "/officers/Manzo.png",
     description:
       "The Chief Chaplain provides overall spiritual leadership and strategic direction for the organization.",
     duties: [
@@ -493,7 +493,7 @@ const Page = () => {
 
           {/* Dialog for Office Details */}
           <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogContent className="max-w-2xl! max-h-[90vh] overflow-y-auto">
               {currentOfficeData && (
                 <>
                   <DialogHeader>

@@ -113,14 +113,8 @@ const chaplaincyRoadmap = [
     title: "Phase 1",
     content: (
       <div>
-        {/* Image Placeholder */}
-        <div className="mb-4 sm:mb-6 w-full h-40 sm:h-48 md:h-64 lg:h-80 rounded-lg bg-linear-to-br from-[#032a0d]/20 to-[#032a0d]/5 border-2 border-dashed border-[#032a0d]/30 flex items-center justify-center">
-          <div className="text-center px-4">
-            <div className="text-3xl sm:text-4xl mb-2">📷</div>
-            <p className="text-[10px] sm:text-xs md:text-sm text-[#032a0d]/60 font-medium">
-              Phase 1 Image Placeholder
-            </p>
-          </div>
+        <div className="mb-6 relative w-full lg:h-105 flex items-center justify-center">
+          <Image src="/roadmap/phase1.png" alt='Phase 1' fill className='size-full' />
         </div>
         <div className="mb-4">
           <h4 className="text-base md:text-lg font-semibold text-[#032a0d] mb-2">
@@ -159,14 +153,8 @@ const chaplaincyRoadmap = [
     title: "Phase 2",
     content: (
       <div>
-        {/* Image Placeholder */}
-        <div className="mb-4 sm:mb-6 w-full h-40 sm:h-48 md:h-64 lg:h-80 rounded-lg bg-linear-to-br from-[#032a0d]/20 to-[#032a0d]/5 border-2 border-dashed border-[#032a0d]/30 flex items-center justify-center">
-          <div className="text-center px-4">
-            <div className="text-3xl sm:text-4xl mb-2">📷</div>
-            <p className="text-[10px] sm:text-xs md:text-sm text-[#032a0d]/60 font-medium">
-              Phase 2 Image Placeholder
-            </p>
-          </div>
+        <div className="mb-6 relative w-full lg:h-105 flex items-center justify-center">
+          <Image src="/roadmap/phase2.png" alt='Phase 2' fill className='size-full' />
         </div>
         <div className="mb-4">
           <h4 className="text-base md:text-lg font-semibold text-[#032a0d] mb-2">
@@ -201,14 +189,8 @@ const chaplaincyRoadmap = [
     title: "Phase 3",
     content: (
       <div>
-        {/* Image Placeholder */}
-        <div className="mb-4 sm:mb-6 w-full h-40 sm:h-48 md:h-64 lg:h-80 rounded-lg bg-linear-to-br from-[#032a0d]/20 to-[#032a0d]/5 border-2 border-dashed border-[#032a0d]/30 flex items-center justify-center">
-          <div className="text-center px-4">
-            <div className="text-3xl sm:text-4xl mb-2">📷</div>
-            <p className="text-[10px] sm:text-xs md:text-sm text-[#032a0d]/60 font-medium">
-              Phase 3 Image Placeholder
-            </p>
-          </div>
+        <div className="mb-6 relative w-full lg:h-105 flex items-center justify-center">
+          <Image src="/roadmap/phase3.png" alt='Phase 3' fill className='size-full' />
         </div>
         <div className="mb-4">
           <h4 className="text-base md:text-lg font-semibold text-[#032a0d] mb-2">
@@ -246,14 +228,8 @@ const chaplaincyRoadmap = [
     title: "Phase 4",
     content: (
       <div>
-        {/* Image Placeholder */}
-        <div className="mb-4 sm:mb-6 w-full h-40 sm:h-48 md:h-64 lg:h-80 rounded-lg bg-linear-to-br from-[#032a0d]/20 to-[#032a0d]/5 border-2 border-dashed border-[#032a0d]/30 flex items-center justify-center">
-          <div className="text-center px-4">
-            <div className="text-3xl sm:text-4xl mb-2">📷</div>
-            <p className="text-[10px] sm:text-xs md:text-sm text-[#032a0d]/60 font-medium">
-              Phase 4 Image Placeholder
-            </p>
-          </div>
+        <div className="mb-6 relative w-full lg:h-105 flex items-center justify-center">
+          <Image src="/roadmap/phase4.png" alt='Phase 4' fill className='size-full' />
         </div>
         <div className="mb-4">
           <h4 className="text-base md:text-lg font-semibold text-[#032a0d] mb-2">
