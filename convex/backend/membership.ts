@@ -133,7 +133,7 @@ function validateAndParseForm(formJson: string): Record<string, unknown> {
         r &&
         String(r.name).trim() &&
         String(r.position).trim() &&
-        String(r.contactNumber).trim()
+        String(r.contactNumber).trim(),
     );
     if (filled.length < 1) {
       throw new Error("At least one character reference is required");
@@ -192,7 +192,7 @@ export const submitApplication = mutation({
       birthday: String(form.birthday).trim(),
       age: Number.isNaN(age) ? 0 : age,
       churchOrganizationAffiliation: String(
-        form.churchOrganizationAffiliation
+        form.churchOrganizationAffiliation,
       ).trim(),
       churchAddress: String(form.churchAddress).trim(),
       regionProvince: String(form.regionProvince).trim(),
@@ -230,7 +230,7 @@ export const submitApplication = mutation({
       skillsTalents: (form.skillsTalents as string) || undefined,
       branchOfService: Array.isArray(form.branchOfService)
         ? (form.branchOfService as string[]).filter((b): b is BranchOfService =>
-            VALID_BRANCH_OF_SERVICE.includes(b as BranchOfService)
+            VALID_BRANCH_OF_SERVICE.includes(b as BranchOfService),
           )
         : undefined,
       branchOfServiceOthers:
@@ -248,7 +248,7 @@ export const submitApplication = mutation({
     if (existing) {
       if (["Approved", "Rejected"].includes(existing.applicationStatus || "")) {
         throw new Error(
-          `Cannot update a ${existing.applicationStatus?.toLowerCase()} application`
+          `Cannot update a ${existing.applicationStatus?.toLowerCase()} application`,
         );
       }
       await ctx.db.patch(existing._id, payload);
@@ -308,7 +308,7 @@ export const saveRequirementAttachment = mutation({
   handler: async (ctx, args) => {
     if (
       !requirementKeys.includes(
-        args.requirementKey as (typeof requirementKeys)[number]
+        args.requirementKey as (typeof requirementKeys)[number],
       )
     ) {
       throw new Error("Invalid requirement key");

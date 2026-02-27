@@ -8,7 +8,7 @@ export const onboardingStepValidator = v.union(
   v.literal("pre_orientation"),
   v.literal("chaplaincy_101"),
   v.literal("oath_taking"),
-  v.literal("id_generation")
+  v.literal("id_generation"),
 );
 
 export default defineSchema({
@@ -34,8 +34,8 @@ export default defineSchema({
         v.literal("Pastor"),
         v.literal("Rev."),
         v.literal("Bishop"),
-        v.literal("Others")
-      )
+        v.literal("Others"),
+      ),
     ),
     positionOthers: v.optional(v.string()), // For "Others" specification
 
@@ -48,7 +48,7 @@ export default defineSchema({
       v.literal("Single"),
       v.literal("Married"),
       v.literal("Widowed"),
-      v.literal("Separated")
+      v.literal("Separated"),
     ),
     gender: v.union(v.literal("Male"), v.literal("Female")),
     nationality: v.string(),
@@ -87,8 +87,8 @@ export default defineSchema({
         v.object({
           jobDescription: v.string(),
           years: v.string(),
-        })
-      )
+        }),
+      ),
     ),
 
     // Skills/Talents
@@ -108,9 +108,9 @@ export default defineSchema({
           v.literal("Security"),
           v.literal("Government"),
           v.literal("DSWD"),
-          v.literal("Others")
-        )
-      )
+          v.literal("Others"),
+        ),
+      ),
     ),
     branchOfServiceOthers: v.optional(v.string()),
 
@@ -121,8 +121,8 @@ export default defineSchema({
           name: v.string(),
           position: v.string(),
           contactNumber: v.string(),
-        })
-      )
+        }),
+      ),
     ),
 
     // Metadata
@@ -136,8 +136,8 @@ export default defineSchema({
         v.literal("Submitted"),
         v.literal("Under Review"),
         v.literal("Approved"),
-        v.literal("Rejected")
-      )
+        v.literal("Rejected"),
+      ),
     ),
 
     // Endorsement
