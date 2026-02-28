@@ -6,10 +6,10 @@ import type { ApplicationFormState } from "../types";
 
 export function StepEducationMinistry({
   form,
-  updateField,
+  updateFieldAction,
 }: {
   form: ApplicationFormState;
-  updateField: <K extends keyof ApplicationFormState>(
+  updateFieldAction: <K extends keyof ApplicationFormState>(
     key: K,
     value: ApplicationFormState[K],
   ) => void;
@@ -24,26 +24,32 @@ export function StepEducationMinistry({
           <Field label="Elementary school (optional)">
             <Input
               value={form.elementarySchool}
-              onChange={(e) => updateField("elementarySchool", e.target.value)}
+              onChange={(e) =>
+                updateFieldAction("elementarySchool", e.target.value)
+              }
             />
           </Field>
           <Field label="Secondary school (optional)">
             <Input
               value={form.secondarySchool}
-              onChange={(e) => updateField("secondarySchool", e.target.value)}
+              onChange={(e) =>
+                updateFieldAction("secondarySchool", e.target.value)
+              }
             />
           </Field>
           <Field label="Tertiary / college (optional)">
             <Input
               value={form.tertiarySchool}
-              onChange={(e) => updateField("tertiarySchool", e.target.value)}
+              onChange={(e) =>
+                updateFieldAction("tertiarySchool", e.target.value)
+              }
             />
           </Field>
           <Field label="Post-graduate studies (optional)">
             <Input
               value={form.postGraduateStudies}
               onChange={(e) =>
-                updateField("postGraduateStudies", e.target.value)
+                updateFieldAction("postGraduateStudies", e.target.value)
               }
             />
           </Field>
@@ -72,7 +78,7 @@ export function StepEducationMinistry({
                       ...copy[index],
                       jobDescription: e.target.value,
                     };
-                    updateField("ministerialWorkExperience", copy);
+                    updateFieldAction("ministerialWorkExperience", copy);
                   }}
                   placeholder="e.g. Hospital chaplain, youth pastor"
                 />
@@ -83,7 +89,7 @@ export function StepEducationMinistry({
                   onChange={(e) => {
                     const copy = [...form.ministerialWorkExperience];
                     copy[index] = { ...copy[index], years: e.target.value };
-                    updateField("ministerialWorkExperience", copy);
+                    updateFieldAction("ministerialWorkExperience", copy);
                   }}
                   placeholder="e.g. 2 years"
                 />

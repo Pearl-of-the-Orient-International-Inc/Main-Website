@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState, type ChangeEvent } from "react";
 import { Input } from "@/components/ui/input";
 import { Info } from "lucide-react";
 import SignatureInput from "@/components/ui/signature-input";
@@ -8,16 +9,46 @@ import type { ApplicationFormState } from "../types";
 
 export function StepReferencesReview({
   form,
-  updateField,
-  handleSignatureChange,
+  updateFieldAction,
+  handleSignatureChangeAction,
 }: {
   form: ApplicationFormState;
-  updateField: <K extends keyof ApplicationFormState>(
+  updateFieldAction: <K extends keyof ApplicationFormState>(
     key: K,
     value: ApplicationFormState[K],
   ) => void;
-  handleSignatureChange: (signature: string | null) => void;
+  handleSignatureChangeAction: (signature: string | null) => void;
 }) {
+  const [signatureMode, setSignatureMode] = useState<"draw" | "upload">("draw");
+
+  useEffect(() => {
+    if (!form.signatureUrl.startsWith("data:image")) return;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = 420;
+    canvas.height = 200;
+    const blankCanvasDataUrl = canvas.toDataURL();
+
+    if (form.signatureUrl === blankCanvasDataUrl) {
+      handleSignatureChangeAction(null);
+    }
+  }, [form.signatureUrl, handleSignatureChangeAction]);
+
+  const handleSignatureUploadAction = (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file || !file.type.startsWith("image/")) return;
+
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === "string") {
+        handleSignatureChangeAction(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
   return (
     <div className="space-y-5">
       <div className="space-y-3">
@@ -40,7 +71,7 @@ export function StepReferencesReview({
                   onChange={(e) => {
                     const copy = [...form.characterReferences];
                     copy[index] = { ...copy[index], name: e.target.value };
-                    updateField("characterReferences", copy);
+                    updateFieldAction("characterReferences", copy);
                   }}
                   placeholder="Full name"
                 />
@@ -51,7 +82,7 @@ export function StepReferencesReview({
                   onChange={(e) => {
                     const copy = [...form.characterReferences];
                     copy[index] = { ...copy[index], position: e.target.value };
-                    updateField("characterReferences", copy);
+                    updateFieldAction("characterReferences", copy);
                   }}
                   placeholder="e.g. Senior Pastor"
                 />
@@ -65,7 +96,7 @@ export function StepReferencesReview({
                       ...copy[index],
                       contactNumber: e.target.value,
                     };
-                    updateField("characterReferences", copy);
+                    updateFieldAction("characterReferences", copy);
                   }}
                   placeholder="e.g. 09XX XXX XXXX"
                 />
@@ -78,11 +109,65 @@ export function StepReferencesReview({
           label="Applicant's signature"
           hint="Use your mouse, trackpad, or finger to sign inside the box."
         >
-          <div className="mt-1">
-            <SignatureInput onSignatureChange={handleSignatureChange} />
+          <div className="mt-1 space-y-3">
+            <div className="inline-flex rounded-md border border-[#032a0d]/20 p-1">
+              <button
+                type="button"
+                onClick={() => setSignatureMode("draw")}
+                className={[
+                  "rounded px-3 py-1 text-xs sm:text-sm transition-colors",
+                  signatureMode === "draw"
+                    ? "bg-[#032a0d] text-white"
+                    : "text-[#032a0d] hover:bg-[#032a0d]/10",
+                ].join(" ")}
+              >
+                Draw signature
+              </button>
+              <button
+                type="button"
+                onClick={() => setSignatureMode("upload")}
+                className={[
+                  "rounded px-3 py-1 text-xs sm:text-sm transition-colors",
+                  signatureMode === "upload"
+                    ? "bg-[#032a0d] text-white"
+                    : "text-[#032a0d] hover:bg-[#032a0d]/10",
+                ].join(" ")}
+              >
+                Upload e-signature
+              </button>
+            </div>
+
+            {signatureMode === "draw" ? (
+              <SignatureInput onSignatureChange={handleSignatureChangeAction} />
+            ) : (
+              <div className="space-y-2">
+                <Input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleSignatureUploadAction}
+                  className="max-w-[420px]"
+                />
+                <p className="text-[10px] sm:text-xs text-[#032a0d]/70">
+                  Upload a transparent PNG or clear image of your signature.
+                </p>
+                {form.signatureUrl && (
+                  <div className="max-w-[420px] overflow-hidden rounded-md border border-[#032a0d]/20 bg-white p-2">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={form.signatureUrl}
+                      alt="Uploaded e-signature preview"
+                      className="h-auto max-h-[180px] w-full object-contain"
+                    />
+                  </div>
+                )}
+              </div>
+            )}
+
             {form.signatureUrl && (
               <p className="mt-1 text-[10px] sm:text-xs text-[#032a0d]/70">
-                Signature captured. You may clear and redraw if needed.
+                {signatureMode === "upload"
+                  ? "E-signature attached."
+                  : "Signature captured. You may clear and redraw if needed."}
               </p>
             )}
           </div>

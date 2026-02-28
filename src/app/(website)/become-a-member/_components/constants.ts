@@ -142,13 +142,13 @@ export const onboardingSteps: {
     description: "Complete Chaplaincy 101 training.",
   },
   {
-    id: "oath_taking",
-    title: "Oath taking",
-    description: "Attend oath taking.",
-  },
-  {
     id: "id_generation",
     title: "ID generation",
     description: "Receive your member ID.",
+  },
+  {
+    id: "oath_taking",
+    title: "Oath taking",
+    description: "Attend oath taking.",
   },
 ];

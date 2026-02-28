@@ -1,5 +1,7 @@
 "use client";
 
+import { CheckCircle2 } from "lucide-react";
+
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -8,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CheckCircle2 } from "lucide-react";
+
 import { Field } from "../Field";
 import type { ApplicationFormState, BranchOfService } from "../types";
 
@@ -28,10 +30,10 @@ const BRANCH_OPTIONS: BranchOfService[] = [
 
 export function StepChurchBackground({
   form,
-  updateField,
+  updateFieldAction,
 }: {
   form: ApplicationFormState;
-  updateField: <K extends keyof ApplicationFormState>(
+  updateFieldAction: <K extends keyof ApplicationFormState>(
     key: K,
     value: ApplicationFormState[K],
   ) => void;
@@ -42,7 +44,7 @@ export function StepChurchBackground({
         <Input
           value={form.churchOrganizationAffiliation}
           onChange={(e) =>
-            updateField("churchOrganizationAffiliation", e.target.value)
+            updateFieldAction("churchOrganizationAffiliation", e.target.value)
           }
           placeholder="Name of church or organization"
         />
@@ -51,7 +53,7 @@ export function StepChurchBackground({
       <Field label="Church address" required>
         <Input
           value={form.churchAddress}
-          onChange={(e) => updateField("churchAddress", e.target.value)}
+          onChange={(e) => updateFieldAction("churchAddress", e.target.value)}
           placeholder="Street, barangay, city / municipality"
         />
       </Field>
@@ -61,7 +63,10 @@ export function StepChurchBackground({
           <Select
             value={form.position}
             onValueChange={(value) =>
-              updateField("position", value as ApplicationFormState["position"])
+              updateFieldAction(
+                "position",
+                value as ApplicationFormState["position"],
+              )
             }
           >
             <SelectTrigger className="w-full">
@@ -80,7 +85,7 @@ export function StepChurchBackground({
         <Field label="If Others, please specify">
           <Input
             value={form.positionOthers}
-            onChange={(e) => updateField("positionOthers", e.target.value)}
+            onChange={(e) => updateFieldAction("positionOthers", e.target.value)}
             placeholder="Specify position or role"
           />
         </Field>
@@ -90,21 +95,21 @@ export function StepChurchBackground({
         <Field label="Height (optional)">
           <Input
             value={form.height}
-            onChange={(e) => updateField("height", e.target.value)}
+            onChange={(e) => updateFieldAction("height", e.target.value)}
             placeholder="e.g. 170 cm"
           />
         </Field>
         <Field label="Weight (optional)">
           <Input
             value={form.weight}
-            onChange={(e) => updateField("weight", e.target.value)}
+            onChange={(e) => updateFieldAction("weight", e.target.value)}
             placeholder="e.g. 70 kg"
           />
         </Field>
         <Field label="Blood type (optional)">
           <Input
             value={form.bloodType}
-            onChange={(e) => updateField("bloodType", e.target.value)}
+            onChange={(e) => updateFieldAction("bloodType", e.target.value)}
             placeholder="e.g. O+"
           />
         </Field>
@@ -114,19 +119,19 @@ export function StepChurchBackground({
         <Field label="Color of eyes (optional)">
           <Input
             value={form.colorOfEyes}
-            onChange={(e) => updateField("colorOfEyes", e.target.value)}
+            onChange={(e) => updateFieldAction("colorOfEyes", e.target.value)}
           />
         </Field>
         <Field label="Color of skin (optional)">
           <Input
             value={form.colorOfSkin}
-            onChange={(e) => updateField("colorOfSkin", e.target.value)}
+            onChange={(e) => updateFieldAction("colorOfSkin", e.target.value)}
           />
         </Field>
         <Field label="SSS number (optional)">
           <Input
             value={form.sssNumber}
-            onChange={(e) => updateField("sssNumber", e.target.value)}
+            onChange={(e) => updateFieldAction("sssNumber", e.target.value)}
           />
         </Field>
       </div>
@@ -135,13 +140,13 @@ export function StepChurchBackground({
         <Field label="TIN number (optional)">
           <Input
             value={form.tinNumber}
-            onChange={(e) => updateField("tinNumber", e.target.value)}
+            onChange={(e) => updateFieldAction("tinNumber", e.target.value)}
           />
         </Field>
         <Field label="Skills / talents (optional)">
           <Input
             value={form.skillsTalents}
-            onChange={(e) => updateField("skillsTalents", e.target.value)}
+            onChange={(e) => updateFieldAction("skillsTalents", e.target.value)}
             placeholder="e.g. counseling, teaching, music"
           />
         </Field>
@@ -160,7 +165,7 @@ export function StepChurchBackground({
                   key={branch}
                   type="button"
                   onClick={() => {
-                    updateField(
+                    updateFieldAction(
                       "branchOfService",
                       isSelected
                         ? form.branchOfService.filter((b) => b !== branch)
@@ -187,7 +192,9 @@ export function StepChurchBackground({
         <Field label="If Others, please specify (optional)">
           <Input
             value={form.branchOfServiceOthers}
-            onChange={(e) => updateField("branchOfServiceOthers", e.target.value)}
+            onChange={(e) =>
+              updateFieldAction("branchOfServiceOthers", e.target.value)
+            }
             placeholder="Specify other branch of service"
           />
         </Field>
@@ -195,4 +202,3 @@ export function StepChurchBackground({
     </div>
   );
 }
-

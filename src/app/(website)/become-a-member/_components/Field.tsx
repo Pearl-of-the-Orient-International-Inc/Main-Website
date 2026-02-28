@@ -22,7 +22,7 @@ export function Field({
         </span>
         {hint && (
           <Tooltip>
-            <TooltipTrigger>
+            <TooltipTrigger type='button'>
               <HelpCircleIcon className="size-3 text-muted-foreground" />
             </TooltipTrigger>
             <TooltipContent>{hint}</TooltipContent>

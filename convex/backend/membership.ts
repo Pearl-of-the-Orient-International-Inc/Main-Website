@@ -31,6 +31,7 @@ const VALID_BRANCH_OF_SERVICE = [
   "DSWD",
   "Others",
 ] as const;
+const PHILIPPINE_MOBILE_REGEX = /^09\d{9}$/;
 
 type BranchOfService = (typeof VALID_BRANCH_OF_SERVICE)[number];
 
@@ -123,6 +124,18 @@ function validateAndParseForm(formJson: string): Record<string, unknown> {
   const age = Number(form.age);
   if (Number.isNaN(age) || age < 0 || age > 150) {
     throw new Error("Please enter a valid age");
+  }
+  const phoneNumber = String(form.phoneNumber).trim();
+  if (!PHILIPPINE_MOBILE_REGEX.test(phoneNumber)) {
+    throw new Error(
+      "Please enter a valid mobile number (11 digits, e.g. 09152479693)",
+    );
+  }
+  const emergencyCellphone = String(form.emergencyCellphone).trim();
+  if (!PHILIPPINE_MOBILE_REGEX.test(emergencyCellphone)) {
+    throw new Error(
+      "Please enter a valid emergency mobile number (11 digits, e.g. 09152479693)",
+    );
   }
   const refs = form.characterReferences as
     | Array<{ name: string; position: string; contactNumber: string }>

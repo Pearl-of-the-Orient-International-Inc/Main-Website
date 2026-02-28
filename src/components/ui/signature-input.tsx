@@ -1,29 +1,22 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
-import { Button } from '@/components/ui/button'
+import { useEffect, useRef, useState } from 'react'
 import { Eraser } from 'lucide-react'
 
+import { Button } from '@/components/ui/button'
+
 type SignatureInputProps = {
-  canvasRef?: React.RefObject<HTMLCanvasElement | null>
+  canvasRef?: React.MutableRefObject<HTMLCanvasElement | null>
   onSignatureChange: (signature: string | null) => void
 }
 
-const disableTouchScroll = (canvas: HTMLCanvasElement) => {
-  const preventScroll = (e: TouchEvent) => {
-    e.preventDefault() // Disable scroll
-  }
-
-  canvas.addEventListener('touchstart', preventScroll, { passive: false })
-  canvas.addEventListener('touchmove', preventScroll, { passive: false })
-  canvas.addEventListener('touchend', preventScroll, { passive: false })
-
-  return () => {
-    canvas.removeEventListener('touchstart', preventScroll)
-    canvas.removeEventListener('touchmove', preventScroll)
-    canvas.removeEventListener('touchend', preventScroll)
-  }
+type Point = {
+  x: number
+  y: number
 }
+
+const STROKE_COLOR = '#000000'
+const STROKE_WIDTH = 2
 
 export default function SignatureInput({
   canvasRef: externalCanvasRef,
@@ -31,60 +24,54 @@ export default function SignatureInput({
 }: SignatureInputProps) {
   const internalCanvasRef = useRef<HTMLCanvasElement>(null)
   const canvasRef = externalCanvasRef ?? internalCanvasRef
-  const [isDrawing, setIsDrawing] = useState(false)
-  const [lastPosition, setLastPosition] = useState<{
-    x: number
-    y: number
-  } | null>(null)
+  const isDrawingRef = useRef(false)
+  const hasStrokeRef = useRef(false)
+  const [lastPoint, setLastPoint] = useState<Point | null>(null)
 
   useEffect(() => {
     const canvas = canvasRef.current
     if (!canvas) return
 
-    // Setup canvas context
     const ctx = canvas.getContext('2d')
-    if (ctx) {
-      ctx.lineWidth = 2
-      ctx.lineCap = 'round'
-      ctx.lineJoin = 'round'
+    if (!ctx) return
+    ctx.lineWidth = STROKE_WIDTH
+    ctx.lineCap = 'round'
+    ctx.lineJoin = 'round'
+    ctx.strokeStyle = STROKE_COLOR
+
+    const preventTouchScroll = (e: TouchEvent) => {
+      e.preventDefault()
     }
 
-    const updateStrokeColor = () => {
-      const ctx = canvas.getContext('2d')
-      if (!ctx) return
-
-      const isDarkClass = document.documentElement.classList.contains('dark')
-      const isLightClass = document.documentElement.classList.contains('light')
-
-      const systemPrefersDark = window.matchMedia(
-        '(prefers-color-scheme: dark)',
-      ).matches
-
-      const isDarkMode = isDarkClass || (!isLightClass && systemPrefersDark)
-
-      ctx.strokeStyle = isDarkMode ? '#ffffff' : '#000000'
-    }
-
-    updateStrokeColor()
-
-    // Disable touch scrolling while drawing
-    const cleanupTouchScroll = disableTouchScroll(canvas)
-
-    const observer = new MutationObserver(updateStrokeColor)
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['class'],
-    })
-
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)')
-    mediaQuery.addEventListener('change', updateStrokeColor)
+    canvas.addEventListener('touchstart', preventTouchScroll, { passive: false })
+    canvas.addEventListener('touchmove', preventTouchScroll, { passive: false })
+    canvas.addEventListener('touchend', preventTouchScroll, { passive: false })
 
     return () => {
-      cleanupTouchScroll()
-      observer.disconnect()
-      mediaQuery.removeEventListener('change', updateStrokeColor)
+      canvas.removeEventListener('touchstart', preventTouchScroll)
+      canvas.removeEventListener('touchmove', preventTouchScroll)
+      canvas.removeEventListener('touchend', preventTouchScroll)
     }
   }, [canvasRef])
+
+  const getPoint = (
+    e:
+      | React.MouseEvent<HTMLCanvasElement>
+      | React.TouchEvent<HTMLCanvasElement>,
+  ): Point | null => {
+    const canvas = canvasRef.current
+    if (!canvas) return null
+    const rect = canvas.getBoundingClientRect()
+
+    const clientX = 'touches' in e ? e.touches[0]?.clientX : e.clientX
+    const clientY = 'touches' in e ? e.touches[0]?.clientY : e.clientY
+    if (clientX === undefined || clientY === undefined) return null
+
+    return {
+      x: clientX - rect.left,
+      y: clientY - rect.top,
+    }
+  }
 
   const startDrawing = (
     e:
@@ -92,22 +79,11 @@ export default function SignatureInput({
       | React.TouchEvent<HTMLCanvasElement>,
   ) => {
     e.preventDefault()
-    setIsDrawing(true)
-    draw(e)
-  }
-
-  const stopDrawing = () => {
-    if (!isDrawing) return
-
-    setIsDrawing(false)
-    setLastPosition(null)
-    const canvas = canvasRef.current
-    const ctx = canvas?.getContext('2d')
-    if (canvas && ctx) {
-      ctx.beginPath()
-      const dataUrl = canvas.toDataURL()
-      onSignatureChange(dataUrl) // Pass data URL to the form's onChange
-    }
+    const point = getPoint(e)
+    if (!point) return
+    isDrawingRef.current = true
+    hasStrokeRef.current = false
+    setLastPoint(point)
   }
 
   const draw = (
@@ -116,79 +92,79 @@ export default function SignatureInput({
       | React.TouchEvent<HTMLCanvasElement>,
   ) => {
     e.preventDefault()
-    if (!isDrawing) return
+    if (!isDrawingRef.current) return
 
     const canvas = canvasRef.current
+    const point = getPoint(e)
     const ctx = canvas?.getContext('2d')
-    if (canvas && ctx) {
-      const rect = canvas.getBoundingClientRect()
-      const x = ('touches' in e ? e.touches[0].clientX : e.clientX) - rect.left
-      const y = ('touches' in e ? e.touches[0].clientY : e.clientY) - rect.top
+    if (!canvas || !ctx || !point) return
 
-      if (lastPosition) {
-        const midX = (lastPosition.x + x) / 2
-        const midY = (lastPosition.y + y) / 2
+    const from = lastPoint ?? point
+    ctx.beginPath()
+    ctx.moveTo(from.x, from.y)
+    ctx.lineTo(point.x, point.y)
+    ctx.stroke()
+    hasStrokeRef.current = true
 
-        ctx.beginPath()
-        ctx.moveTo(lastPosition.x, lastPosition.y)
-        ctx.quadraticCurveTo(midX, midY, x, y) // Smooth transition
-        ctx.stroke()
-      } else {
-        // For the first point, simply move to the position without a stroke
-        ctx.beginPath()
-        ctx.moveTo(x, y)
-      }
+    setLastPoint(point)
+  }
 
-      setLastPosition({ x, y })
-    }
+  const stopDrawing = () => {
+    if (!isDrawingRef.current) return
+
+    isDrawingRef.current = false
+    setLastPoint(null)
+
+    if (!hasStrokeRef.current) return
+    hasStrokeRef.current = false
+
+    const canvas = canvasRef.current
+    if (!canvas) return
+    onSignatureChange(canvas.toDataURL())
   }
 
   const clearSignature = () => {
     const canvas = canvasRef.current
     const ctx = canvas?.getContext('2d')
-    if (canvas && ctx) {
-      ctx.clearRect(0, 0, canvas.width, canvas.height)
-      onSignatureChange(null) // Clear signature in the form as well
-    }
+    if (!canvas || !ctx) return
+
+    ctx.clearRect(0, 0, canvas.width, canvas.height)
+    isDrawingRef.current = false
+    hasStrokeRef.current = false
+    setLastPoint(null)
+    onSignatureChange(null)
   }
 
-  // Callback ref to sync both internal and external refs
   const setCanvasRef = (element: HTMLCanvasElement | null) => {
-    // Update internal ref
-    ;(
-      internalCanvasRef as React.MutableRefObject<HTMLCanvasElement | null>
-    ).current = element
-    // Update external ref if provided
+    internalCanvasRef.current = element
     if (externalCanvasRef) {
-      ;(
-        externalCanvasRef as React.MutableRefObject<HTMLCanvasElement | null>
-      ).current = element
+      externalCanvasRef.current = element
     }
   }
 
   return (
-    <div className="border border-gray-300 rounded-md overflow-hidden relative w-[400px] h-[200px]">
+    <div className="relative h-[200px] w-full max-w-[420px] overflow-hidden rounded-md border border-gray-300 bg-white">
       <canvas
         ref={setCanvasRef}
-        width={400}
+        width={420}
         height={200}
-        className="w-full h-full"
+        className="h-full w-full cursor-crosshair touch-none bg-white"
         onMouseDown={startDrawing}
-        onMouseUp={stopDrawing}
-        onMouseOut={stopDrawing}
         onMouseMove={draw}
+        onMouseUp={stopDrawing}
+        onMouseLeave={stopDrawing}
         onTouchStart={startDrawing}
-        onTouchEnd={stopDrawing}
         onTouchMove={draw}
+        onTouchEnd={stopDrawing}
       />
       <Button
         type="button"
         size="icon"
         variant="outline"
-        className="absolute left-1 bottom-1 z-10 rounded-full"
+        className="absolute bottom-1 left-1 z-10 rounded-full"
         onClick={clearSignature}
       >
-        <Eraser className="w-4 h-4 text-muted-foreground hover:text-primary" />
+        <Eraser className="h-4 w-4 text-muted-foreground hover:text-primary" />
       </Button>
     </div>
   )

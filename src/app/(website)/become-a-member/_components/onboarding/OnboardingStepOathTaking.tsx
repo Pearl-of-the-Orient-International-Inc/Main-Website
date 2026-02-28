@@ -1,53 +1,37 @@
 "use client";
 
-import { useMutation } from "convex/react";
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Doc } from '../../../../../../convex/_generated/dataModel';
-import { api } from '../../../../../../convex/_generated/api';
+import { CalendarCheck2 } from "lucide-react";
+
+import { Doc } from "../../../../../../convex/_generated/dataModel";
 
 type Props = {
   application: Doc<"personalInformation">;
 };
 
 export function OnboardingStepOathTaking({ application }: Props) {
-  const setOnboardingStep = useMutation(api.backend.membership.setOnboardingStep);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const handleContinue = async () => {
-    setError(null);
-    setLoading(true);
-    try {
-      await setOnboardingStep({ step: "id_generation" });
-    } catch (e) {
-      setError(e instanceof Error ? e.message : "Failed to continue");
-    } finally {
-      setLoading(false);
-    }
-  };
-
   return (
     <div className="space-y-6">
-      <p className="text-sm text-[#032a0d]/80">
-        Attend the oath taking ceremony to formally complete your membership.
-        You will receive the date and venue from the team.
-      </p>
-      {error && (
-        <p className="text-sm text-red-600" role="alert">
-          {error}
-        </p>
-      )}
-      <div className="flex justify-end">
-        <Button
-          type="button"
-          onClick={handleContinue}
-          disabled={loading}
-          className="bg-[#032a0d] hover:bg-[#032a0d]/90"
-        >
-          {loading ? "Saving…" : "Continue to ID Generation"}
-        </Button>
+      <div className="rounded-xl border border-[#032a0d]/15 bg-[#032a0d]/5 p-4 sm:p-5">
+        <div className="flex items-start gap-3">
+          <CalendarCheck2 className="mt-0.5 size-5 shrink-0 text-[#032a0d]" />
+          <div className="space-y-1">
+            <h3 className="font-serif text-lg text-[#032a0d] sm:text-xl">
+              Final Step: Oath Taking
+            </h3>
+            <p className="text-sm text-[#032a0d]/80">
+              Attend the oath taking ceremony to formally complete your
+              onboarding. The leadership team will provide your schedule and
+              venue instructions.
+            </p>
+          </div>
+        </div>
       </div>
+
+      <p className="text-sm text-[#032a0d]/75">
+        You have completed the onboarding requirements up to this final step.
+        Please wait for official confirmation details for member ID{" "}
+        <span className="font-semibold text-[#032a0d]">{application.uniqueId}</span>.
+      </p>
     </div>
   );
 }

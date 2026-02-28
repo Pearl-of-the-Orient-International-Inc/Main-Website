@@ -2,30 +2,20 @@
 
 import { useEffect, useState } from "react";
 import QRCode from "qrcode";
-import { MapPin } from "lucide-react";
+import { useMutation } from "convex/react";
+import { Button } from "@/components/ui/button";
 import { Doc } from "../../../../../../convex/_generated/dataModel";
+import { api } from "../../../../../../convex/_generated/api";
 
 type Props = {
   application: Doc<"personalInformation">;
 };
 
-function formatPosition(app: Doc<"personalInformation">): string {
-  if (!app.position) return "";
-  if (app.position === "Others" && app.positionOthers?.trim()) {
-    return app.positionOthers.trim();
-  }
-  return app.position;
-}
-
-function formatLocation(app: Doc<"personalInformation">): string {
-  const parts = [app.regionProvince, app.churchAddress || app.address].filter(
-    Boolean,
-  );
-  return parts.join(", ") || app.address || "";
-}
-
 export function OnboardingStepIdGeneration({ application }: Props) {
+  const setOnboardingStep = useMutation(api.backend.membership.setOnboardingStep);
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -39,8 +29,17 @@ export function OnboardingStepIdGeneration({ application }: Props) {
       .catch(() => setQrDataUrl(null));
   }, [application.uniqueId]);
 
-  const positionText = formatPosition(application);
-  const locationText = formatLocation(application);
+  const handleContinue = async () => {
+    setError(null);
+    setLoading(true);
+    try {
+      await setOnboardingStep({ step: "oath_taking" });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Failed to continue");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -62,6 +61,7 @@ export function OnboardingStepIdGeneration({ application }: Props) {
           </div>
           {qrDataUrl && (
             <div className="flex flex-col items-center">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={qrDataUrl}
                 alt="QR code to member profile"
@@ -76,9 +76,26 @@ export function OnboardingStepIdGeneration({ application }: Props) {
       </div>
 
       <p className="text-sm text-[#032a0d]/70">
-        You will receive your physical ID and further instructions from the
-        team. Thank you for completing the onboarding process.
+        Your digital ID and QR profile are ready. Continue to the final step
+        for oath taking schedule and completion details.
       </p>
+
+      {error && (
+        <p className="text-sm text-red-600" role="alert">
+          {error}
+        </p>
+      )}
+
+      <div className="flex justify-end">
+        <Button
+          type="button"
+          onClick={handleContinue}
+          disabled={loading}
+          className="bg-[#032a0d] hover:bg-[#032a0d]/90"
+        >
+          {loading ? "Saving..." : "Continue to Oath Taking"}
+        </Button>
+      </div>
     </div>
   );
 }

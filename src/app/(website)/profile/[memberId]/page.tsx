@@ -95,7 +95,7 @@ export default function MemberProfilePage() {
               </p>
             </div>
 
-            <div className="relative w-full overflow-hidden rounded-xl border border-[#032a0d]/10 bg-neutral-50 aspect-[16/10] sm:aspect-video">
+            <div className="relative w-full overflow-hidden rounded-xl border border-[#032a0d]/10 bg-neutral-50 aspect-16/10 sm:aspect-video">
               <Image
                 src={imageUrl}
                 alt={`Member verification for ${memberId}`}

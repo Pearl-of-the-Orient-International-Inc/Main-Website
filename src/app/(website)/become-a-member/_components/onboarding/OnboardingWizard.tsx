@@ -16,8 +16,8 @@ const STEP_ORDER: OnboardingStepId[] = [
   "requirements",
   "pre_orientation",
   "chaplaincy_101",
-  "oath_taking",
   "id_generation",
+  "oath_taking",
 ];
 
 function stepIndex(stepId: OnboardingStepId | undefined): number {
@@ -39,7 +39,7 @@ export function OnboardingWizard({ application }: Props) {
 
   return (
     <section className="py-10 sm:py-12 lg:py-16">
-      <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-2xl border border-[#032a0d]/15 bg-white shadow-sm p-5 sm:p-6 lg:p-7">
           <div className="mb-6">
             <p className="text-xs sm:text-sm uppercase text-[#032a0d]/70">
