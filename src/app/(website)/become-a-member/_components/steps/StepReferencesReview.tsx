@@ -2,10 +2,12 @@
 
 import { useEffect, useState, type ChangeEvent } from "react";
 import { Input } from "@/components/ui/input";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Info } from "lucide-react";
 import SignatureInput from "@/components/ui/signature-input";
 import { Field } from "../Field";
 import type { ApplicationFormState } from "../types";
+import { readFileAsDataUrl } from "../utils";
 
 export function StepReferencesReview({
   form,
@@ -34,19 +36,18 @@ export function StepReferencesReview({
     }
   }, [form.signatureUrl, handleSignatureChangeAction]);
 
-  const handleSignatureUploadAction = (
+  const handleSignatureUploadAction = async (
     event: ChangeEvent<HTMLInputElement>,
   ) => {
     const file = event.target.files?.[0];
     if (!file || !file.type.startsWith("image/")) return;
 
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === "string") {
-        handleSignatureChangeAction(reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
+    try {
+      const signatureDataUrl = await readFileAsDataUrl(file);
+      handleSignatureChangeAction(signatureDataUrl);
+    } catch {
+      // keep current signature if file reading fails
+    }
   };
 
   return (
@@ -174,13 +175,43 @@ export function StepReferencesReview({
         </Field>
       </div>
 
-      <div className="rounded-lg border border-[#032a0d]/15 bg-[#032a0d]/3 px-4 py-3 text-xs sm:text-sm text-[#032a0d]/80 flex gap-3">
-        <Info className="mt-0.5 size-4 shrink-0 text-[#032a0d]" />
-        <p>
-          By submitting this form, you affirm that the information provided is
-          true and correct to the best of your knowledge. Final endorsement and
-          membership approval will be communicated to you by the leadership.
-        </p>
+      <div className="space-y-3 rounded-lg border border-[#032a0d]/15 bg-[#032a0d]/3 px-4 py-3 text-xs sm:text-sm text-[#032a0d]/80">
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="declaration-truth"
+            checked={form.declarationTruthConfirmed}
+            onCheckedChange={(checked) =>
+              updateFieldAction("declarationTruthConfirmed", checked === true)
+            }
+            className="mt-0.5"
+          />
+          <label htmlFor="declaration-truth" className="cursor-pointer">
+            I do hereby certify that all information above is true and correct
+            with the best of my knowledge.
+          </label>
+        </div>
+        <div className="flex items-start gap-2">
+          <Checkbox
+            id="monthly-pledge"
+            checked={form.monthlyPledgeConfirmed}
+            onCheckedChange={(checked) =>
+              updateFieldAction("monthlyPledgeConfirmed", checked === true)
+            }
+            className="mt-0.5"
+          />
+          <label htmlFor="monthly-pledge" className="cursor-pointer">
+            I do hereby agree that I will contribute and support the monthly
+            pledge required for the chaplain&apos;s operational expenses,
+            program, and activities.
+          </label>
+        </div>
+        <div className="flex gap-3 pt-1">
+          <Info className="mt-0.5 size-4 shrink-0 text-[#032a0d]" />
+          <p>
+            Final endorsement and membership approval will be communicated to
+            you by the leadership.
+          </p>
+        </div>
       </div>
     </div>
   );

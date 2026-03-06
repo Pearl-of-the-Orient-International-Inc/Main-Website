@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, type ChangeEvent } from "react";
+import { useMemo, useState } from "react";
 
 import { getBarangays } from "@/constants/barangay";
 import { getMunicipalities } from "@/constants/municipality";
@@ -17,6 +17,7 @@ import {
 
 import { Field } from "../Field";
 import type { ApplicationFormState } from "../types";
+import { sanitizeMobileNumber } from "../utils";
 
 type LocationSelection = {
   regionId: number | null;
@@ -34,8 +35,6 @@ const EMPTY_LOCATION_SELECTION: LocationSelection = {
 
 const normalize = (value: string) => value.trim().toLowerCase();
 const PHONE_PATTERN = "09[0-9]{9}";
-const sanitizeMobileNumber = (value: string) => value.replace(/\D/g, "").slice(0, 11);
-
 function parseLocationSummary(
   summary: string,
   regions: ReturnType<typeof getRegions>,
@@ -131,45 +130,36 @@ function buildLocationSummary(
   const province =
     selection.provinceId === null
       ? null
-      : getProvinces(selection.regionId).find(
+      : (getProvinces(selection.regionId).find(
           (item) => item.province_id === selection.provinceId,
-        ) ?? null;
+        ) ?? null);
 
   const municipality =
     selection.provinceId === null || selection.municipalityId === null
       ? null
-      : getMunicipalities(selection.provinceId).find(
+      : (getMunicipalities(selection.provinceId).find(
           (item) => item.municipality_id === selection.municipalityId,
-        ) ?? null;
+        ) ?? null);
 
   const barangay =
     selection.municipalityId === null || selection.barangayId === null
       ? null
-      : getBarangays(selection.municipalityId).find(
+      : (getBarangays(selection.municipalityId).find(
           (item) => item.barangay_id === selection.barangayId,
-        ) ?? null;
+        ) ?? null);
 
-  return [
-    region.region_description,
-    province?.province_name,
-    municipality?.municipality_name,
-    barangay?.barangay_name,
-  ]
-    .filter(Boolean)
-    .join(", ");
+  return `Barangay ${barangay?.barangay_name}, ${municipality?.municipality_name}, ${province?.province_name}, ${region.region_description}`;
 }
 
 export function StepPersonalDetails({
   form,
   updateFieldAction,
-  handlePhotoChangeAction,
 }: {
   form: ApplicationFormState;
   updateFieldAction: <K extends keyof ApplicationFormState>(
     key: K,
     value: ApplicationFormState[K],
   ) => void;
-  handlePhotoChangeAction: (event: ChangeEvent<HTMLInputElement>) => void;
 }) {
   const regions = useMemo(() => getRegions(), []);
   const [selectedLocation, setSelectedLocation] = useState<LocationSelection>(
@@ -248,14 +238,6 @@ export function StepPersonalDetails({
         </Field>
       </div>
 
-      <Field label="Home address" required>
-        <Input
-          value={form.address}
-          onChange={(e) => updateFieldAction("address", e.target.value)}
-          placeholder="House no., street, subdivision / village"
-        />
-      </Field>
-
       <div className="grid gap-4 sm:grid-cols-3">
         <Field label="Civil status" required>
           <Select
@@ -283,7 +265,10 @@ export function StepPersonalDetails({
           <Select
             value={form.gender}
             onValueChange={(value) =>
-              updateFieldAction("gender", value as ApplicationFormState["gender"])
+              updateFieldAction(
+                "gender",
+                value as ApplicationFormState["gender"],
+              )
             }
           >
             <SelectTrigger className="w-full">
@@ -351,7 +336,10 @@ export function StepPersonalDetails({
               </SelectTrigger>
               <SelectContent>
                 {regions.map((region) => (
-                  <SelectItem key={region.region_id} value={String(region.region_id)}>
+                  <SelectItem
+                    key={region.region_id}
+                    value={String(region.region_id)}
+                  >
                     {region.region_description}
                   </SelectItem>
                 ))}
@@ -453,7 +441,13 @@ export function StepPersonalDetails({
           </div>
 
           <Input
-            value={form.regionProvince}
+            value={form.address}
+            onChange={(e) => updateFieldAction("address", e.target.value)}
+            placeholder="House no., street, subdivision / village"
+          />
+
+          <Input
+            value={`${form.address}, ${form.regionProvince}`}
             readOnly
             aria-readonly="true"
             placeholder="Location summary will be auto-generated"
@@ -487,30 +481,6 @@ export function StepPersonalDetails({
           />
         </Field>
       </div>
-
-      <Field
-        label="Recent ID photo"
-        hint="A clear 2x2 or profile photo. This will appear on your membership record."
-      >
-        <div className="flex items-center gap-4">
-          <input
-            type="file"
-            accept="image/*"
-            onChange={handlePhotoChangeAction}
-            className="text-xs sm:text-sm"
-          />
-          {form.photoUrl && (
-            <div className="h-16 w-16 overflow-hidden rounded-md border border-[#032a0d]/20 bg-white">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={form.photoUrl}
-                alt="Applicant photo preview"
-                className="h-full w-full object-cover"
-              />
-            </div>
-          )}
-        </div>
-      </Field>
     </div>
   );
 }

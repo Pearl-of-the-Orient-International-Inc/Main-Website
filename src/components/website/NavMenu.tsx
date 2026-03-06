@@ -1,25 +1,72 @@
 "use client";
 
-import { useClerk, useUser } from "@clerk/clerk-react";
-import { ArrowRightIcon, BellIcon, ChevronRightIcon, Loader2Icon, LogOutIcon, SettingsIcon } from "lucide-react";
+import {
+  ArrowRightIcon,
+  BellIcon,
+  ChevronRightIcon,
+  LogOutIcon,
+  SettingsIcon,
+} from "lucide-react";
 import { useState } from "react";
 import { BadgeCheckIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import Link from 'next/link';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  toApiError,
+  useCurrentUserQuery,
+  useLogoutMutation,
+} from "@/features/auth/auth.hooks";
+import { useToast } from "@/hooks/use-toast";
 
 export const NavMenu = () => {
-  const { isLoaded, isSignedIn, user } = useUser();
-  const { signOut } = useClerk()
+  const router = useRouter();
+  const { toast } = useToast();
+  const { data: currentUser } = useCurrentUserQuery();
+  const logoutMutation = useLogoutMutation();
   const [isOpen, setIsOpen] = useState(false);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
   };
 
-  if (!isLoaded) {
-    return <Loader2Icon className="animate-spin size-8" />;
-  }
+  const isSignedIn = Boolean(currentUser);
+  const userInitials = currentUser?.name
+    ? currentUser.name
+        .split(" ")
+        .filter(Boolean)
+        .slice(0, 2)
+        .map((part) => part[0]?.toUpperCase() ?? "")
+        .join("")
+    : "U";
+
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+      toast({
+        title: "Logged out",
+        description: "You have been logged out successfully.",
+        variant: "success",
+      });
+      setIsOpen(false);
+      router.push("/sign-in");
+    } catch (error: unknown) {
+      const apiError = toApiError(error);
+      toast({
+        title: "Logout failed",
+        description: apiError.message ?? "Unable to logout. Please try again.",
+        variant: "error",
+      });
+    }
+  };
 
   return (
     <>
@@ -162,19 +209,21 @@ export const NavMenu = () => {
 
       {/* Overlay Background */}
       <div
-        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-500 ${isOpen ? "opacity-100" : "pointer-events-none opacity-0"
-          }`}
+        className={`fixed inset-0 z-40 bg-black/50 backdrop-blur-sm transition-opacity duration-500 ${
+          isOpen ? "opacity-100" : "pointer-events-none opacity-0"
+        }`}
         onClick={toggleMenu}
       />
 
       {/* Sidebar Menu */}
       <nav
-        className={`fixed left-0 top-0 z-50 h-full w-full max-w-110 bg-[#032a0d] text-white transition-transform duration-500 ease-in-out ${isOpen ? "translate-x-0" : "-translate-x-full"
-          }`}
+        className={`fixed left-0 top-0 z-50 h-full w-full max-w-110 bg-[#032a0d] text-white transition-transform duration-500 ease-in-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
       >
         <div className="flex h-full flex-col">
           {/* Main Navigation Links */}
-          <div className="flex-1 overflow-y-auto px-8 py-8 mt-20">
+          <div className="flex-1 overflow-y-auto no-scrollbar px-8 py-8 mt-20">
             <ul className="space-y-6 font-serif">
               <li>
                 <a
@@ -270,12 +319,11 @@ export const NavMenu = () => {
                     <div className="relative w-fit">
                       <Avatar className="size-10">
                         <AvatarImage
-                          src={user?.imageUrl}
-                          alt={user?.fullName || "User Name"}
+                          src={currentUser?.avatar ?? ""}
+                          alt={currentUser?.name ?? "Current user"}
                         />
                         <AvatarFallback className="text-xs">
-                          {user?.firstName?.charAt(0)}
-                          {user?.lastName?.charAt(0)}
+                          {userInitials}
                         </AvatarFallback>
                       </Avatar>
                       <span className="absolute -top-1.5 -right-1.5">
@@ -285,10 +333,8 @@ export const NavMenu = () => {
                     </div>
 
                     <div className="text-left">
-                      <p className="text-sm">{user?.fullName ?? "User Name"}</p>
-                      <p className="text-xs">
-                        {user?.emailAddresses[0]?.emailAddress ?? "User Email"}
-                      </p>
+                      <p className="text-sm">{currentUser?.name}</p>
+                      <p className="text-xs">{currentUser?.email}</p>
                     </div>
 
                     <ChevronRightIcon className="ml-auto size-4" />
@@ -301,22 +347,19 @@ export const NavMenu = () => {
                   sideOffset={8}
                 >
                   <DropdownMenuLabel className="flex items-center gap-2">
-                    <Avatar>
+                    <Avatar className="size-10">
                       <AvatarImage
-                        src={user?.imageUrl}
-                        alt={user?.fullName || "User Name"}
+                        src={currentUser?.avatar ?? ""}
+                        alt={currentUser?.name ?? "Current user"}
                       />
                       <AvatarFallback className="text-xs">
-                        {user?.firstName?.charAt(0)}
-                        {user?.lastName?.charAt(0)}
+                        {userInitials}
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-1 flex-col">
-                      <span className="text-popover-foreground">
-                        {user.fullName ?? "User Name"}
-                      </span>
+                      <span className="text-popover-foreground">{currentUser?.name}</span>
                       <span className="text-muted-foreground text-xs">
-                        {user?.emailAddresses[0]?.emailAddress ?? "User Email"}
+                        {currentUser?.email}
                       </span>
                     </div>
                   </DropdownMenuLabel>
@@ -341,15 +384,18 @@ export const NavMenu = () => {
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    onClick={() => signOut({ redirectUrl: "/" })}
+                    onSelect={(event) => {
+                      event.preventDefault();
+                      void handleLogout();
+                    }}
+                    disabled={logoutMutation.isPending}
                   >
                     <LogOutIcon className="size-4" />
-                    <span>Log out</span>
+                    <span>{logoutMutation.isPending ? "Logging out..." : "Log out"}</span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             )}
-
           </div>
         </div>
       </nav>

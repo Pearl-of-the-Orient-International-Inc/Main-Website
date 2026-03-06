@@ -1,101 +1,101 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { getClerkErrorMessage } from "@/lib/utils";
-import { useClerk, useSignIn } from "@clerk/nextjs";
-import { OAuthStrategy } from "@clerk/types";
+import { toApiError, useLoginMutation } from "@/features/auth/auth.hooks";
+import { useToast } from "@/hooks/use-toast";
 import { CircleAlertIcon, EyeIcon, EyeOffIcon, XIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { toast } from "sonner";
 
 export const SignInForm = () => {
   const router = useRouter();
-  const { isLoaded, signIn, setActive } = useSignIn();
-  const { client } = useClerk();
+  const loginMutation = useLoginMutation();
+  const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
 
-  const lastStrategy = client?.lastAuthenticationStrategy;
-
   // Handle the submission of the form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isLoaded) return;
+    if (!email || !password) {
+      toast({
+        title: "Missing credentials",
+        description: "Please enter your email and password.",
+        variant: "warning",
+      });
+      return;
+    }
 
-    // Start the sign-in process using the email and password provided
-    // If the user is not signed up yet, this will catch the `form_identifier_not_found` error
     try {
-      const signInAttempt = await signIn.create({
-        identifier: email,
+      const response = await loginMutation.mutateAsync({
+        email,
         password,
+        userAgent:
+          typeof window !== "undefined"
+            ? window.navigator.userAgent
+            : undefined,
       });
 
-      // If sign-in process is complete, set the created session as active
-      // and redirect the user
-      if (signInAttempt.status === "complete") {
-        await setActive({
-          session: signInAttempt.createdSessionId,
-          navigate: async ({ session }) => {
-            if (session?.currentTask) {
-              // Check for tasks and navigate to custom UI to help users resolve them
-              // See https://clerk.com/docs/guides/development/custom-flows/authentication/session-tasks
-              console.log(session?.currentTask);
-              return;
-            }
-
-            toast.success("Signed in successfully");
-            router.push("/");
-          },
+      if (response.mfaRequired) {
+        toast({
+          title: "Two-factor required",
+          description: "Two-factor authentication is required. Complete MFA flow next.",
+          variant: "info",
         });
-      } else {
-        // If the status is not complete, check why. User may need to
-        // complete further steps.
-        console.error(JSON.stringify(signInAttempt, null, 2));
-        toast.error("Sign in requires additional steps. Please try again.");
+        return;
       }
-    } catch (err: any) {
-      const message = getClerkErrorMessage(err);
-      toast.error(message);
+
+      toast({
+        title: "Signed in",
+        description: "Signed in successfully.",
+        variant: "success",
+      });
+      router.push("/");
+    } catch (error: unknown) {
+      const apiError = toApiError(error);
+
+      if (apiError.requiresVerification) {
+        toast({
+          title: "Email verification required",
+          description:
+            apiError.message ?? "Please verify your email before logging in.",
+          variant: "warning",
+        });
+        return;
+      }
+
+      toast({
+        title: "Sign in failed",
+        description: apiError.message ?? "Sign in failed.",
+        variant: "error",
+      });
     }
   };
 
-  const signInWith = (strategy: OAuthStrategy) => {
-    if (!signIn) return null;
-
-    return signIn
-      .authenticateWithRedirect({
-        strategy,
-        redirectUrl: "/sign-in/sso-callback",
-        redirectUrlComplete: "/", // Learn more about session tasks at https://clerk.com/docs/guides/development/custom-flows/authentication/session-tasks
-      })
-      .then((res) => {
-        console.log(res);
-      })
-      .catch((err: any) => {
-        const message = getClerkErrorMessage(err);
-        toast.error(message);
-      });
+  const signInWith = (providerName: string) => {
+    toast({
+      title: "Frontend-only",
+      description: `${providerName} sign-in is frontend-only for now.`,
+      variant: "info",
+    });
   };
 
   const providers = [
     {
-      strategy: "oauth_google" as const,
+      id: "google",
       name: "Continue with Google",
       icon: "/icons/google.png",
     },
     {
-      strategy: "oauth_facebook" as const,
+      id: "facebook",
       name: "Continue with Facebook",
       icon: "/icons/facebook.png",
     },
@@ -277,8 +277,11 @@ export const SignInForm = () => {
                   </div>
                 </div>
 
-                <Button className="w-full bg-[#032a0d] hover:bg-[#032a0d]/90">
-                  Sign In
+                <Button
+                  className="w-full bg-[#032a0d] hover:bg-[#032a0d]/90"
+                  disabled={loginMutation.isPending}
+                >
+                  {loginMutation.isPending ? "Signing in..." : "Sign In"}
                 </Button>
               </div>
 
@@ -293,8 +296,8 @@ export const SignInForm = () => {
               <div className="grid lg:grid-cols-1 gap-3">
                 {providers.map((provider) => (
                   <Button
-                    key={provider.strategy}
-                    onClick={() => signInWith(provider.strategy)}
+                    key={provider.id}
+                    onClick={() => signInWith(provider.name)}
                     type="button"
                     variant="outline"
                     className="relative"
@@ -306,11 +309,6 @@ export const SignInForm = () => {
                       height={20}
                     />
                     <span>{provider.name}</span>
-                    {lastStrategy === provider.strategy && (
-                      <Badge className="absolute -top-2 -right-2 text-[10px] bg-linear-to-r from-[#032a0d] to-green-700 border-none">
-                        Last Used
-                      </Badge>
-                    )}
                   </Button>
                 ))}
               </div>

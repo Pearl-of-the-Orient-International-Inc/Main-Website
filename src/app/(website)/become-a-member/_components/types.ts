@@ -53,12 +53,13 @@ export type ApplicationFormState = {
   // Education
   elementarySchool: string;
   secondarySchool: string;
-  tertiarySchool: string;
-  postGraduateStudies: string;
+  tertiarySchool: string[];
+  postGraduateStudies: string[];
 
   // Ministry & skills
   ministerialWorkExperience: {
-    jobDescription: string;
+    rolePosition: string;
+    institution: string;
     years: string;
   }[];
   skillsTalents: string;
@@ -75,6 +76,10 @@ export type ApplicationFormState = {
   // Media
   photoUrl: string;
   signatureUrl: string;
+
+  // Declarations
+  declarationTruthConfirmed: boolean;
+  monthlyPledgeConfirmed: boolean;
 };
 
 export type StepIndex = 0 | 1 | 2 | 3;

@@ -1,4 +1,5 @@
 import type { ApplicationFormState } from "./types";
+import type { ApplicantRequirementType } from "@/features/member/member.types";
 
 export const emptyFormState: ApplicationFormState = {
   firstName: "",
@@ -27,12 +28,10 @@ export const emptyFormState: ApplicationFormState = {
   emergencyCellphone: "",
   elementarySchool: "",
   secondarySchool: "",
-  tertiarySchool: "",
-  postGraduateStudies: "",
+  tertiarySchool: [""],
+  postGraduateStudies: [""],
   ministerialWorkExperience: [
-    { jobDescription: "", years: "" },
-    { jobDescription: "", years: "" },
-    { jobDescription: "", years: "" },
+    { rolePosition: "", institution: "", years: "" },
   ],
   skillsTalents: "",
   branchOfService: [],
@@ -44,6 +43,8 @@ export const emptyFormState: ApplicationFormState = {
   ],
   photoUrl: "",
   signatureUrl: "",
+  declarationTruthConfirmed: false,
+  monthlyPledgeConfirmed: false,
 };
 
 export const steps = [
@@ -69,47 +70,68 @@ export const steps = [
   },
 ] as const;
 
-/** Onboarding step IDs (post-submission). Must match Convex onboardingStepValidator. */
 export type OnboardingStepId =
   | "application"
   | "requirements"
   | "pre_orientation"
+  | "payment_checkout"
+  | "online_interview"
   | "chaplaincy_101"
   | "oath_taking"
   | "id_generation";
 
-/** Requirement keys for step 2. Must match Convex requirementKeys. */
 export const REQUIREMENT_KEYS = [
-  "photo_2x2_1",
-  "photo_2x2_2",
+  "photo_2x2",
+  "hs_baccalaureate_diploma",
+  "two_three_year_program_diploma",
+  "masters_degree_diploma",
+  "doctoral_degree_diploma",
   "ordination_certificate",
   "pastors_recommendation_letter",
-  "baccalaureate_diploma",
+  "letter_of_intent",
+  "endorsement_letters",
   "marriage_contract",
   "clearance_barangay",
   "clearance_police",
   "clearance_nbi",
-  "letter_of_intent",
 ] as const;
 
 export type RequirementKey = (typeof REQUIREMENT_KEYS)[number];
 
-/** Human-readable labels for each requirement. */
+export const REQUIREMENT_TYPE_BY_KEY: Record<RequirementKey, ApplicantRequirementType> = {
+  photo_2x2: "PHOTO_2X2",
+  hs_baccalaureate_diploma: "HS_BACCALAUREATE_DIPLOMA",
+  two_three_year_program_diploma: "TWO_THREE_YEAR_PROGRAM_DIPLOMA",
+  masters_degree_diploma: "MASTERS_DEGREE_DIPLOMA",
+  doctoral_degree_diploma: "DOCTORAL_DEGREE_DIPLOMA",
+  ordination_certificate: "ORDINATION_CERTIFICATE",
+  pastors_recommendation_letter: "PASTORS_RECOMMENDATION_LETTER",
+  letter_of_intent: "LETTER_OF_INTENT",
+  endorsement_letters: "ENDORSEMENT_LETTERS",
+  marriage_contract: "MARRIAGE_CONTRACT",
+  clearance_barangay: "CLEARANCE_BARANGAY",
+  clearance_police: "CLEARANCE_POLICE",
+  clearance_nbi: "CLEARANCE_NBI",
+};
+
 export const REQUIREMENT_LABELS: Record<RequirementKey, string> = {
-  photo_2x2_1: "2x2 picture (white background) – 1st copy",
-  photo_2x2_2: "2x2 picture (white background) – 2nd copy",
-  ordination_certificate: "Ordination Certificate or Certificate of Pastoral",
-  pastors_recommendation_letter:
-    "Pastor's Recommendation Letter (if not a pastor)",
-  baccalaureate_diploma: "Baccalaureate Diploma (at least)",
+  photo_2x2:
+    "2x2 picture (white background) - required",
+  hs_baccalaureate_diploma: "HS Baccalaureate Diploma",
+  two_three_year_program_diploma: "2-3 year program Baccalaureate Diploma",
+  masters_degree_diploma: "Master's degree Baccalaureate Diploma",
+  doctoral_degree_diploma: "Doctoral degree Baccalaureate Diploma",
+  ordination_certificate:
+    "Ordination Certificate/Certificate of Pastoral Appointment (if pastor)",
+  pastors_recommendation_letter: "Recommendation Letter (if not pastor)",
+  letter_of_intent: "Letter of Intent",
+  endorsement_letters: "Endorsement Letters",
   marriage_contract: "Marriage Contract (if married)",
   clearance_barangay: "Barangay Clearance",
   clearance_police: "Police Clearance",
   clearance_nbi: "NBI Clearance",
-  letter_of_intent: "Letter of Intent",
 };
 
-/** Clearances: at least one required. */
 export const CLEARANCE_KEYS: RequirementKey[] = [
   "clearance_barangay",
   "clearance_police",
@@ -137,14 +159,24 @@ export const onboardingSteps: {
     description: "Complete pre-orientation.",
   },
   {
-    id: "chaplaincy_101",
-    title: "Chaplaincy 101 training",
-    description: "Complete Chaplaincy 101 training.",
+    id: "payment_checkout",
+    title: "Payment / checkout",
+    description: "Submit payment or promissory note.",
+  },
+  {
+    id: "online_interview",
+    title: "Online interview",
+    description: "Book your weekend interview appointment.",
   },
   {
     id: "id_generation",
     title: "ID generation",
-    description: "Receive your member ID.",
+    description: "Receive your member ID and certificate.",
+  },
+  {
+    id: "chaplaincy_101",
+    title: "Chaplaincy 101 training",
+    description: "Complete Chaplaincy 101 training.",
   },
   {
     id: "oath_taking",

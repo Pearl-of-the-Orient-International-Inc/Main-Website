@@ -1,12 +1,10 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import type { ChangeEvent } from "react";
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { useSignIn } from "@clerk/nextjs";
 import { REGEXP_ONLY_DIGITS } from "input-otp";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -26,11 +24,10 @@ import {
 } from "@/components/ui/dialog";
 import { DotIcon, EyeIcon, EyeOffIcon } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
-import { getClerkErrorMessage } from "@/lib/utils";
 
 export const ForgotPasswordForm = () => {
   const router = useRouter();
-  const { isLoaded, signIn, setActive } = useSignIn();
+  const { toast } = useToast();
 
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
@@ -81,22 +78,31 @@ export const ForgotPasswordForm = () => {
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoaded || !signIn) return;
+    if (!email) {
+      toast({
+        title: "Email required",
+        description: "Please enter your email address.",
+        variant: "warning",
+      });
+      return;
+    }
 
     setIsSending(true);
     try {
-      await signIn.create({
-        strategy: "reset_password_email_code",
-        identifier: email,
-      });
-
+      await new Promise((resolve) => setTimeout(resolve, 500));
       setShowResetDialog(true);
       setTimeLeft(60);
-      toast.success("We sent a reset code to your email.");
-    } catch (err: any) {
-      const message = getClerkErrorMessage(err);
-      console.error(JSON.stringify(err, null, 2));
-      toast.error(message);
+      toast({
+        title: "Reset flow ready",
+        description: "Frontend reset flow is ready. Verification dialog opened.",
+        variant: "success",
+      });
+    } catch {
+      toast({
+        title: "Reset failed",
+        description: "Unable to start reset flow in preview mode.",
+        variant: "error",
+      });
     } finally {
       setIsSending(false);
     }
@@ -104,63 +110,48 @@ export const ForgotPasswordForm = () => {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!isLoaded || !signIn) return;
     if (code.length !== 6) return;
 
     if (!password || password !== confirmPassword) {
-      toast.error("Passwords do not match.");
+      toast({
+        title: "Password mismatch",
+        description: "Passwords do not match.",
+        variant: "error",
+      });
       return;
     }
 
     setIsResetting(true);
     try {
-      const result = await signIn.attemptFirstFactor({
-        strategy: "reset_password_email_code",
-        code,
-        password,
+      await new Promise((resolve) => setTimeout(resolve, 600));
+      toast({
+        title: "Password reset ready",
+        description: "Password reset UI is ready. Connect to backend endpoint next.",
+        variant: "success",
       });
-
-      if (result.status === "complete") {
-        await setActive({
-          session: result.createdSessionId,
-          navigate: async () => {
-            toast.success("Password reset successfully.");
-            router.push("/sign-in");
-          },
-        });
-        setShowResetDialog(false);
-        setCode("");
-        setPassword("");
-        setConfirmPassword("");
-      } else if (result.status === "needs_second_factor") {
-        toast.error(
-          "Two-factor authentication is required. Please complete sign-in to continue.",
-        );
-      } else {
-        console.warn("Unexpected status during password reset", result.status);
-      }
-    } catch (err: any) {
-      const message = getClerkErrorMessage(err);
-      console.error(JSON.stringify(err, null, 2));
-      toast.error(message);
+      setShowResetDialog(false);
+      setCode("");
+      setPassword("");
+      setConfirmPassword("");
+      router.push("/sign-in");
+    } catch {
+      toast({
+        title: "Reset failed",
+        description: "Unable to complete reset in preview mode.",
+        variant: "error",
+      });
     } finally {
       setIsResetting(false);
     }
   };
 
   const handleResend = async () => {
-    if (!isLoaded || !signIn) return;
-    try {
-      await signIn.create({
-        strategy: "reset_password_email_code",
-        identifier: email,
-      });
-      setTimeLeft(60);
-      toast.success("Verification code resent.");
-    } catch (err: any) {
-      const message = getClerkErrorMessage(err);
-      toast.error(message);
-    }
+    setTimeLeft(60);
+    toast({
+      title: "Code resent",
+      description: "Verification code resend previewed.",
+      variant: "success",
+    });
   };
 
   return (

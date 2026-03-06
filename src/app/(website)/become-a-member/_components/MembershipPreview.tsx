@@ -1,6 +1,11 @@
 import { CheckIcon } from "lucide-react";
 import type { ApplicationFormState, BranchOfService } from "./types";
 
+function formatEducationEntries(entries: string[]): string {
+  const cleaned = entries.map((item) => item.trim()).filter(Boolean);
+  return cleaned.length > 0 ? cleaned.join(" | ") : "N/A";
+}
+
 export function MembershipPreview({ form }: { form: ApplicationFormState }) {
   const fullName = [form.firstName, form.lastName].filter(Boolean).join(" ");
   // eslint-disable-next-line react-hooks/purity
@@ -157,11 +162,15 @@ export function MembershipPreview({ form }: { form: ApplicationFormState }) {
         </div>
         <NumberedRow index={1} label="Elementary" value={form.elementarySchool || "N/A"} />
         <NumberedRow index={2} label="Secondary" value={form.secondarySchool || "N/A"} />
-        <NumberedRow index={3} label="Tertiary" value={form.tertiarySchool || "N/A"} />
+        <NumberedRow
+          index={3}
+          label="Tertiary"
+          value={formatEducationEntries(form.tertiarySchool)}
+        />
         <NumberedRow
           index={4}
           label="Post Graduate Studies"
-          value={form.postGraduateStudies || "N/A"}
+          value={formatEducationEntries(form.postGraduateStudies)}
         />
 
         <div className="mt-3 mb-1 font-semibold">
@@ -173,8 +182,10 @@ export function MembershipPreview({ form }: { form: ApplicationFormState }) {
             key={index}
             prefix={`${index + 1}.`}
             value={
-              exp.jobDescription || exp.years
-                ? `${exp.jobDescription} ${exp.years ? `(${exp.years})` : ""}`
+              exp.rolePosition || exp.institution || exp.years
+                ? `${exp.rolePosition}${
+                    exp.institution ? ` / ${exp.institution}` : ""
+                  }${exp.years ? ` / ${exp.years}` : ""}`
                 : "N/A"
             }
           />
@@ -228,14 +239,35 @@ export function MembershipPreview({ form }: { form: ApplicationFormState }) {
           />
         ))}
 
-        <p className="mt-4 text-[10px] sm:text-xs">
-          I do hereby certify that all information above is true and correct with the
-          best of my knowledge.
-        </p>
-        <p className="mt-2 text-[10px] sm:text-xs">
-          I do hereby agree that I will contribute and support the monthly pledge
-          required for the chaplaincy&apos;s operational expenses, program, and activities.
-        </p>
+        <div className="mt-4 space-y-2 text-[10px] sm:text-xs">
+          <p className="flex items-start gap-2">
+            {form.declarationTruthConfirmed ? (
+              <span className="mt-0.5 inline-flex size-3.5 items-center justify-center border border-black bg-[#032a0d] text-white">
+                <CheckIcon className="size-3" />
+              </span>
+            ) : (
+              <span className="mt-0.5 inline-block size-3.5 border border-black" />
+            )}
+            <span>
+              I do hereby certify that all information above is true and correct
+              with the best of my knowledge.
+            </span>
+          </p>
+          <p className="flex items-start gap-2">
+            {form.monthlyPledgeConfirmed ? (
+              <span className="mt-0.5 inline-flex size-3.5 items-center justify-center border border-black bg-[#032a0d] text-white">
+                <CheckIcon className="size-3" />
+              </span>
+            ) : (
+              <span className="mt-0.5 inline-block size-3.5 border border-black" />
+            )}
+            <span>
+              I do hereby agree that I will contribute and support the monthly
+              pledge required for the chaplaincy&apos;s operational expenses, program,
+              and activities.
+            </span>
+          </p>
+        </div>
 
         <div className="mt-6 flex flex-wrap gap-8 justify-between text-[10px] sm:text-xs">
           <div className="flex-1 min-w-35">

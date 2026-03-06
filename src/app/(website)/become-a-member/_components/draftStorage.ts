@@ -23,6 +23,60 @@ function mergeForm(partial: Partial<ApplicationFormState>): ApplicationFormState
       (form as Record<string, unknown>)[key] = value;
     }
   }
+
+  const rawTertiary = partial.tertiarySchool as unknown;
+  if (!Array.isArray(rawTertiary)) {
+    form.tertiarySchool =
+      typeof rawTertiary === "string" && rawTertiary.trim()
+        ? [rawTertiary]
+        : [""];
+  } else if (form.tertiarySchool.length === 0) {
+    form.tertiarySchool = [""];
+  }
+
+  const rawPostGraduate = partial.postGraduateStudies as unknown;
+  if (!Array.isArray(rawPostGraduate)) {
+    form.postGraduateStudies =
+      typeof rawPostGraduate === "string" && rawPostGraduate.trim()
+        ? [rawPostGraduate]
+        : [""];
+  } else if (form.postGraduateStudies.length === 0) {
+    form.postGraduateStudies = [""];
+  }
+
+  const rawExperience = partial.ministerialWorkExperience as unknown;
+  if (Array.isArray(rawExperience)) {
+    const normalized = rawExperience
+      .map((item) => {
+        if (!item || typeof item !== "object") return null;
+        const record = item as Record<string, unknown>;
+        const rolePosition =
+          typeof record.rolePosition === "string"
+            ? record.rolePosition
+            : typeof record.jobDescription === "string"
+              ? record.jobDescription
+              : "";
+        const institution =
+          typeof record.institution === "string" ? record.institution : "";
+        const years = typeof record.years === "string" ? record.years : "";
+        if (!rolePosition && !institution && !years) return null;
+        return { rolePosition, institution, years };
+      })
+      .filter(
+        (item): item is { rolePosition: string; institution: string; years: string } =>
+          item !== null,
+      );
+
+    form.ministerialWorkExperience =
+      normalized.length > 0
+        ? normalized
+        : [{ rolePosition: "", institution: "", years: "" }];
+  } else {
+    form.ministerialWorkExperience = [
+      { rolePosition: "", institution: "", years: "" },
+    ];
+  }
+
   return form;
 }
 

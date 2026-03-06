@@ -1,50 +1,77 @@
 "use client";
 
-import { useQuery } from "convex/react";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
-import { BecomeMemberHero } from "../_components/BecomeMemberHero";
+import { useState } from "react";
 import { OnboardingWizard } from "../_components/onboarding/OnboardingWizard";
-import { api } from '../../../../../convex/_generated/api';
+import { loadDraft } from "../_components/draftStorage";
+import {
+  getOrCreateOnboardingMeta,
+  saveOnboardingMeta,
+} from "../_components/onboarding/storage";
+import type {
+  FrontendOnboardingApplication,
+  FrontendOnboardingMeta,
+} from "../_components/onboarding/types";
+import Image from "next/image";
+import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { AuthGuard } from "@/components/providers/AuthGuard";
 
 export default function OnboardingPage() {
   const router = useRouter();
-  const application = useQuery(api.backend.membership.getApplication);
+  const [application, setApplication] = useState<FrontendOnboardingApplication>(
+    () => {
+      const { form } = loadDraft();
+      const meta = getOrCreateOnboardingMeta();
+      return { ...form, ...meta };
+    },
+  );
 
-  useEffect(() => {
-    if (application === undefined) return;
-    if (!application) {
-      router.replace("/become-a-member");
-      return;
-    }
-    if (application.applicationStatus !== "Submitted" && application.applicationStatus !== "Under Review" && application.applicationStatus !== "Approved") {
-      router.replace("/become-a-member");
-    }
-  }, [application, router]);
-
-  if (application === undefined) {
-    return (
-      <div className="bg-neutral-50 min-h-screen">
-        <BecomeMemberHero />
-        <section className="py-10 sm:py-12 lg:py-16">
-          <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-            <div className="rounded-2xl border border-[#032a0d]/15 bg-white shadow-sm p-8 text-center text-[#032a0d]/70">
-              Loading…
-            </div>
-          </div>
-        </section>
-      </div>
-    );
-  }
-
-  if (!application) {
-    return null;
-  }
+  const handleMetaChange = (meta: FrontendOnboardingMeta) => {
+    saveOnboardingMeta(meta);
+    setApplication((prev) => ({ ...prev, ...meta }));
+  };
 
   return (
-    <div className="bg-neutral-50">
-      <BecomeMemberHero />
-      <OnboardingWizard application={application} />
-    </div>
+    <AuthGuard>
+      <section className="bg-neutral-300 min-h-screen py-8 sm:py-10 lg:py-14">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-5 border border-black/10 bg-white px-5 py-5 sm:px-8 sm:py-6">
+            <div className="flex items-center gap-4 sm:gap-6">
+              <Image
+                src="/main/logo.png"
+                alt="Pearl of the Orient logo"
+                width={100}
+                height={100}
+                className="size-16 sm:size-20"
+                priority
+              />
+              <div>
+                <h1 className="font-serif text-xl text-neutral-900 sm:text-3xl">
+                  Chaplaincy Ministries
+                </h1>
+                <p className="mt-1 text-xs text-neutral-600 sm:text-sm">
+                  Pearl of the Orient International Auxiliary Chaplain Values
+                  Educators Inc.
+                </p>
+              </div>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => router.back()}
+                className="mb-4 border-[#032a0d]/30 ml-auto text-[#032a0d] hover:bg-[#032a0d]/5"
+              >
+                <ArrowLeft className="size-4" />
+                Back
+              </Button>
+            </div>
+          </div>
+          <OnboardingWizard
+            application={application}
+            onMetaChangeAction={handleMetaChange}
+          />
+        </div>
+      </section>
+    </AuthGuard>
   );
 }

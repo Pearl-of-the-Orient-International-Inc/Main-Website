@@ -1,17 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  InputOTP,
-  InputOTPGroup,
-  InputOTPSlot,
-} from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
-import { getClerkErrorMessage } from "@/lib/utils";
-import { useSignUp } from "@clerk/nextjs";
 import {
   Dialog,
   DialogContent,
@@ -20,44 +12,25 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Spinner } from "@/components/ui/spinner";
-import {
-  CircleAlertIcon,
-  DotIcon,
-  EyeIcon,
-  EyeOffIcon,
-  XIcon,
-} from "lucide-react";
+import { toApiError, useRegisterMutation } from "@/features/auth/auth.hooks";
+import { useToast } from "@/hooks/use-toast";
+import { CircleAlertIcon, EyeIcon, EyeOffIcon, XIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { REGEXP_ONLY_DIGITS } from "input-otp";
+import { useState } from "react";
 
 export const SignUpForm = () => {
   const router = useRouter();
-  const { isLoaded, signUp, setActive } = useSignUp();
+  const registerMutation = useRegisterMutation();
+  const { toast } = useToast();
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
-  const [code, setCode] = useState("");
-  const [showEmailCode, setShowEmailCode] = useState(false);
-  const [isCreating, setIsCreating] = useState(false);
-  const [isVerifying, setIsVerifying] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(30);
-
-  useEffect(() => {
-    if (timeLeft > 0) {
-      const timer = setTimeout(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [timeLeft]);
+  const [showSuccessDialog, setShowSuccessDialog] = useState(false);
 
   const maskEmail = (value: string) => {
     const [local, domain] = value.split("@");
@@ -71,106 +44,42 @@ export const SignUpForm = () => {
     return `${start}${middle}${end}@${domain}`;
   };
 
-  // Handle the submission of the form
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!isLoaded) return;
+    if (!firstName || !lastName || !email || !password) {
+      toast({
+        title: "Incomplete form",
+        description: "Please complete all required fields.",
+        variant: "warning",
+      });
+      return;
+    }
 
-    setIsCreating(true);
-    // Start the sign-up process using the email and password provided
     try {
-      await signUp.create({
-        firstName,
-        lastName,
-        emailAddress: email,
+      const response = await registerMutation.mutateAsync({
+        name: `${firstName} ${lastName}`.replace(/\s+/g, " ").trim(),
+        email,
         password,
-        legalAccepted: true,
+        role: "MEMBER",
       });
 
-      // Send the user an email with the verification code
-      await signUp.prepareEmailAddressVerification({
-        strategy: "email_code",
+      toast({
+        title: "Account created",
+        description: response.message || "Account created successfully.",
+        variant: "success",
       });
-
-      // Open verification dialog and start timer
-      setShowEmailCode(true);
-      setTimeLeft(60);
-    } catch (err: any) {
-      const message = getClerkErrorMessage(err);
-      console.error(JSON.stringify(err, null, 2));
-      toast.error(message);
-    } finally {
-      setIsCreating(false);
+      setShowSuccessDialog(true);
+    } catch (error: unknown) {
+      const apiError = toApiError(error);
+      toast({
+        title: "Sign up failed",
+        description: apiError.message ?? "Sign up failed.",
+        variant: "error",
+      });
     }
   };
 
-  // Handle the submission of the email verification code
-  const handleEmailCode = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (!isLoaded) return;
-
-    setIsVerifying(true);
-    try {
-      // Use the code the user provided to attempt verification
-      const signUpAttempt = await signUp.attemptEmailAddressVerification({
-        code,
-      });
-
-      // If verification was completed, set the session to active
-      // and redirect the user
-      if (signUpAttempt.status === "complete") {
-        await setActive({
-          session: signUpAttempt.createdSessionId,
-          navigate: async ({ session }) => {
-            if (session?.currentTask) {
-              // Check for session tasks and navigate to custom UI to help users resolve them
-              // See https://clerk.com/docs/guides/development/custom-flows/authentication/session-tasks
-              console.log(session?.currentTask);
-              return;
-            }
-
-            router.push("/");
-          },
-        });
-      } else {
-        // If the status is not complete, check why. User may need to
-        // complete further steps.
-        console.error("Sign-up attempt not complete:", signUpAttempt);
-        console.error("Sign-up attempt status:", signUpAttempt.status);
-      }
-    } catch (err: any) {
-      const message = getClerkErrorMessage(err);
-      console.error(JSON.stringify(err, null, 2));
-      toast.error(message);
-    } finally {
-      setIsVerifying(false);
-    }
-  };
-
-  const formatTime = (seconds: number) => {
-    const mins = Math.floor(seconds / 60);
-    const secs = seconds % 60;
-
-    return `${mins.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
-
-  const handleResend = () => {
-    if (!isLoaded) return;
-    (async () => {
-      try {
-        await signUp.prepareEmailAddressVerification({
-          strategy: "email_code",
-        });
-        toast.success("Verification code resent to your email.");
-        setTimeLeft(60);
-      } catch (err: any) {
-        const message = getClerkErrorMessage(err);
-        toast.error(message);
-      }
-    })();
-  };
   return (
     <section className="max-w-6xl px-4 sm:px-6 lg:px-8 mx-auto space-y-8">
       {isActive && (
@@ -194,10 +103,9 @@ export const SignUpForm = () => {
       <div className="grid lg:grid-cols-5 grid-cols-1 gap-3 my-10">
         <div className="lg:col-span-3">
           <div className="bg-card border rounded-[calc(var(--radius)+.125rem)] shadow-md shadow-zinc-950/5 h-fit flex flex-col">
-            {/* Header */}
             <div
               onClick={() => router.push("/")}
-              className={`flex flex-col bg-[#032a0d] rounded-t-[calc(var(--radius)+.125rem)] items-center border-b pb-5 px-6 py-5 cursor-pointer text-center transition-all text-white duration-300 max-w-full `}
+              className="flex flex-col bg-[#032a0d] rounded-t-[calc(var(--radius)+.125rem)] items-center border-b pb-5 px-6 py-5 cursor-pointer text-center transition-all text-white duration-300 max-w-full"
             >
               <Image
                 src="/main/logo.png"
@@ -215,8 +123,7 @@ export const SignUpForm = () => {
               </div>
             </div>
 
-            {/* Content */}
-            <div className=" space-y-5 px-6 py-5 overflow-y-auto max-h-130">
+            <div className="space-y-5 px-6 py-5 overflow-y-auto max-h-130">
               <div>
                 <h3 className="font-semibold text-sm uppercase tracking-wide">
                   Important Announcement
@@ -228,7 +135,6 @@ export const SignUpForm = () => {
                 </p>
               </div>
 
-              {/* Important Dates */}
               <div>
                 <h4 className="font-medium text-sm">Important Dates</h4>
                 <ul className="mt-2 list-disc list-inside text-sm text-muted-foreground space-y-1">
@@ -247,7 +153,6 @@ export const SignUpForm = () => {
                 </ul>
               </div>
 
-              {/* Notes */}
               <div>
                 <h4 className="font-medium text-sm">Notes</h4>
                 <ul className="mt-2 list-disc list-inside text-sm text-muted-foreground space-y-1">
@@ -270,7 +175,6 @@ export const SignUpForm = () => {
               </div>
             </div>
 
-            {/* Footer */}
             <div className="border-t px-6 py-3 text-right">
               <Link href="#" className="text-sm text-[#032a0d] hover:underline">
                 See more →
@@ -280,7 +184,6 @@ export const SignUpForm = () => {
         </div>
 
         <div className="lg:col-span-2">
-          {/* Main sign-up form */}
           <form
             onSubmit={handleSubmit}
             className="bg-muted h-fit w-full overflow-hidden rounded-[calc(var(--radius)+.125rem)] border shadow-md shadow-zinc-950/5 dark:[--color-muted:var(--color-zinc-900)]"
@@ -375,10 +278,10 @@ export const SignUpForm = () => {
 
                 <Button
                   className="w-full bg-[#032a0d] hover:bg-[#032a0d]/90"
-                  disabled={isCreating}
+                  disabled={registerMutation.isPending}
                 >
-                  {isCreating && <Spinner className="size-4" />}
-                  {isCreating ? "Signing up..." : "Sign Up"}
+                  {registerMutation.isPending && <Spinner className="size-4" />}
+                  {registerMutation.isPending ? "Signing up..." : "Sign Up"}
                 </Button>
               </div>
 
@@ -407,74 +310,22 @@ export const SignUpForm = () => {
             </div>
           </form>
 
-          {/* Email verification dialog */}
-          <Dialog open={showEmailCode} onOpenChange={setShowEmailCode}>
+          <Dialog open={showSuccessDialog} onOpenChange={setShowSuccessDialog}>
             <DialogContent>
-              <form onSubmit={handleEmailCode}>
-                <DialogHeader>
-                  <DialogTitle>Verify your email address</DialogTitle>
-                  <DialogDescription>
-                    We sent a 6-digit verification code to{" "}
-                    <b>{maskEmail(email)}</b>. Enter the code below to verify
-                    your account.
-                  </DialogDescription>
-                </DialogHeader>
-                <div className="space-y-2 mt-6 mb-3">
-                  <Label htmlFor="code" className="block text-sm">
-                    Verification code
-                  </Label>
-                  <InputOTP
-                    id="code"
-                    maxLength={6}
-                    value={code}
-                    onChange={(value) => setCode(value)}
-                    pattern={REGEXP_ONLY_DIGITS}
-                  >
-                    <InputOTPGroup>
-                      <InputOTPSlot className="size-15 text-lg" index={0} />
-                      <InputOTPSlot className="size-15 text-lg" index={1} />
-                      <InputOTPSlot className="size-15 text-lg" index={2} />
-                    </InputOTPGroup>
-                    <div role="separator" className="text-muted-foreground">
-                      <DotIcon />
-                    </div>
-                    <InputOTPGroup>
-                      <InputOTPSlot className="size-15 text-lg" index={3} />
-                      <InputOTPSlot className="size-15 text-lg" index={4} />
-                      <InputOTPSlot className="size-15 text-lg" index={5} />
-                    </InputOTPGroup>
-                  </InputOTP>
-                  <p className="text-muted-foreground text-xs">
-                    {timeLeft > 0 ? (
-                      `Resend available in ${formatTime(timeLeft)}`
-                    ) : (
-                      <>
-                        Didn&apos;t receive a code?
-                        <button
-                          type="button"
-                          onClick={handleResend}
-                          className="hover:text-primary ml-1 cursor-pointer underline"
-                        >
-                          Resend code
-                        </button>
-                      </>
-                    )}
-                  </p>
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full bg-[#032a0d] hover:bg-[#032a0d]/90"
-                  disabled={isVerifying}
-                >
-                  {isVerifying && <Spinner className="size-4" />}
-                  {isVerifying ? "Verifying..." : "Verify account"}
-                </Button>
-              </form>
+              <DialogHeader>
+                <DialogTitle>Account created successfully</DialogTitle>
+                <DialogDescription>
+                  We sent a verification link to <b>{maskEmail(email)}</b>. Please verify your email before signing in.
+                </DialogDescription>
+              </DialogHeader>
+              <Button
+                className="w-full bg-[#032a0d] hover:bg-[#032a0d]/90"
+                onClick={() => router.push("/sign-in")}
+              >
+                Go to sign in
+              </Button>
             </DialogContent>
           </Dialog>
-
-          {/* Required for sign-up flows Clerk's bot sign-up protection is enabled by default */}
-          <div id="clerk-captcha" />
         </div>
       </div>
     </section>

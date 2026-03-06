@@ -1,10 +1,12 @@
 "use client";
 
-import { useQuery } from "convex/react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useEffect, useState } from "react";
 import { MapPin, GraduationCap, User, Users, Briefcase } from "lucide-react";
-import { api } from '../../../../../convex/_generated/api';
+import { loadDraft } from "../../become-a-member/_components/draftStorage";
+import { loadOnboardingMeta } from "../../become-a-member/_components/onboarding/storage";
+import type { FrontendOnboardingApplication } from "../../become-a-member/_components/onboarding/types";
 
 function formatPosition(profile: {
   position?: string;
@@ -29,18 +31,36 @@ function formatLocation(profile: {
   return parts.join(", ") || profile.address || "";
 }
 
+function hasEducationEntries(entries: string[]): boolean {
+  return entries.some((entry) => entry.trim().length > 0);
+}
+
 export default function MemberProfilePage() {
   const params = useParams();
-  const uniqueId = params.uniqueId as string;
-  const profile = useQuery(
-    api.backend.membership.getApplicationByUniqueId,
-    uniqueId ? { uniqueId } : "skip",
+  const uniqueIdParam = params.uniqueId;
+  const uniqueId =
+    typeof uniqueIdParam === "string" ? uniqueIdParam : uniqueIdParam?.[0] ?? "";
+  const [profile, setProfile] = useState<FrontendOnboardingApplication | null | undefined>(
+    undefined,
   );
+
+  useEffect(() => {
+    const { form } = loadDraft();
+    const onboardingMeta = loadOnboardingMeta();
+    const id = window.setTimeout(() => {
+      if (!onboardingMeta || onboardingMeta.uniqueId !== uniqueId) {
+        setProfile(null);
+        return;
+      }
+      setProfile({ ...form, ...onboardingMeta });
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [uniqueId]);
 
   if (profile === undefined) {
     return (
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
-        <p className="text-[#032a0d]/70">Loading…</p>
+        <p className="text-[#032a0d]/70">Loading...</p>
       </div>
     );
   }
@@ -188,8 +208,8 @@ export default function MemberProfilePage() {
         {/* Education */}
         {(profile.elementarySchool ||
           profile.secondarySchool ||
-          profile.tertiarySchool ||
-          profile.postGraduateStudies) && (
+          hasEducationEntries(profile.tertiarySchool) ||
+          hasEducationEntries(profile.postGraduateStudies)) && (
           <div className="rounded-2xl border border-[#032a0d]/15 bg-white shadow-sm p-5 sm:p-6 space-y-4">
             <h2 className="font-serif text-base sm:text-lg text-[#032a0d] flex items-center gap-2">
               <GraduationCap className="size-5 shrink-0" />
@@ -208,16 +228,30 @@ export default function MemberProfilePage() {
                   {profile.secondarySchool}
                 </li>
               )}
-              {profile.tertiarySchool && (
+              {hasEducationEntries(profile.tertiarySchool) && (
                 <li>
-                  <span className="font-semibold">Tertiary:</span>{" "}
-                  {profile.tertiarySchool}
+                  <span className="font-semibold">Tertiary:</span>
+                  <ul className="ml-4 mt-1 list-disc space-y-1">
+                    {profile.tertiarySchool
+                      .map((entry) => entry.trim())
+                      .filter(Boolean)
+                      .map((entry, index) => (
+                        <li key={`tertiary-${index}`}>{entry}</li>
+                      ))}
+                  </ul>
                 </li>
               )}
-              {profile.postGraduateStudies && (
+              {hasEducationEntries(profile.postGraduateStudies) && (
                 <li>
-                  <span className="font-semibold">Post-graduate:</span>{" "}
-                  {profile.postGraduateStudies}
+                  <span className="font-semibold">Post-graduate:</span>
+                  <ul className="ml-4 mt-1 list-disc space-y-1">
+                    {profile.postGraduateStudies
+                      .map((entry) => entry.trim())
+                      .filter(Boolean)
+                      .map((entry, index) => (
+                        <li key={`postgrad-${index}`}>{entry}</li>
+                      ))}
+                  </ul>
                 </li>
               )}
             </ul>
@@ -318,14 +352,20 @@ export default function MemberProfilePage() {
               <ul className="space-y-3 text-sm text-[#032a0d]/80">
                 {profile.ministerialWorkExperience
                   .filter(
-                    (e) => e.jobDescription?.trim() || e.years?.trim(),
+                    (e) =>
+                      e.rolePosition?.trim() ||
+                      e.institution?.trim() ||
+                      e.years?.trim(),
                   )
                   .map((exp, i) => (
                     <li
                       key={i}
                       className="py-2 border-b border-[#032a0d]/10 last:border-0"
                     >
-                      <p className="font-semibold">{exp.jobDescription}</p>
+                      <p className="font-semibold">{exp.rolePosition}</p>
+                      {exp.institution && (
+                        <p className="text-[#032a0d]/70">{exp.institution}</p>
+                      )}
                       {exp.years && (
                         <p className="text-[#032a0d]/70 text-xs mt-0.5">
                           {exp.years}
@@ -340,3 +380,5 @@ export default function MemberProfilePage() {
     </div>
   );
 }
+
+

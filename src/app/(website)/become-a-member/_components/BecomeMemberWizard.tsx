@@ -1,122 +1,199 @@
 "use client";
 
-import type { ChangeEvent } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
-import { useAuth, useUser } from "@clerk/nextjs";
-import { useMutation, useQuery } from "convex/react";
 import { ArrowLeft, Info } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
+import {
+  toApiError,
+  useApplyMemberMutation,
+} from "@/features/member/member.hooks";
+import { useCurrentUserQuery } from "@/features/auth/auth.hooks";
+import type { ApplyMemberRequest } from "@/features/member/member.types";
 
 import { loadDraft, saveDraft } from "./draftStorage";
-import { emptyFormState } from "./constants";
 import type { ApplicationFormState, StepIndex } from "./types";
+import { computeAgeFromBirthday } from "./utils";
 import { StepPersonalDetails } from "./steps/StepPersonalDetails";
 import { StepChurchBackground } from "./steps/StepChurchBackground";
 import { StepEducationMinistry } from "./steps/StepEducationMinistry";
 import { StepReferencesReview } from "./steps/StepReferencesReview";
-import { api } from "../../../../../convex/_generated/api";
 
 const DRAFT_SAVE_DEBOUNCE_MS = 500;
 const DRAFT_STEP: StepIndex = 3;
 
-function computeAgeFromBirthday(birthday: string): string {
-  if (!birthday) return "";
+const CIVIL_STATUS_MAP: Record<
+  Exclude<ApplicationFormState["civilStatus"], "">,
+  ApplyMemberRequest["civilStatus"]
+> = {
+  Single: "SINGLE",
+  Married: "MARRIED",
+  Widowed: "WIDOWED",
+  Separated: "SEPARATED",
+};
 
-  const birthDate = new Date(birthday);
-  if (Number.isNaN(birthDate.getTime())) return "";
+const GENDER_MAP: Record<
+  Exclude<ApplicationFormState["gender"], "">,
+  ApplyMemberRequest["gender"]
+> = {
+  Male: "MALE",
+  Female: "FEMALE",
+};
 
-  const today = new Date();
-  let age = today.getFullYear() - birthDate.getFullYear();
-  const monthDiff = today.getMonth() - birthDate.getMonth();
-  const hasNotHadBirthdayYet =
-    monthDiff < 0 ||
-    (monthDiff === 0 && today.getDate() < birthDate.getDate());
+const getFirstNonEmpty = (...values: Array<string | undefined>): string | null => {
+  for (const value of values) {
+    const normalized = value?.trim();
+    if (normalized) return normalized;
+  }
+  return null;
+};
 
-  if (hasNotHadBirthdayYet) {
-    age -= 1;
+const splitRegionSummary = (
+  summary: string,
+): {
+  region: string;
+  province: string;
+  municipalityCity: string;
+  barangay: string;
+} | null => {
+  const parts = summary
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length < 4) return null;
+
+  return {
+    region: parts[0],
+    province: parts[1],
+    municipalityCity: parts[2],
+    barangay: parts[3],
+  };
+};
+
+const joinList = (values: string[]): string | undefined => {
+  const cleaned = values.map((value) => value.trim()).filter(Boolean);
+  return cleaned.length > 0 ? cleaned.join(" | ") : undefined;
+};
+
+const splitName = (fullName?: string): { firstName: string; lastName: string } => {
+  const normalized = fullName?.trim() ?? "";
+  if (!normalized) {
+    return { firstName: "", lastName: "" };
   }
 
-  if (age < 0) return "";
-  return String(age);
-}
-
-function mergeFormFromJson(formJson: string): ApplicationFormState {
-  try {
-    const partial = JSON.parse(formJson) as Partial<ApplicationFormState>;
-    const form: ApplicationFormState = { ...emptyFormState };
-    for (const key of Object.keys(
-      emptyFormState,
-    ) as (keyof ApplicationFormState)[]) {
-      const value = partial[key];
-      if (value !== undefined && value !== null) {
-        (form as Record<string, unknown>)[key] = value;
-      }
-    }
-    return form;
-  } catch {
-    return emptyFormState;
+  const parts = normalized.split(/\s+/).filter(Boolean);
+  if (parts.length === 1) {
+    return { firstName: parts[0], lastName: "" };
   }
-}
+
+  return {
+    firstName: parts.slice(0, -1).join(" "),
+    lastName: parts[parts.length - 1],
+  };
+};
+
+const mapFormToApplyPayload = (
+  form: ApplicationFormState,
+): ApplyMemberRequest | null => {
+  const location = splitRegionSummary(form.regionProvince);
+  if (!location) return null;
+
+  if (!form.civilStatus || !form.gender) return null;
+
+  const currentPositionRole = getFirstNonEmpty(form.position, form.positionOthers);
+  if (!currentPositionRole) return null;
+
+  const ministerialExperiences = form.ministerialWorkExperience
+    .map((experience) => ({
+      roleDescription: [
+        experience.rolePosition.trim(),
+        experience.institution.trim(),
+      ]
+        .filter(Boolean)
+        .join(" - "),
+      yearsApprox: experience.years.trim(),
+    }))
+    .filter(
+      (experience) => experience.roleDescription.length > 0 && experience.yearsApprox.length > 0,
+    );
+
+  const characterReferences = form.characterReferences
+    .map((reference) => ({
+      name: reference.name.trim(),
+      positionRelationship: reference.position.trim(),
+      contactNumber: reference.contactNumber.trim(),
+    }))
+    .filter(
+      (reference) =>
+        reference.name.length > 0 &&
+        reference.positionRelationship.length > 0 &&
+        reference.contactNumber.length > 0,
+    );
+
+  return {
+    firstName: form.firstName.trim(),
+    lastName: form.lastName.trim(),
+    mobilePhoneNumber: form.phoneNumber.trim(),
+    homeAddress: form.address.trim(),
+    civilStatus: CIVIL_STATUS_MAP[form.civilStatus],
+    gender: GENDER_MAP[form.gender],
+    nationality: form.nationality.trim(),
+    dateOfBirth: new Date(form.birthday).toISOString(),
+    region: location.region,
+    province: location.province,
+    municipalityCity: location.municipalityCity,
+    barangay: location.barangay,
+    emergencyContactName: form.emergencyName.trim(),
+    emergencyContactMobile: form.emergencyCellphone.trim(),
+    churchAffiliation: form.churchOrganizationAffiliation.trim(),
+    churchAddress: form.churchAddress.trim(),
+    currentPositionRole,
+    currentPositionRoleOther: form.positionOthers.trim() || undefined,
+    height: form.height.trim() || undefined,
+    weight: form.weight.trim() || undefined,
+    bloodType: form.bloodType.trim() || undefined,
+    colorOfEyes: form.colorOfEyes.trim() || undefined,
+    colorOfSkin: form.colorOfSkin.trim() || undefined,
+    sssNumber: form.sssNumber.trim() || undefined,
+    tinNumber: form.tinNumber.trim() || undefined,
+    skillsTalents: form.skillsTalents.trim() || undefined,
+    preferredBranchOther: getFirstNonEmpty(
+      form.branchOfService.join(", "),
+      form.branchOfServiceOthers,
+    ) ?? undefined,
+    elementarySchool: form.elementarySchool.trim() || undefined,
+    secondarySchool: form.secondarySchool.trim() || undefined,
+    tertiaryCollege: joinList(form.tertiarySchool),
+    postGraduateStudies: joinList(form.postGraduateStudies),
+    ministerialExperiences:
+      ministerialExperiences.length > 0 ? ministerialExperiences : undefined,
+    characterReferences:
+      characterReferences.length > 0 ? characterReferences : undefined,
+    signature: form.signatureUrl.trim()
+      ? {
+          type: "DRAWN",
+          signatureData: form.signatureUrl.trim(),
+        }
+      : undefined,
+  };
+};
 
 export function BecomeMemberWizard() {
   const router = useRouter();
-  const { isSignedIn } = useAuth();
-  const { user, isLoaded: isUserLoaded } = useUser();
-  const draftFromConvex = useQuery(
-    api.backend.membership.getDraft,
-    isSignedIn ? {} : "skip",
-  );
-  const saveDraftMutation = useMutation(api.backend.membership.saveDraft);
-  const submitApplicationMutation = useMutation(
-    api.backend.membership.submitApplication,
-  );
+  const { toast } = useToast();
+  const applyMemberMutation = useApplyMemberMutation();
+  const { data: currentUser } = useCurrentUserQuery();
 
   const [form, setForm] = useState<ApplicationFormState>(
     () => loadDraft().form,
   );
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitSuccess, setSubmitSuccess] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const hasSyncedFromConvex = useRef(false);
-
-  useEffect(() => {
-    if (!isSignedIn) {
-      hasSyncedFromConvex.current = false;
-    }
-  }, [isSignedIn]);
-
-  useEffect(() => {
-    if (!isSignedIn || !draftFromConvex || hasSyncedFromConvex.current) return;
-    hasSyncedFromConvex.current = true;
-    setForm(mergeFormFromJson(draftFromConvex.formJson));
-  }, [isSignedIn, draftFromConvex]);
-
-  useEffect(() => {
-    const isDraftResolved = !isSignedIn || draftFromConvex !== undefined;
-    if (!isSignedIn || !isUserLoaded || !user || !isDraftResolved) return;
-
-    const fallbackEmail = user.emailAddresses[0]?.emailAddress ?? "";
-    const primaryEmail = user.primaryEmailAddress?.emailAddress ?? fallbackEmail;
-
-    setForm((prev) => {
-      const updates: Partial<ApplicationFormState> = {};
-
-      if (!prev.firstName.trim() && user.firstName?.trim()) {
-        updates.firstName = user.firstName.trim();
-      }
-      if (!prev.lastName.trim() && user.lastName?.trim()) {
-        updates.lastName = user.lastName.trim();
-      }
-      if (!prev.emailAddress.trim() && primaryEmail.trim()) {
-        updates.emailAddress = primaryEmail.trim();
-      }
-
-      if (Object.keys(updates).length === 0) return prev;
-      return { ...prev, ...updates };
-    });
-  }, [isSignedIn, isUserLoaded, user, draftFromConvex]);
 
   useEffect(() => {
     const computedAge = computeAgeFromBirthday(form.birthday);
@@ -125,24 +202,45 @@ export function BecomeMemberWizard() {
   }, [form.birthday, form.age]);
 
   useEffect(() => {
-    if (isSignedIn) return;
+    if (!currentUser) return;
+
+    const { firstName, lastName } = splitName(currentUser.name);
+
+    setForm((prev) => {
+      const next = { ...prev };
+      let hasChanges = false;
+
+      if (!prev.firstName.trim() && firstName) {
+        next.firstName = firstName;
+        hasChanges = true;
+      }
+
+      if (!prev.lastName.trim() && lastName) {
+        next.lastName = lastName;
+        hasChanges = true;
+      }
+
+      if (!prev.emailAddress.trim() && currentUser.email?.trim()) {
+        next.emailAddress = currentUser.email.trim();
+        hasChanges = true;
+      }
+
+      if (!prev.photoUrl.trim() && currentUser.avatar?.trim()) {
+        next.photoUrl = currentUser.avatar.trim();
+        hasChanges = true;
+      }
+
+      return hasChanges ? next : prev;
+    });
+  }, [currentUser]);
+
+  useEffect(() => {
     const id = setTimeout(
       () => saveDraft(form, DRAFT_STEP),
       DRAFT_SAVE_DEBOUNCE_MS,
     );
     return () => clearTimeout(id);
-  }, [isSignedIn, form]);
-
-  useEffect(() => {
-    if (!isSignedIn) return;
-    const id = setTimeout(() => {
-      saveDraftMutation({
-        formJson: JSON.stringify(form),
-        step: DRAFT_STEP,
-      }).catch(() => {});
-    }, DRAFT_SAVE_DEBOUNCE_MS);
-    return () => clearTimeout(id);
-  }, [isSignedIn, form, saveDraftMutation]);
+  }, [form]);
 
   const updateField = <K extends keyof ApplicationFormState>(
     key: K,
@@ -151,36 +249,53 @@ export function BecomeMemberWizard() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const handlePhotoChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      if (typeof reader.result === "string") {
-        updateField("photoUrl", reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleSignatureChange = (signature: string | null) => {
     updateField("signatureUrl", signature ?? "");
   };
 
   const handleSubmit = async () => {
-    if (!isSignedIn) {
-      setSubmitError("Please sign in to submit your application.");
+    setSubmitError(null);
+    setSubmitSuccess(false);
+
+    if (!form.declarationTruthConfirmed || !form.monthlyPledgeConfirmed) {
+      setSubmitError(
+        "Please confirm both declaration checkboxes before submitting.",
+      );
       return;
     }
 
-    setSubmitError(null);
+    const payload = mapFormToApplyPayload(form);
+
+    if (!payload) {
+      setSubmitError(
+        "Please complete all required fields, including full location and valid personal details.",
+      );
+      return;
+    }
+
     setIsSubmitting(true);
+
     try {
-      await submitApplicationMutation();
+      saveDraft(form, DRAFT_STEP);
+      await applyMemberMutation.mutateAsync(payload);
+      setSubmitSuccess(true);
+      toast({
+        title: "Application submitted",
+        description: "Your membership application was submitted successfully.",
+        variant: "success",
+      });
       router.push("/become-a-member/onboarding");
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : "Submission failed.");
+      const apiError = toApiError(err);
+      const message =
+        apiError.message ??
+        (err instanceof Error ? err.message : "Submission failed.");
+      setSubmitError(message);
+      toast({
+        title: "Submission failed",
+        description: message,
+        variant: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -211,7 +326,7 @@ export function BecomeMemberWizard() {
             <Button
               type="button"
               variant="outline"
-              onClick={() => router.back()}
+              onClick={() => router.push("/")}
               className="mb-4 border-[#032a0d]/30 ml-auto text-[#032a0d] hover:bg-[#032a0d]/5"
             >
               <ArrowLeft className="size-4" />
@@ -241,7 +356,6 @@ export function BecomeMemberWizard() {
                 <StepPersonalDetails
                   form={form}
                   updateFieldAction={updateField}
-                  handlePhotoChangeAction={handlePhotoChange}
                 />
               </section>
 
@@ -282,6 +396,12 @@ export function BecomeMemberWizard() {
               {submitError && (
                 <p className="text-sm text-red-600" role="alert">
                   {submitError}
+                </p>
+              )}
+              {submitSuccess && (
+                <p className="text-sm text-emerald-700" role="status">
+                  Application submitted successfully. Your status is now under
+                  review.
                 </p>
               )}
 
@@ -356,11 +476,10 @@ export function BecomeMemberWizard() {
                     Fields marked with an asterisk (<span className='text-destructive'>*</span>) are required.
                   </p>
                 </div>
-                {!isSignedIn && (
-                  <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
-                    Sign in is required before final submission.
-                  </p>
-                )}
+                <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+                  Submission is connected to the backend. Ensure all required
+                  fields are complete before submitting.
+                </p>
               </div>
             </div>
           </aside>
