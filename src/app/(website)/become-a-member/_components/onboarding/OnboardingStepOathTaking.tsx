@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   BadgeCheck,
   CalendarCheck2,
@@ -9,6 +10,7 @@ import {
   Info,
   MapPinCheckInside,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 type Props = {
   uniqueId: string;
@@ -132,6 +134,12 @@ export function OnboardingStepOathTaking({ uniqueId }: Props) {
           <div className="rounded border border-[#032a0d]/15 bg-[#032a0d]/5 px-4 py-3 text-sm text-[#032a0d]/80">
             You have completed all prior onboarding steps. Member ID reference:{" "}
             <span className="font-semibold text-[#032a0d]">{uniqueId}</span>.
+          </div>
+
+          <div className="flex justify-end">
+            <Button asChild className="bg-[#032a0d] hover:bg-[#032a0d]/90">
+              <Link href="/">Back to home</Link>
+            </Button>
           </div>
         </div>
       </div>
