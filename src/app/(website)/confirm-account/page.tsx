@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { ConfirmAccountForm } from "@/components/forms/auth/ConfirmAccountForm";
 
 const Page = () => {
@@ -26,10 +27,24 @@ const Page = () => {
         </div>
       </section>
 
-      <ConfirmAccountForm />
+      <Suspense fallback={<ConfirmAccountFallback />}>
+        <ConfirmAccountForm />
+      </Suspense>
     </div>
   );
 };
 
-export default Page;
+const ConfirmAccountFallback = () => {
+  return (
+    <section className="max-w-6xl px-4 sm:px-6 lg:px-8 mx-auto space-y-8 py-10">
+      <div className="mx-auto max-w-xl rounded-[calc(var(--radius)+.125rem)] border bg-card p-8 shadow-md shadow-zinc-950/5">
+        <div className="space-y-2 text-center">
+          <h2 className="text-2xl font-semibold">Confirm Account</h2>
+          <p className="text-sm text-muted-foreground">Loading verification details...</p>
+        </div>
+      </div>
+    </section>
+  );
+};
 
+export default Page;
