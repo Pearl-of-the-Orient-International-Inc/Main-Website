@@ -112,3 +112,12 @@ export function saveDraft(
     // ignore quota or parse errors
   }
 }
+
+export function clearDraft(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(STORAGE_KEY);
+  } catch {
+    // ignore storage errors
+  }
+}

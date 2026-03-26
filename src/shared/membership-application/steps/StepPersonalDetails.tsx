@@ -209,14 +209,13 @@ export function StepPersonalDetails({
             placeholder="e.g. Juan"
           />
         </Field>
-        <Field label="Middle initial">
+        <Field label="Middle name">
           <Input
             value={form.middleInitial}
             onChange={(event) =>
-              updateFieldAction("middleInitial", event.target.value.toUpperCase().slice(0, 1))
+              updateFieldAction("middleInitial", event.target.value)
             }
-            placeholder="e.g. R"
-            maxLength={1}
+            placeholder="e.g. Ramos"
           />
         </Field>
         <Field label="Last name" required>
@@ -224,6 +223,13 @@ export function StepPersonalDetails({
             value={form.lastName}
             onChange={(event) => updateFieldAction("lastName", event.target.value)}
             placeholder="e.g. Dela Cruz"
+          />
+        </Field>
+        <Field label="Extension name">
+          <Input
+            value={form.extensionName}
+            onChange={(event) => updateFieldAction("extensionName", event.target.value)}
+            placeholder="e.g. Jr., Sr., III"
           />
         </Field>
       </div>
@@ -238,17 +244,17 @@ export function StepPersonalDetails({
                 updateFieldAction("emailAddress", event.target.value)
               }
               placeholder="you@example.com"
-              readOnly={emailMode === "locked"}
-              aria-readonly={emailMode === "locked"}
-              className={
-                emailMode === "locked"
-                  ? "bg-neutral-100 text-neutral-700"
-                  : undefined
-              }
+              // readOnly={emailMode === "locked"}
+              // aria-readonly={emailMode === "locked"}
+              // className={
+              //   emailMode === "locked"
+              //     ? "bg-neutral-100 text-neutral-700"
+              //     : undefined
+              // }
             />
-            {emailHelperText ? (
+            {/* {emailHelperText ? (
               <p className="text-xs text-neutral-500">{emailHelperText}</p>
-            ) : null}
+            ) : null} */}
           </div>
         </Field>
         <Field label="Mobile / phone number" required>

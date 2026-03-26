@@ -38,7 +38,7 @@ export function StepChurchBackground({
 }) {
   return (
     <div className="space-y-4">
-      <Field label="Church / Organization affiliation" required>
+      <Field label="Church / Organization affiliation">
         <Input
           value={form.churchOrganizationAffiliation}
           onChange={(event) =>
@@ -48,7 +48,7 @@ export function StepChurchBackground({
         />
       </Field>
 
-      <Field label="Church address" required>
+      <Field label="Church address">
         <Input
           value={form.churchAddress}
           onChange={(event) => updateFieldAction("churchAddress", event.target.value)}
