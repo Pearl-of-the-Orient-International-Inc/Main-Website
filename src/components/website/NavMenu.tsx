@@ -275,7 +275,7 @@ export const NavMenu = () => {
               >
                 About Pearl of the Orient
               </a>
-              <a href="#" className="block transition-colors hover:underline">
+              <a href="office-of-the-chief-chaplain" className="block transition-colors hover:underline">
                 Office of the Chief Chaplain
               </a>
               <a

@@ -3,7 +3,9 @@ import type { ApplicantRequirementType } from "@/features/member/member.types";
 
 export const emptyFormState: ApplicationFormState = {
   firstName: "",
+  middleInitial: "",
   lastName: "",
+  extensionName: "",
   emailAddress: "",
   address: "",
   phoneNumber: "",

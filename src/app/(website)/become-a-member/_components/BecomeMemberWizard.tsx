@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Info } from "lucide-react";
-
+import { MembershipApplicationForm } from "@/shared/membership-application/MembershipApplicationForm";
+import type { ApplicationFormState } from "@/shared/membership-application/types";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -13,17 +13,10 @@ import {
 } from "@/features/member/member.hooks";
 import { useCurrentUserQuery } from "@/features/auth/auth.hooks";
 import type { ApplyMemberRequest } from "@/features/member/member.types";
-
-import { loadDraft, saveDraft } from "./draftStorage";
-import type { ApplicationFormState, StepIndex } from "./types";
-import { computeAgeFromBirthday } from "./utils";
-import { StepPersonalDetails } from "./steps/StepPersonalDetails";
-import { StepChurchBackground } from "./steps/StepChurchBackground";
-import { StepEducationMinistry } from "./steps/StepEducationMinistry";
-import { StepReferencesReview } from "./steps/StepReferencesReview";
-
-const DRAFT_SAVE_DEBOUNCE_MS = 500;
-const DRAFT_STEP: StepIndex = 3;
+import { getBarangays } from "@/constants/barangay";
+import { getMunicipalities } from "@/constants/municipality";
+import { getProvinces } from "@/constants/province";
+import { getRegions } from "@/constants/region";
 
 const CIVIL_STATUS_MAP: Record<
   Exclude<ApplicationFormState["civilStatus"], "">,
@@ -66,34 +59,19 @@ const splitRegionSummary = (
 
   if (parts.length < 4) return null;
 
+  const [barangayLabel, municipalityCity, province, region] = parts;
+
   return {
-    region: parts[0],
-    province: parts[1],
-    municipalityCity: parts[2],
-    barangay: parts[3],
+    region,
+    province,
+    municipalityCity,
+    barangay: barangayLabel.replace(/^Barangay\s+/i, "").trim(),
   };
 };
 
 const joinList = (values: string[]): string | undefined => {
   const cleaned = values.map((value) => value.trim()).filter(Boolean);
   return cleaned.length > 0 ? cleaned.join(" | ") : undefined;
-};
-
-const splitName = (fullName?: string): { firstName: string; lastName: string } => {
-  const normalized = fullName?.trim() ?? "";
-  if (!normalized) {
-    return { firstName: "", lastName: "" };
-  }
-
-  const parts = normalized.split(/\s+/).filter(Boolean);
-  if (parts.length === 1) {
-    return { firstName: parts[0], lastName: "" };
-  }
-
-  return {
-    firstName: parts.slice(0, -1).join(" "),
-    lastName: parts[parts.length - 1],
-  };
 };
 
 const mapFormToApplyPayload = (
@@ -118,7 +96,8 @@ const mapFormToApplyPayload = (
       yearsApprox: experience.years.trim(),
     }))
     .filter(
-      (experience) => experience.roleDescription.length > 0 && experience.yearsApprox.length > 0,
+      (experience) =>
+        experience.roleDescription.length > 0 && experience.yearsApprox.length > 0,
     );
 
   const characterReferences = form.characterReferences
@@ -136,6 +115,7 @@ const mapFormToApplyPayload = (
 
   return {
     firstName: form.firstName.trim(),
+    middleInitial: form.middleInitial.trim() || undefined,
     lastName: form.lastName.trim(),
     mobilePhoneNumber: form.phoneNumber.trim(),
     homeAddress: form.address.trim(),
@@ -161,10 +141,9 @@ const mapFormToApplyPayload = (
     sssNumber: form.sssNumber.trim() || undefined,
     tinNumber: form.tinNumber.trim() || undefined,
     skillsTalents: form.skillsTalents.trim() || undefined,
-    preferredBranchOther: getFirstNonEmpty(
-      form.branchOfService.join(", "),
-      form.branchOfServiceOthers,
-    ) ?? undefined,
+    preferredBranchOther:
+      getFirstNonEmpty(form.branchOfService.join(", "), form.branchOfServiceOthers) ??
+      undefined,
     elementarySchool: form.elementarySchool.trim() || undefined,
     secondarySchool: form.secondarySchool.trim() || undefined,
     tertiaryCollege: joinList(form.tertiarySchool),
@@ -188,116 +167,35 @@ export function BecomeMemberWizard() {
   const applyMemberMutation = useApplyMemberMutation();
   const { data: currentUser } = useCurrentUserQuery();
 
-  const [form, setForm] = useState<ApplicationFormState>(
-    () => loadDraft().form,
-  );
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const computedAge = computeAgeFromBirthday(form.birthday);
-    if (form.age === computedAge) return;
-    setForm((prev) => ({ ...prev, age: computedAge }));
-  }, [form.birthday, form.age]);
-
-  useEffect(() => {
-    if (!currentUser) return;
-
-    const { firstName, lastName } = splitName(currentUser.name);
-
-    setForm((prev) => {
-      const next = { ...prev };
-      let hasChanges = false;
-
-      if (!prev.firstName.trim() && firstName) {
-        next.firstName = firstName;
-        hasChanges = true;
-      }
-
-      if (!prev.lastName.trim() && lastName) {
-        next.lastName = lastName;
-        hasChanges = true;
-      }
-
-      if (!prev.emailAddress.trim() && currentUser.email?.trim()) {
-        next.emailAddress = currentUser.email.trim();
-        hasChanges = true;
-      }
-
-      if (!prev.photoUrl.trim() && currentUser.avatar?.trim()) {
-        next.photoUrl = currentUser.avatar.trim();
-        hasChanges = true;
-      }
-
-      return hasChanges ? next : prev;
-    });
-  }, [currentUser]);
-
-  useEffect(() => {
-    const id = setTimeout(
-      () => saveDraft(form, DRAFT_STEP),
-      DRAFT_SAVE_DEBOUNCE_MS,
-    );
-    return () => clearTimeout(id);
-  }, [form]);
-
-  const updateField = <K extends keyof ApplicationFormState>(
-    key: K,
-    value: ApplicationFormState[K],
-  ) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const handleSignatureChange = (signature: string | null) => {
-    updateField("signatureUrl", signature ?? "");
-  };
-
-  const handleSubmit = async () => {
-    setSubmitError(null);
-    setSubmitSuccess(false);
-
-    if (!form.declarationTruthConfirmed || !form.monthlyPledgeConfirmed) {
-      setSubmitError(
-        "Please confirm both declaration checkboxes before submitting.",
-      );
-      return;
-    }
-
+  const handleSubmit = async (form: ApplicationFormState) => {
     const payload = mapFormToApplyPayload(form);
 
     if (!payload) {
-      setSubmitError(
+      throw new Error(
         "Please complete all required fields, including full location and valid personal details.",
       );
-      return;
     }
 
-    setIsSubmitting(true);
-
     try {
-      saveDraft(form, DRAFT_STEP);
       await applyMemberMutation.mutateAsync(payload);
-      setSubmitSuccess(true);
       toast({
         title: "Application submitted",
         description: "Your membership application was submitted successfully.",
         variant: "success",
       });
       router.push("/become-a-member/onboarding");
-    } catch (err) {
-      const apiError = toApiError(err);
+    } catch (error) {
+      const apiError = toApiError(error);
       const message =
         apiError.message ??
-        (err instanceof Error ? err.message : "Submission failed.");
-      setSubmitError(message);
+        (error instanceof Error ? error.message : "Submission failed.");
+
       toast({
         title: "Submission failed",
         description: message,
         variant: "error",
       });
-    } finally {
-      setIsSubmitting(false);
+      throw new Error(message);
     }
   };
 
@@ -327,7 +225,7 @@ export function BecomeMemberWizard() {
               type="button"
               variant="outline"
               onClick={() => router.push("/")}
-              className="mb-4 border-[#032a0d]/30 ml-auto text-[#032a0d] hover:bg-[#032a0d]/5"
+              className="mb-4 ml-auto border-[#032a0d]/30 text-[#032a0d] hover:bg-[#032a0d]/5"
             >
               <ArrowLeft className="size-4" />
               Back
@@ -336,89 +234,23 @@ export function BecomeMemberWizard() {
         </div>
 
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_350px]">
-          <div className="overflow-hidden border border-black/10 bg-white">
-            <div className="bg-[#032a0d] px-5 py-4 text-white">
-              <h2 className="text-lg">Application Form</h2>
-            </div>
-
-            <form
-              className="space-y-8 p-5 sm:p-6"
-              onSubmit={(event) => {
-                event.preventDefault();
-                handleSubmit();
-              }}
-            >
-              <section className="space-y-4">
-                <h3 className="font-serif text-xl text-[#032a0d]">
-                  Contact Information
-                </h3>
-                <div className="h-px bg-black/10" />
-                <StepPersonalDetails
-                  form={form}
-                  updateFieldAction={updateField}
-                />
-              </section>
-
-              <section className="space-y-4">
-                <h3 className="font-serif text-xl text-[#032a0d]">
-                  Church Background
-                </h3>
-                <div className="h-px bg-black/10" />
-                <StepChurchBackground
-                  form={form}
-                  updateFieldAction={updateField}
-                />
-              </section>
-
-              <section className="space-y-4">
-                <h3 className="font-serif text-xl text-[#032a0d]">
-                  Education and Ministry
-                </h3>
-                <div className="h-px bg-black/10" />
-                <StepEducationMinistry
-                  form={form}
-                  updateFieldAction={updateField}
-                />
-              </section>
-
-              <section className="space-y-4">
-                <h3 className="font-serif text-xl text-[#032a0d]">
-                  References and Confirmation
-                </h3>
-                <div className="h-px bg-black/10" />
-                <StepReferencesReview
-                  form={form}
-                  updateFieldAction={updateField}
-                  handleSignatureChangeAction={handleSignatureChange}
-                />
-              </section>
-
-              {submitError && (
-                <p className="text-sm text-red-600" role="alert">
-                  {submitError}
-                </p>
-              )}
-              {submitSuccess && (
-                <p className="text-sm text-emerald-700" role="status">
-                  Application submitted successfully. Your status is now under
-                  review.
-                </p>
-              )}
-
-              <div className="flex flex-col gap-3 border-t border-black/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-xs text-neutral-500 sm:text-sm">
-                  Your draft is auto-saved while filling out this form.
-                </p>
-                <Button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="bg-[#032a0d] hover:bg-[#032a0d]/90"
-                >
-                  {isSubmitting ? "Submitting..." : "Submit application"}
-                </Button>
-              </div>
-            </form>
-          </div>
+          <MembershipApplicationForm
+            storageKey="pearl-member-application-draft"
+            locationCatalog={{
+              getRegions,
+              getProvinces,
+              getMunicipalities,
+              getBarangays,
+            }}
+            currentUser={{
+              name: currentUser?.name,
+              email: currentUser?.email,
+              avatar: currentUser?.avatar,
+            }}
+            emailMode="locked"
+            emailHelperText="This email comes from your logged-in account and will be used for your member profile."
+            onSubmitAction={handleSubmit}
+          />
 
           <aside className="self-start lg:sticky lg:top-6">
             <div className="overflow-hidden border border-black/10 bg-white">
@@ -473,7 +305,8 @@ export function BecomeMemberWizard() {
                 <div className="flex gap-2 rounded border border-dashed border-[#032a0d]/25 bg-[#032a0d]/5 px-3 py-3 text-xs text-[#032a0d]/80">
                   <Info className="size-4 shrink-0 text-[#032a0d]" />
                   <p>
-                    Fields marked with an asterisk (<span className='text-destructive'>*</span>) are required.
+                    Fields marked with an asterisk (
+                    <span className="text-destructive">*</span>) are required.
                   </p>
                 </div>
                 <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">

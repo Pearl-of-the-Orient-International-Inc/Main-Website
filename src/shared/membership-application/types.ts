@@ -12,14 +12,11 @@ export type BranchOfService =
   | "Others";
 
 export type ApplicationFormState = {
-  // Identity
   firstName: string;
   middleInitial: string;
   lastName: string;
   extensionName: string;
   emailAddress: string;
-
-  // Personal & contact
   address: string;
   phoneNumber: string;
   civilStatus: "Single" | "Married" | "Widowed" | "Separated" | "";
@@ -27,38 +24,24 @@ export type ApplicationFormState = {
   nationality: string;
   birthday: string;
   age: string;
-
-  // Church & location
   churchOrganizationAffiliation: string;
   churchAddress: string;
   regionProvince: string;
-
-  // Role
   position: "Church Worker" | "Pastor" | "Rev." | "Bishop" | "Others" | "";
   positionOthers: string;
-
-  // Physical
   height: string;
   weight: string;
   bloodType: string;
   colorOfEyes: string;
   colorOfSkin: string;
-
-  // IDs
   sssNumber: string;
   tinNumber: string;
-
-  // Emergency
   emergencyName: string;
   emergencyCellphone: string;
-
-  // Education
   elementarySchool: string;
   secondarySchool: string;
   tertiarySchool: string[];
   postGraduateStudies: string[];
-
-  // Ministry & skills
   ministerialWorkExperience: {
     rolePosition: string;
     institution: string;
@@ -67,22 +50,49 @@ export type ApplicationFormState = {
   skillsTalents: string;
   branchOfService: BranchOfService[];
   branchOfServiceOthers: string;
-
-  // Character references
   characterReferences: {
     name: string;
     position: string;
     contactNumber: string;
   }[];
-
-  // Media
   photoUrl: string;
   signatureUrl: string;
-
-  // Declarations
   declarationTruthConfirmed: boolean;
   monthlyPledgeConfirmed: boolean;
 };
 
 export type StepIndex = 0 | 1 | 2 | 3;
 
+export type SharedCurrentUser = {
+  name?: string | null;
+  email?: string | null;
+  avatar?: string | null;
+};
+
+export type RegionOption = {
+  region_id: number;
+  region_name: string;
+  region_description: string;
+};
+
+export type ProvinceOption = {
+  province_id: number;
+  province_name: string;
+};
+
+export type MunicipalityOption = {
+  municipality_id: number;
+  municipality_name: string;
+};
+
+export type BarangayOption = {
+  barangay_id: number;
+  barangay_name: string;
+};
+
+export type LocationCatalog = {
+  getRegions: () => RegionOption[];
+  getProvinces: (regionId: number | null) => ProvinceOption[];
+  getMunicipalities: (provinceId: number | null) => MunicipalityOption[];
+  getBarangays: (municipalityId: number | null) => BarangayOption[];
+};

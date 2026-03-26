@@ -1,5 +1,6 @@
 export interface ApplyMemberRequest {
   firstName: string;
+  middleInitial?: string;
   lastName: string;
   mobilePhoneNumber: string;
   homeAddress: string;
