@@ -222,7 +222,7 @@ export function StepPersonalDetails({
             aria-invalid={Boolean(fieldErrors.firstName)}
           />
         </Field>
-        <Field label="Middle name" className="sm:col-span-3">
+        <Field label="Middle name" className="sm:col-span-2">
           <Input
             value={form.middleInitial}
             onChange={(event) =>
@@ -244,7 +244,7 @@ export function StepPersonalDetails({
             aria-invalid={Boolean(fieldErrors.lastName)}
           />
         </Field>
-        <Field label="Extension name" className="sm:col-span-1">
+        <Field label="Ext. name" className="sm:col-span-2">
           <Input
             value={form.extensionName}
             onChange={(event) => updateFieldAction("extensionName", event.target.value)}
