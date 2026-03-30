@@ -106,7 +106,7 @@ export function StepEducationMinistry({
           <Field label="Tertiary / College (optional)">
             <div className="space-y-2">
               {form.tertiarySchool.map((entry, index) => (
-                <div key={`${index}-${entry}`} className="flex items-center gap-2">
+                <div key={index} className="flex items-center gap-2">
                   <Input
                     value={entry}
                     onChange={(event) =>
@@ -141,7 +141,7 @@ export function StepEducationMinistry({
           <Field label="Post-graduate studies (optional)">
             <div className="space-y-2">
               {form.postGraduateStudies.map((entry, index) => (
-                <div key={`${index}-${entry}`} className="flex items-center gap-2">
+                <div key={index} className="flex items-center gap-2">
                   <Input
                     value={entry}
                     onChange={(event) =>

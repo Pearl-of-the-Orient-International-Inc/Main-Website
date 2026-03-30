@@ -69,13 +69,13 @@ const Page = () => {
             <div className="grid lg:grid-cols-[0.95fr_1.05fr]">
               <div className="border-b border-[#e7ece4] bg-[#fbfcf8] lg:border-b-0 lg:border-r">
                 <div className="relative mx-auto h-full w-full max-w-184 overflow-hidden bg-[#edf3e8]">
-                  {/* <Image
-                    src="/officers/Manzo.png"
+                  <Image
+                    src="/chief.jpg"
                     alt="Bishop Dr. Rodel Manzo"
                     fill
-                    className="object-contain object-center"
+                    className="object-object-cover object-center"
                     priority
-                  /> */}
+                  />
                 </div>
               </div>
 

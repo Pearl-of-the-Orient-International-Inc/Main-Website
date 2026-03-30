@@ -11,12 +11,12 @@ import {
   toApiError,
   useApplyMemberMutation,
 } from "@/features/member/member.hooks";
+import { useCurrentUserQuery } from "@/features/auth/auth.hooks";
 import type { ApplyMemberRequest } from "@/features/member/member.types";
 import { getBarangays } from "@/constants/barangay";
 import { getMunicipalities } from "@/constants/municipality";
 import { getProvinces } from "@/constants/province";
 import { getRegions } from "@/constants/region";
-import { clearDraft } from "./draftStorage";
 
 const CIVIL_STATUS_MAP: Record<
   Exclude<ApplicationFormState["civilStatus"], "">,
@@ -74,21 +74,26 @@ const joinList = (values: string[]): string | undefined => {
   return cleaned.length > 0 ? cleaned.join(" | ") : undefined;
 };
 
-const getMiddleInitial = (value: string): string | undefined => {
-  const normalized = value.trim();
-  return normalized ? normalized.charAt(0).toUpperCase() : undefined;
-};
-
 const mapFormToApplyPayload = (
   form: ApplicationFormState,
 ): ApplyMemberRequest | null => {
   const location = splitRegionSummary(form.regionProvince);
+  const mobilePhoneNumber = form.phoneNumber.trim();
+  const homeAddress = form.address.trim();
+  const nationality = form.nationality.trim();
+  const emergencyContactName = form.emergencyName.trim();
+  const emergencyContactMobile = form.emergencyCellphone.trim();
 
   if (!form.firstName.trim() || !form.lastName.trim()) return null;
   if (!form.emailAddress.trim()) return null;
   if (!form.gender || !form.birthday) return null;
+  if (!form.civilStatus) return null;
+  if (!mobilePhoneNumber || !homeAddress || !nationality) return null;
+  if (!emergencyContactName || !emergencyContactMobile) return null;
 
   const currentPositionRole = getFirstNonEmpty(form.position, form.positionOthers) ?? undefined;
+
+  if (!location || !currentPositionRole) return null;
 
   const ministerialExperiences = form.ministerialWorkExperience
     .map((experience) => ({
@@ -120,22 +125,21 @@ const mapFormToApplyPayload = (
 
   return {
     firstName: form.firstName.trim(),
-    middleInitial: getMiddleInitial(form.middleInitial),
-    email: form.emailAddress.trim() || undefined,
+    middleInitial: form.middleInitial.trim() || undefined,
     lastName: form.lastName.trim(),
     extensionName: form.extensionName.trim() || undefined,
-    mobilePhoneNumber: form.phoneNumber.trim() || undefined,
-    homeAddress: form.address.trim() || undefined,
-    civilStatus: form.civilStatus ? CIVIL_STATUS_MAP[form.civilStatus] : undefined,
+    mobilePhoneNumber,
+    homeAddress,
+    civilStatus: CIVIL_STATUS_MAP[form.civilStatus],
     gender: GENDER_MAP[form.gender],
-    nationality: form.nationality.trim() || undefined,
+    nationality,
     dateOfBirth: new Date(form.birthday).toISOString(),
-    region: location?.region || undefined,
-    province: location?.province || undefined,
-    municipalityCity: location?.municipalityCity || undefined,
-    barangay: location?.barangay || undefined,
-    emergencyContactName: form.emergencyName.trim() || undefined,
-    emergencyContactMobile: form.emergencyCellphone.trim() || undefined,
+    region: location.region,
+    province: location.province,
+    municipalityCity: location.municipalityCity,
+    barangay: location.barangay,
+    emergencyContactName,
+    emergencyContactMobile,
     churchAffiliation: form.churchOrganizationAffiliation.trim() || undefined,
     churchAddress: form.churchAddress.trim() || undefined,
     currentPositionRole,
@@ -172,25 +176,25 @@ export function BecomeMemberWizard() {
   const router = useRouter();
   const { toast } = useToast();
   const applyMemberMutation = useApplyMemberMutation();
+  const { data: currentUser } = useCurrentUserQuery();
 
   const handleSubmit = async (form: ApplicationFormState) => {
     const payload = mapFormToApplyPayload(form);
 
     if (!payload) {
       throw new Error(
-        "Please complete the required personal details before submitting your application.",
+        "Please complete all required fields, including full location and valid personal details.",
       );
     }
 
     try {
       await applyMemberMutation.mutateAsync(payload);
-      clearDraft();
       toast({
         title: "Application submitted",
         description: "Your membership application was submitted successfully.",
         variant: "success",
       });
-      router.push("/become-a-member/success");
+      router.push("/become-a-member/onboarding");
     } catch (error) {
       const apiError = toApiError(error);
       const message =
@@ -249,6 +253,13 @@ export function BecomeMemberWizard() {
               getMunicipalities,
               getBarangays,
             }}
+            currentUser={{
+              name: currentUser?.name,
+              email: currentUser?.email,
+              avatar: currentUser?.avatar,
+            }}
+            emailMode="locked"
+            emailHelperText="This email comes from your logged-in account and will be used for your member profile."
             onSubmitAction={handleSubmit}
           />
 

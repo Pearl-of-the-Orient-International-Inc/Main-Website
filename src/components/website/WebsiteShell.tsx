@@ -11,7 +11,8 @@ import { Navbar } from "@/components/website/Navbar";
 
 export function WebsiteShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isPlainMembershipRoute = pathname.startsWith("/become-a-member");
+  const isPlainMembershipRoute =
+    pathname === "/become-a-member" || pathname === "/become-a-member/onboarding";
 
   if (isPlainMembershipRoute) {
     return <>{children}</>;
