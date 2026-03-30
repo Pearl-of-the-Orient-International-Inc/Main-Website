@@ -2,17 +2,19 @@
 
 import { useEffect, useState, type ChangeEvent } from "react";
 import { Info } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import SignatureInput from "@/components/ui/signature-input";
 import { Field } from "../Field";
-import type { ApplicationFormState } from "../types";
+import type { ApplicationFieldErrors, ApplicationFormState } from "../types";
 import { readFileAsDataUrl } from "../utils";
 
 export function StepReferencesReview({
   form,
   updateFieldAction,
   handleSignatureChangeAction,
+  fieldErrors = {},
 }: {
   form: ApplicationFormState;
   updateFieldAction: <K extends keyof ApplicationFormState>(
@@ -20,6 +22,7 @@ export function StepReferencesReview({
     value: ApplicationFormState[K],
   ) => void;
   handleSignatureChangeAction: (signature: string | null) => void;
+  fieldErrors?: ApplicationFieldErrors;
 }) {
   const [signatureMode, setSignatureMode] = useState<"draw" | "upload">("draw");
 
@@ -174,7 +177,14 @@ export function StepReferencesReview({
         </Field>
       </div>
 
-      <div className="space-y-3 rounded-lg border border-[#032a0d]/15 bg-[#032a0d]/3 px-4 py-3 text-xs text-[#032a0d]/80 sm:text-sm">
+      <div
+        className={cn(
+          "space-y-3 rounded-lg border bg-[#032a0d]/3 px-4 py-3 text-xs text-[#032a0d]/80 sm:text-sm",
+          fieldErrors.declarationTruthConfirmed || fieldErrors.monthlyPledgeConfirmed
+            ? "border-destructive"
+            : "border-[#032a0d]/15",
+        )}
+      >
         <div className="flex items-start gap-2">
           <Checkbox
             id="declaration-truth"

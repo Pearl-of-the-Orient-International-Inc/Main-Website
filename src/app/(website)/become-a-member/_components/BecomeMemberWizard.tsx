@@ -4,9 +4,11 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Info } from "lucide-react";
 import { MembershipApplicationForm } from "@/shared/membership-application/MembershipApplicationForm";
-import type { ApplicationFormState } from "@/shared/membership-application/types";
+import type {
+  ApplicationFieldErrors,
+  ApplicationFormState,
+} from "@/shared/membership-application/types";
 import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
 import {
   toApiError,
   useApplyMemberMutation,
@@ -74,31 +76,91 @@ const joinList = (values: string[]): string | undefined => {
   return cleaned.length > 0 ? cleaned.join(" | ") : undefined;
 };
 
+class MembershipFormValidationError extends Error {
+  fieldErrors: ApplicationFieldErrors;
+
+  constructor(message: string, fieldErrors: ApplicationFieldErrors) {
+    super(message);
+    this.name = "MembershipFormValidationError";
+    this.fieldErrors = fieldErrors;
+  }
+}
+
 const getApplyPayloadValidationError = (
   form: ApplicationFormState,
-): string | null => {
-  if (!form.firstName.trim()) return "First name is required.";
-  if (!form.lastName.trim()) return "Last name is required.";
-  if (!form.emailAddress.trim()) return "Email address is required.";
-  if (!form.gender) return "Gender is required.";
-  if (!form.birthday) return "Date of birth is required.";
-  if (!form.civilStatus) return "Civil status is required.";
-  if (!form.phoneNumber.trim()) return "Mobile / phone number is required.";
-  if (!form.address.trim()) return "Home address is required.";
-  if (!form.nationality.trim()) return "Nationality is required.";
-  if (!form.emergencyName.trim()) return "Emergency contact name is required.";
+): MembershipFormValidationError | null => {
+  if (!form.firstName.trim()) {
+    return new MembershipFormValidationError("First name is required.", {
+      firstName: "First name is required.",
+    });
+  }
+  if (!form.lastName.trim()) {
+    return new MembershipFormValidationError("Last name is required.", {
+      lastName: "Last name is required.",
+    });
+  }
+  if (!form.emailAddress.trim()) {
+    return new MembershipFormValidationError("Email address is required.", {
+      emailAddress: "Email address is required.",
+    });
+  }
+  if (!form.gender) {
+    return new MembershipFormValidationError("Gender is required.", {
+      gender: "Gender is required.",
+    });
+  }
+  if (!form.birthday) {
+    return new MembershipFormValidationError("Date of birth is required.", {
+      birthday: "Date of birth is required.",
+    });
+  }
+  if (!form.civilStatus) {
+    return new MembershipFormValidationError("Civil status is required.", {
+      civilStatus: "Civil status is required.",
+    });
+  }
+  if (!form.phoneNumber.trim()) {
+    return new MembershipFormValidationError("Mobile / phone number is required.", {
+      phoneNumber: "Mobile / phone number is required.",
+    });
+  }
+  if (!form.address.trim()) {
+    return new MembershipFormValidationError("Home address is required.", {
+      address: "Home address is required.",
+    });
+  }
+  if (!form.nationality.trim()) {
+    return new MembershipFormValidationError("Nationality is required.", {
+      nationality: "Nationality is required.",
+    });
+  }
+  if (!form.emergencyName.trim()) {
+    return new MembershipFormValidationError("Emergency contact name is required.", {
+      emergencyName: "Emergency contact name is required.",
+    });
+  }
   if (!form.emergencyCellphone.trim()) {
-    return "Emergency contact mobile is required.";
+    return new MembershipFormValidationError("Emergency contact mobile is required.", {
+      emergencyCellphone: "Emergency contact mobile is required.",
+    });
   }
 
   const location = splitRegionSummary(form.regionProvince);
   if (!location) {
-    return "Please complete your full location: region, province, municipality, and barangay.";
+    return new MembershipFormValidationError(
+      "Please complete your full location: region, province, municipality, and barangay.",
+      {
+        regionProvince:
+          "Please complete your full location: region, province, municipality, and barangay.",
+      },
+    );
   }
 
   const currentPositionRole = getFirstNonEmpty(form.position, form.positionOthers);
   if (!currentPositionRole) {
-    return "Current position / role is required.";
+    return new MembershipFormValidationError("Current position / role is required.", {
+      position: "Current position / role is required.",
+    });
   }
 
   return null;
@@ -204,14 +266,13 @@ const mapFormToApplyPayload = (
 
 export function BecomeMemberWizard() {
   const router = useRouter();
-  const { toast } = useToast();
   const applyMemberMutation = useApplyMemberMutation();
   const { data: currentUser } = useCurrentUserQuery();
 
   const handleSubmit = async (form: ApplicationFormState) => {
     const validationError = getApplyPayloadValidationError(form);
     if (validationError) {
-      throw new Error(validationError);
+      throw validationError;
     }
 
     const payload = mapFormToApplyPayload(form);
@@ -235,12 +296,6 @@ export function BecomeMemberWizard() {
       const message =
         apiError.message ??
         (error instanceof Error ? error.message : "Submission failed.");
-
-      toast({
-        title: "Submission failed",
-        description: message,
-        variant: "error",
-      });
       throw new Error(message);
     }
   };

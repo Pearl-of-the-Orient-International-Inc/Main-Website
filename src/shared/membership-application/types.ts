@@ -61,6 +61,10 @@ export type ApplicationFormState = {
   monthlyPledgeConfirmed: boolean;
 };
 
+export type ApplicationFieldErrors = Partial<
+  Record<keyof ApplicationFormState, string>
+>;
+
 export type StepIndex = 0 | 1 | 2 | 3;
 
 export type SharedCurrentUser = {

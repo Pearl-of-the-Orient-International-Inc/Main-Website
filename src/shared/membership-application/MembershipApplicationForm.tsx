@@ -2,12 +2,14 @@
 
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useToast } from "@/hooks/use-toast";
 import { loadDraft, saveDraft } from "./draftStorage";
 import { StepChurchBackground } from "./steps/StepChurchBackground";
 import { StepEducationMinistry } from "./steps/StepEducationMinistry";
 import { StepPersonalDetails } from "./steps/StepPersonalDetails";
 import { StepReferencesReview } from "./steps/StepReferencesReview";
 import type {
+  ApplicationFieldErrors,
   ApplicationFormState,
   LocationCatalog,
   SharedCurrentUser,
@@ -28,7 +30,7 @@ export function MembershipApplicationForm({
   disabledSubmitMessage,
   submitLabel = "Submit application",
   submittingLabel = "Submitting...",
-  successMessage = "Application submitted successfully. Your status is now under review.",
+  successMessage: _successMessage = "Application submitted successfully. Your status is now under review.",
   onSubmitAction,
 }: {
   storageKey: string;
@@ -43,10 +45,14 @@ export function MembershipApplicationForm({
   successMessage?: string;
   onSubmitAction: (form: ApplicationFormState) => Promise<void>;
 }) {
+  const { toast } = useToast();
   const [form, setForm] = useState<ApplicationFormState>(() => loadDraft(storageKey).form);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitSuccess, setSubmitSuccess] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<ApplicationFieldErrors>({});
+
+  const applyFieldErrors = (errors: ApplicationFieldErrors) => {
+    setFieldErrors(errors);
+  };
 
   useEffect(() => {
     const computedAge = computeAgeFromBirthday(form.birthday);
@@ -99,6 +105,13 @@ export function MembershipApplicationForm({
     key: K,
     value: ApplicationFormState[K],
   ) => {
+    setFieldErrors((previous) => {
+      if (!previous[key]) return previous;
+
+      const next = { ...previous };
+      delete next[key];
+      return next;
+    });
     setForm((previous) => ({ ...previous, [key]: value }));
   };
 
@@ -107,18 +120,37 @@ export function MembershipApplicationForm({
   };
 
   const handleSubmit = async () => {
-    setSubmitError(null);
-    setSubmitSuccess(false);
+    setFieldErrors({});
 
     if (disableSubmit) {
-      setSubmitError(disabledSubmitMessage ?? "Submission is unavailable right now.");
+      toast({
+        title: "Submission unavailable",
+        description:
+          disabledSubmitMessage ?? "Submission is unavailable right now.",
+        variant: "error",
+      });
       return;
     }
 
     if (!form.declarationTruthConfirmed || !form.monthlyPledgeConfirmed) {
-      setSubmitError(
-        "Please confirm both declaration checkboxes before submitting.",
-      );
+      const confirmationErrors: ApplicationFieldErrors = {};
+
+      if (!form.declarationTruthConfirmed) {
+        confirmationErrors.declarationTruthConfirmed =
+          "Please confirm the declaration checkbox.";
+      }
+
+      if (!form.monthlyPledgeConfirmed) {
+        confirmationErrors.monthlyPledgeConfirmed =
+          "Please confirm the monthly pledge checkbox.";
+      }
+
+      applyFieldErrors(confirmationErrors);
+      toast({
+        title: "Incomplete form",
+        description: "Please confirm both declaration checkboxes before submitting.",
+        variant: "error",
+      });
       return;
     }
 
@@ -127,11 +159,22 @@ export function MembershipApplicationForm({
     try {
       saveDraft(storageKey, form, DRAFT_STEP);
       await onSubmitAction(form);
-      setSubmitSuccess(true);
     } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Submission failed.";
-      setSubmitError(message);
+      const message = error instanceof Error ? error.message : "Submission failed.";
+      const nextFieldErrors =
+        typeof error === "object" &&
+        error !== null &&
+        "fieldErrors" in error &&
+        typeof (error as { fieldErrors?: unknown }).fieldErrors === "object"
+          ? ((error as { fieldErrors?: ApplicationFieldErrors }).fieldErrors ?? {})
+          : {};
+
+      applyFieldErrors(nextFieldErrors);
+      toast({
+        title: "Submission failed",
+        description: message,
+        variant: "error",
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -159,13 +202,18 @@ export function MembershipApplicationForm({
             locationCatalog={locationCatalog}
             emailMode={emailMode}
             emailHelperText={emailHelperText}
+            fieldErrors={fieldErrors}
           />
         </section>
 
         <section className="space-y-4">
           <h3 className="font-serif text-xl text-[#032a0d]">Church Background</h3>
           <div className="h-px bg-black/10" />
-          <StepChurchBackground form={form} updateFieldAction={updateField} />
+          <StepChurchBackground
+            form={form}
+            updateFieldAction={updateField}
+            fieldErrors={fieldErrors}
+          />
         </section>
 
         <section className="space-y-4">
@@ -185,19 +233,9 @@ export function MembershipApplicationForm({
             form={form}
             updateFieldAction={updateField}
             handleSignatureChangeAction={handleSignatureChange}
+            fieldErrors={fieldErrors}
           />
         </section>
-
-        {submitError ? (
-          <p className="text-sm text-red-600" role="alert">
-            {submitError}
-          </p>
-        ) : null}
-        {submitSuccess ? (
-          <p className="text-sm text-emerald-700" role="status">
-            {successMessage}
-          </p>
-        ) : null}
 
         <div className="flex flex-col gap-3 border-t border-black/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-neutral-500 sm:text-sm">

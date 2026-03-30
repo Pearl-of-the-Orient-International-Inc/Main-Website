@@ -10,7 +10,11 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Field } from "../Field";
-import type { ApplicationFormState, BranchOfService } from "../types";
+import type {
+  ApplicationFieldErrors,
+  ApplicationFormState,
+  BranchOfService,
+} from "../types";
 
 const BRANCH_OPTIONS: BranchOfService[] = [
   "Humanitarian",
@@ -29,12 +33,14 @@ const BRANCH_OPTIONS: BranchOfService[] = [
 export function StepChurchBackground({
   form,
   updateFieldAction,
+  fieldErrors = {},
 }: {
   form: ApplicationFormState;
   updateFieldAction: <K extends keyof ApplicationFormState>(
     key: K,
     value: ApplicationFormState[K],
   ) => void;
+  fieldErrors?: ApplicationFieldErrors;
 }) {
   return (
     <div className="space-y-4">
@@ -57,14 +63,21 @@ export function StepChurchBackground({
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Current position / role" required>
+        <Field
+          label="Current position / role"
+          required
+          error={Boolean(fieldErrors.position)}
+        >
           <Select
             value={form.position}
             onValueChange={(value) =>
               updateFieldAction("position", value as ApplicationFormState["position"])
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger
+              className="w-full"
+              aria-invalid={Boolean(fieldErrors.position)}
+            >
               <SelectValue placeholder="Select" />
             </SelectTrigger>
             <SelectContent>

@@ -9,8 +9,13 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { cn } from "@/lib/utils";
 import { Field } from "../Field";
-import type { ApplicationFormState, LocationCatalog } from "../types";
+import type {
+  ApplicationFieldErrors,
+  ApplicationFormState,
+  LocationCatalog,
+} from "../types";
 import { sanitizeMobileNumber } from "../utils";
 
 type LocationSelection = {
@@ -159,6 +164,7 @@ export function StepPersonalDetails({
   locationCatalog,
   emailMode = "editable",
   emailHelperText,
+  fieldErrors = {},
 }: {
   form: ApplicationFormState;
   updateFieldAction: <K extends keyof ApplicationFormState>(
@@ -168,6 +174,7 @@ export function StepPersonalDetails({
   locationCatalog: LocationCatalog;
   emailMode?: "editable" | "locked";
   emailHelperText?: string;
+  fieldErrors?: ApplicationFieldErrors;
 }) {
   const regions = useMemo(() => locationCatalog.getRegions(), [locationCatalog]);
   const [selectedLocation, setSelectedLocation] =
@@ -202,11 +209,12 @@ export function StepPersonalDetails({
   return (
     <div className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="First name" required>
+        <Field label="First name" required error={Boolean(fieldErrors.firstName)}>
           <Input
             value={form.firstName}
             onChange={(event) => updateFieldAction("firstName", event.target.value)}
             placeholder="e.g. Juan"
+            aria-invalid={Boolean(fieldErrors.firstName)}
           />
         </Field>
         <Field label="Middle name">
@@ -218,11 +226,12 @@ export function StepPersonalDetails({
             placeholder="e.g. Ramos"
           />
         </Field>
-        <Field label="Last name" required>
+        <Field label="Last name" required error={Boolean(fieldErrors.lastName)}>
           <Input
             value={form.lastName}
             onChange={(event) => updateFieldAction("lastName", event.target.value)}
             placeholder="e.g. Dela Cruz"
+            aria-invalid={Boolean(fieldErrors.lastName)}
           />
         </Field>
         <Field label="Extension name">
@@ -235,7 +244,7 @@ export function StepPersonalDetails({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Email address" required>
+        <Field label="Email address" required error={Boolean(fieldErrors.emailAddress)}>
           <div className="space-y-1.5">
             <Input
               type="email"
@@ -244,6 +253,7 @@ export function StepPersonalDetails({
                 updateFieldAction("emailAddress", event.target.value)
               }
               placeholder="you@example.com"
+              aria-invalid={Boolean(fieldErrors.emailAddress)}
               // readOnly={emailMode === "locked"}
               // aria-readonly={emailMode === "locked"}
               // className={
@@ -257,7 +267,7 @@ export function StepPersonalDetails({
             ) : null} */}
           </div>
         </Field>
-        <Field label="Mobile / phone number" required>
+        <Field label="Mobile / phone number" required error={Boolean(fieldErrors.phoneNumber)}>
           <Input
             type="tel"
             inputMode="numeric"
@@ -271,12 +281,13 @@ export function StepPersonalDetails({
               )
             }
             placeholder="e.g. 09152479693"
+            aria-invalid={Boolean(fieldErrors.phoneNumber)}
           />
         </Field>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
-        <Field label="Civil status" required>
+        <Field label="Civil status" required error={Boolean(fieldErrors.civilStatus)}>
           <Select
             value={form.civilStatus}
             onValueChange={(value) =>
@@ -286,7 +297,10 @@ export function StepPersonalDetails({
               )
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger
+              className="w-full"
+              aria-invalid={Boolean(fieldErrors.civilStatus)}
+            >
               <SelectValue placeholder="Select" />
             </SelectTrigger>
             <SelectContent>
@@ -298,14 +312,17 @@ export function StepPersonalDetails({
           </Select>
         </Field>
 
-        <Field label="Gender" required>
+        <Field label="Gender" required error={Boolean(fieldErrors.gender)}>
           <Select
             value={form.gender}
             onValueChange={(value) =>
               updateFieldAction("gender", value as ApplicationFormState["gender"])
             }
           >
-            <SelectTrigger className="w-full">
+            <SelectTrigger
+              className="w-full"
+              aria-invalid={Boolean(fieldErrors.gender)}
+            >
               <SelectValue placeholder="Select" />
             </SelectTrigger>
             <SelectContent>
@@ -315,21 +332,23 @@ export function StepPersonalDetails({
           </Select>
         </Field>
 
-        <Field label="Nationality" required>
+        <Field label="Nationality" required error={Boolean(fieldErrors.nationality)}>
           <Input
             value={form.nationality}
             onChange={(event) => updateFieldAction("nationality", event.target.value)}
             placeholder="e.g. Filipino"
+            aria-invalid={Boolean(fieldErrors.nationality)}
           />
         </Field>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Date of birth" required>
+        <Field label="Date of birth" required error={Boolean(fieldErrors.birthday)}>
           <Input
             type="date"
             value={form.birthday}
             onChange={(event) => updateFieldAction("birthday", event.target.value)}
+            aria-invalid={Boolean(fieldErrors.birthday)}
           />
         </Field>
         <Field label="Age" required>
@@ -344,7 +363,11 @@ export function StepPersonalDetails({
         </Field>
       </div>
 
-      <Field label="Location (Region / Province / Municipality / Barangay)" required>
+      <Field
+        label="Location (Region / Province / Municipality / Barangay)"
+        required
+        error={Boolean(fieldErrors.regionProvince || fieldErrors.address)}
+      >
         <div className="space-y-3">
           <div className="grid gap-3 sm:grid-cols-2">
             <Select
@@ -362,7 +385,10 @@ export function StepPersonalDetails({
                 })
               }
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger
+                className={cn("w-full", fieldErrors.regionProvince && "border-destructive")}
+                aria-invalid={Boolean(fieldErrors.regionProvince)}
+              >
                 <SelectValue placeholder="Select region" />
               </SelectTrigger>
               <SelectContent>
@@ -390,7 +416,10 @@ export function StepPersonalDetails({
               }
               disabled={activeLocation.regionId === null}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger
+                className={cn("w-full", fieldErrors.regionProvince && "border-destructive")}
+                aria-invalid={Boolean(fieldErrors.regionProvince)}
+              >
                 <SelectValue placeholder="Select province" />
               </SelectTrigger>
               <SelectContent>
@@ -421,7 +450,10 @@ export function StepPersonalDetails({
               }
               disabled={activeLocation.provinceId === null}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger
+                className={cn("w-full", fieldErrors.regionProvince && "border-destructive")}
+                aria-invalid={Boolean(fieldErrors.regionProvince)}
+              >
                 <SelectValue placeholder="Select municipality / city" />
               </SelectTrigger>
               <SelectContent>
@@ -452,7 +484,10 @@ export function StepPersonalDetails({
               }
               disabled={activeLocation.municipalityId === null}
             >
-              <SelectTrigger className="w-full">
+              <SelectTrigger
+                className={cn("w-full", fieldErrors.regionProvince && "border-destructive")}
+                aria-invalid={Boolean(fieldErrors.regionProvince)}
+              >
                 <SelectValue placeholder="Select barangay" />
               </SelectTrigger>
               <SelectContent>
@@ -472,6 +507,7 @@ export function StepPersonalDetails({
             value={form.address}
             onChange={(event) => updateFieldAction("address", event.target.value)}
             placeholder="House no., street, subdivision / village"
+            aria-invalid={Boolean(fieldErrors.address)}
           />
 
           <Input
@@ -485,16 +521,25 @@ export function StepPersonalDetails({
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Emergency contact name" required>
+        <Field
+          label="Emergency contact name"
+          required
+          error={Boolean(fieldErrors.emergencyName)}
+        >
           <Input
             value={form.emergencyName}
             onChange={(event) =>
               updateFieldAction("emergencyName", event.target.value)
             }
             placeholder="Full name of emergency contact"
+            aria-invalid={Boolean(fieldErrors.emergencyName)}
           />
         </Field>
-        <Field label="Emergency contact mobile" required>
+        <Field
+          label="Emergency contact mobile"
+          required
+          error={Boolean(fieldErrors.emergencyCellphone)}
+        >
           <Input
             type="tel"
             inputMode="numeric"
@@ -508,6 +553,7 @@ export function StepPersonalDetails({
               )
             }
             placeholder="e.g. 09152479693"
+            aria-invalid={Boolean(fieldErrors.emergencyCellphone)}
           />
         </Field>
       </div>
