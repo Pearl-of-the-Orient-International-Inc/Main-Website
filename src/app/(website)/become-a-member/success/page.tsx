@@ -3,7 +3,69 @@ import Image from "next/image";
 import { CheckCircle2, ChevronRight, Clock3, Home } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
-export default function BecomeMemberSuccessPage() {
+type SuccessPageProps = {
+  searchParams?: Promise<{
+    createdUser?: string;
+    verified?: string;
+  }>;
+};
+
+const getSuccessContent = ({
+  createdUser,
+  verified,
+}: {
+  createdUser: boolean;
+  verified: boolean;
+}) => {
+  if (createdUser) {
+    return {
+      title: "Your membership application has been received.",
+      description:
+        "We created your pending account and sent your temporary login credentials plus verification link to your email. The admin team will review your application first, and onboarding will only open once your application is approved.",
+      steps: [
+        "Check your email for your temporary password and verification link.",
+        "Your submitted details will stay pending while the admin reviews them.",
+        "After approval, you can log in and continue the onboarding flow.",
+        "Please keep your phone number and email active for updates.",
+      ],
+    };
+  }
+
+  if (!verified) {
+    return {
+      title: "Your membership application has been received.",
+      description:
+        "Your account already exists, so we only sent a verification link to your email. The admin team will review your application first, and onboarding will only open once your application is approved.",
+      steps: [
+        "Check your email for your verification link.",
+        "Your submitted details will stay pending while the admin reviews them.",
+        "After approval and email verification, you can log in and continue the onboarding flow.",
+        "Please keep your phone number and email active for updates.",
+      ],
+    };
+  }
+
+  return {
+    title: "Your membership application has been received.",
+    description:
+      "Your account is already verified, so your application is now queued for admin review. Onboarding will only open once your application is approved.",
+    steps: [
+      "Your submitted details will stay pending while the admin reviews them.",
+      "After approval, you can log in with your existing account and continue the onboarding flow.",
+      "Please keep your phone number and email active for updates.",
+      "You can return to the homepage while waiting for the next update.",
+    ],
+  };
+};
+
+export default async function BecomeMemberSuccessPage({
+  searchParams,
+}: SuccessPageProps) {
+  const resolvedSearchParams = await searchParams;
+  const createdUser = resolvedSearchParams?.createdUser === "1";
+  const verified = resolvedSearchParams?.verified === "1";
+  const content = getSuccessContent({ createdUser, verified });
+
   return (
     <section className="min-h-screen bg-neutral-300 py-8 sm:py-10 lg:py-14">
       <div className="mx-auto max-w-4xl px-4">
@@ -33,14 +95,9 @@ export default function BecomeMemberSuccessPage() {
             <div className="flex items-start gap-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-emerald-900">
               <CheckCircle2 className="mt-0.5 size-6 shrink-0" />
               <div>
-                <p className="text-lg font-semibold">
-                  Your membership application has been received.
-                </p>
+                <p className="text-lg font-semibold">{content.title}</p>
                 <p className="mt-1 text-sm leading-6 text-emerald-800/90">
-                  We created your pending account and sent your login credentials
-                  plus verification link to your email. The admin team will
-                  review your application first, and onboarding will only open
-                  once your application is approved.
+                  {content.description}
                 </p>
               </div>
             </div>
@@ -51,10 +108,9 @@ export default function BecomeMemberSuccessPage() {
                 <p className="font-medium">What happens next</p>
               </div>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-neutral-700">
-                <li>Check your email for your temporary password and verification link.</li>
-                <li>Your submitted details will stay pending while the admin reviews them.</li>
-                <li>After approval, you can log in and continue the onboarding flow.</li>
-                <li>Please keep your phone number and email active for updates.</li>
+                {content.steps.map((step) => (
+                  <li key={step}>{step}</li>
+                ))}
               </ul>
             </div>
 

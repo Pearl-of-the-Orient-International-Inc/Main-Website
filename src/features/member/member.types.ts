@@ -224,5 +224,16 @@ export interface ApplyMemberResponse {
     id: string;
     uniqueId?: string | null;
     status: string;
+    user?: {
+      id: string;
+      name: string;
+      email: string;
+      accountStatus?: string;
+      isEmailVerified?: boolean;
+    };
+  };
+  meta?: {
+    createdUser: boolean;
+    isEmailVerified: boolean;
   };
 }

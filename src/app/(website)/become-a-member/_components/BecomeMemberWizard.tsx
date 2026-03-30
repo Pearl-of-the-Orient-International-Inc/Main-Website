@@ -286,14 +286,29 @@ export function BecomeMemberWizard() {
     }
 
     try {
-      await applyMemberMutation.mutateAsync(payload);
+      const response = await applyMemberMutation.mutateAsync(payload);
+      const createdUser = response.meta?.createdUser ?? false;
+      const isEmailVerified =
+        response.meta?.isEmailVerified ?? response.data.user?.isEmailVerified ?? false;
+
+      const successDescription = createdUser
+        ? "Your application was submitted. Check your email for your temporary account credentials and verification link."
+        : isEmailVerified
+          ? "Your application was submitted. Your account is already verified, and the admin team will review your details next."
+          : "Your application was submitted. Check your email for your verification link while the admin team reviews your details.";
+
       toast({
         title: "Application submitted",
-        description:
-          "Your application was submitted. Check your email for your account credentials and verification link.",
+        description: successDescription,
         variant: "success",
       });
-      router.push("/become-a-member/success");
+
+      const query = new URLSearchParams({
+        createdUser: createdUser ? "1" : "0",
+        verified: isEmailVerified ? "1" : "0",
+      });
+
+      router.push(`/become-a-member/success?${query.toString()}`);
     } catch (error) {
       const apiError = toApiError(error);
       const message =
