@@ -217,6 +217,7 @@ const mapFormToApplyPayload = (
     );
 
   return {
+    email: form.emailAddress.trim(),
     firstName: form.firstName.trim(),
     middleInitial: form.middleInitial.trim() || undefined,
     lastName: form.lastName.trim(),

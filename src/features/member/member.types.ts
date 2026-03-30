@@ -1,4 +1,5 @@
 export interface ApplyMemberRequest {
+  email: string;
   firstName: string;
   middleInitial?: string;
   lastName: string;
