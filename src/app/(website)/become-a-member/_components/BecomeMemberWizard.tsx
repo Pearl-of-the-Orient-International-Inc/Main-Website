@@ -292,7 +292,7 @@ export function BecomeMemberWizard() {
         description: "Your membership application was submitted successfully.",
         variant: "success",
       });
-      router.push("/become-a-member/onboarding");
+      router.push("/become-a-member/success");
     } catch (error) {
       const apiError = toApiError(error);
       const message =

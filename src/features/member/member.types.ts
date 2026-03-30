@@ -79,6 +79,7 @@ export interface MemberRequirementsResponse {
   message: string;
   data: {
     memberId: string;
+    status: "PENDING" | "APPROVED" | "REJECTED";
     uniqueId?: string | null;
     attachments: Record<string, string>;
     requirements: Array<{

@@ -12,7 +12,9 @@ import { Navbar } from "@/components/website/Navbar";
 export function WebsiteShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const isPlainMembershipRoute =
-    pathname === "/become-a-member" || pathname === "/become-a-member/onboarding";
+    pathname === "/become-a-member" ||
+    pathname === "/become-a-member/onboarding" ||
+    pathname === "/become-a-member/success";
 
   if (isPlainMembershipRoute) {
     return <>{children}</>;
