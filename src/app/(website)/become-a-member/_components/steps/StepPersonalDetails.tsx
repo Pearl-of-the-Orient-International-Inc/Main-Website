@@ -202,11 +202,14 @@ export function StepPersonalDetails({
             placeholder="e.g. Juan"
           />
         </Field>
-        <Field label="Middle name" className="sm:col-span-2">
+        <Field label="Middle initial" className="sm:col-span-2">
           <Input
             value={form.middleInitial}
-            onChange={(e) => updateFieldAction("middleInitial", e.target.value)}
-            placeholder="e.g. Ramos"
+            onChange={(e) =>
+              updateFieldAction("middleInitial", e.target.value.slice(0, 1))
+            }
+            maxLength={1}
+            placeholder="e.g. R"
           />
         </Field>
         <Field label="Last name" required className="sm:col-span-4">

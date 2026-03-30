@@ -222,13 +222,14 @@ export function StepPersonalDetails({
             aria-invalid={Boolean(fieldErrors.firstName)}
           />
         </Field>
-        <Field label="Middle name" className="sm:col-span-2">
+        <Field label="Middle initial" className="sm:col-span-2">
           <Input
             value={form.middleInitial}
             onChange={(event) =>
-              updateFieldAction("middleInitial", event.target.value)
+              updateFieldAction("middleInitial", event.target.value.slice(0, 1))
             }
-            placeholder="e.g. Ramos"
+            maxLength={1}
+            placeholder="e.g. R"
           />
         </Field>
         <Field
