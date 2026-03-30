@@ -1,7 +1,18 @@
 import { SignInForm } from "@/components/forms/auth/SignInForm";
 import Link from "next/link";
 
-const Page = () => {
+const Page = async ({
+  searchParams,
+}: {
+  searchParams?: Promise<{ redirect?: string }>;
+}) => {
+  const resolvedSearchParams = await searchParams;
+  const redirectTo =
+    typeof resolvedSearchParams?.redirect === "string" &&
+    resolvedSearchParams.redirect.startsWith("/")
+      ? resolvedSearchParams.redirect
+      : "/";
+
   return (
     <div className="bg-white">
       {/* Hero / Banner */}
@@ -28,7 +39,7 @@ const Page = () => {
           </p>
         </div>
       </section>
-      <SignInForm />
+      <SignInForm redirectTo={redirectTo} />
     </div>
   );
 };

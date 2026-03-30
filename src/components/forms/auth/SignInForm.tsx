@@ -9,19 +9,22 @@ import { useToast } from "@/hooks/use-toast";
 import { CircleAlertIcon, EyeIcon, EyeOffIcon, XIcon } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export const SignInForm = () => {
+export const SignInForm = ({
+  redirectTo = "/",
+}: {
+  redirectTo?: string;
+}) => {
   const router = useRouter();
-  const searchParams = useSearchParams();
   const loginMutation = useLoginMutation();
   const { toast } = useToast();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isActive, setIsActive] = useState(true);
   const [isVisible, setIsVisible] = useState(false);
-  const redirectTarget = searchParams.get("redirect")?.trim() || "/";
+  const redirectTarget = redirectTo.trim() || "/";
 
   // Handle the submission of the form
   const handleSubmit = async (e: React.FormEvent) => {
