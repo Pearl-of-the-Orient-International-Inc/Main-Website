@@ -47,7 +47,7 @@ export default function OnboardingPage() {
     if (isCurrentUserLoading || isMemberRequirementsLoading) return;
 
     if (isCurrentUserError || !currentUser) {
-      router.replace("/sign-in");
+      router.replace("/sign-in?redirect=%2Fbecome-a-member%2Fonboarding");
       return;
     }
 
