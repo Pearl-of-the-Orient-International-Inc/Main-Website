@@ -208,8 +208,13 @@ export function StepPersonalDetails({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="First name" required error={Boolean(fieldErrors.firstName)}>
+      <div className="grid gap-4 sm:grid-cols-12">
+        <Field
+          label="First name"
+          required
+          error={Boolean(fieldErrors.firstName)}
+          className="sm:col-span-4"
+        >
           <Input
             value={form.firstName}
             onChange={(event) => updateFieldAction("firstName", event.target.value)}
@@ -217,7 +222,7 @@ export function StepPersonalDetails({
             aria-invalid={Boolean(fieldErrors.firstName)}
           />
         </Field>
-        <Field label="Middle name">
+        <Field label="Middle name" className="sm:col-span-3">
           <Input
             value={form.middleInitial}
             onChange={(event) =>
@@ -226,7 +231,12 @@ export function StepPersonalDetails({
             placeholder="e.g. Ramos"
           />
         </Field>
-        <Field label="Last name" required error={Boolean(fieldErrors.lastName)}>
+        <Field
+          label="Last name"
+          required
+          error={Boolean(fieldErrors.lastName)}
+          className="sm:col-span-4"
+        >
           <Input
             value={form.lastName}
             onChange={(event) => updateFieldAction("lastName", event.target.value)}
@@ -234,7 +244,7 @@ export function StepPersonalDetails({
             aria-invalid={Boolean(fieldErrors.lastName)}
           />
         </Field>
-        <Field label="Extension name">
+        <Field label="Extension name" className="sm:col-span-1">
           <Input
             value={form.extensionName}
             onChange={(event) => updateFieldAction("extensionName", event.target.value)}

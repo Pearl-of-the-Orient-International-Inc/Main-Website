@@ -194,19 +194,33 @@ export function StepPersonalDetails({
 
   return (
     <div className="space-y-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="First name" required>
+      <div className="grid gap-4 sm:grid-cols-12">
+        <Field label="First name" required className="sm:col-span-4">
           <Input
             value={form.firstName}
             onChange={(e) => updateFieldAction("firstName", e.target.value)}
             placeholder="e.g. Juan"
           />
         </Field>
-        <Field label="Last name" required>
+        <Field label="Middle name" className="sm:col-span-3">
+          <Input
+            value={form.middleInitial}
+            onChange={(e) => updateFieldAction("middleInitial", e.target.value)}
+            placeholder="e.g. Ramos"
+          />
+        </Field>
+        <Field label="Last name" required className="sm:col-span-4">
           <Input
             value={form.lastName}
             onChange={(e) => updateFieldAction("lastName", e.target.value)}
             placeholder="e.g. Dela Cruz"
+          />
+        </Field>
+        <Field label="Extension name" className="sm:col-span-1">
+          <Input
+            value={form.extensionName}
+            onChange={(e) => updateFieldAction("extensionName", e.target.value)}
+            placeholder="Jr."
           />
         </Field>
       </div>

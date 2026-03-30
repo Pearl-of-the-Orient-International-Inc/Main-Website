@@ -1,5 +1,6 @@
 import type { ReactNode } from "react";
 import { HelpCircleIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 export function Field({
@@ -7,16 +8,18 @@ export function Field({
   required,
   hint,
   error,
+  className,
   children,
 }: {
   label: string;
   required?: boolean;
   hint?: string;
   error?: boolean;
+  className?: string;
   children: ReactNode;
 }) {
   return (
-    <label className="block space-y-1.5 text-xs sm:text-sm">
+    <label className={cn("block space-y-1.5 text-xs sm:text-sm", className)}>
       <span className="flex items-center gap-2">
         <span className={error ? "font-medium text-red-600" : "font-medium text-[#032a0d]"}>
           {label}
