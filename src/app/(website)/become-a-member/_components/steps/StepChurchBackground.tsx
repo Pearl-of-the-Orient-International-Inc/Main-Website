@@ -59,7 +59,7 @@ export function StepChurchBackground({
       </Field>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <Field label="Current position / role">
+        <Field label="Current position / role" required>
           <Select
             value={form.position}
             onValueChange={(value) =>

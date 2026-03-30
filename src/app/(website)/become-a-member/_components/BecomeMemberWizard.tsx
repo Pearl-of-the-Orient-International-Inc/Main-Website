@@ -74,6 +74,36 @@ const joinList = (values: string[]): string | undefined => {
   return cleaned.length > 0 ? cleaned.join(" | ") : undefined;
 };
 
+const getApplyPayloadValidationError = (
+  form: ApplicationFormState,
+): string | null => {
+  if (!form.firstName.trim()) return "First name is required.";
+  if (!form.lastName.trim()) return "Last name is required.";
+  if (!form.emailAddress.trim()) return "Email address is required.";
+  if (!form.gender) return "Gender is required.";
+  if (!form.birthday) return "Date of birth is required.";
+  if (!form.civilStatus) return "Civil status is required.";
+  if (!form.phoneNumber.trim()) return "Mobile / phone number is required.";
+  if (!form.address.trim()) return "Home address is required.";
+  if (!form.nationality.trim()) return "Nationality is required.";
+  if (!form.emergencyName.trim()) return "Emergency contact name is required.";
+  if (!form.emergencyCellphone.trim()) {
+    return "Emergency contact mobile is required.";
+  }
+
+  const location = splitRegionSummary(form.regionProvince);
+  if (!location) {
+    return "Please complete your full location: region, province, municipality, and barangay.";
+  }
+
+  const currentPositionRole = getFirstNonEmpty(form.position, form.positionOthers);
+  if (!currentPositionRole) {
+    return "Current position / role is required.";
+  }
+
+  return null;
+};
+
 const mapFormToApplyPayload = (
   form: ApplicationFormState,
 ): ApplyMemberRequest | null => {
@@ -179,6 +209,11 @@ export function BecomeMemberWizard() {
   const { data: currentUser } = useCurrentUserQuery();
 
   const handleSubmit = async (form: ApplicationFormState) => {
+    const validationError = getApplyPayloadValidationError(form);
+    if (validationError) {
+      throw new Error(validationError);
+    }
+
     const payload = mapFormToApplyPayload(form);
 
     if (!payload) {
