@@ -37,8 +37,10 @@ export default function BecomeMemberSuccessPage() {
                   Your membership application has been received.
                 </p>
                 <p className="mt-1 text-sm leading-6 text-emerald-800/90">
-                  The admin team will review your application first. Onboarding
-                  will only open once your application is approved.
+                  We created your pending account and sent your login credentials
+                  plus verification link to your email. The admin team will
+                  review your application first, and onboarding will only open
+                  once your application is approved.
                 </p>
               </div>
             </div>
@@ -49,6 +51,7 @@ export default function BecomeMemberSuccessPage() {
                 <p className="font-medium">What happens next</p>
               </div>
               <ul className="mt-3 space-y-2 text-sm leading-6 text-neutral-700">
+                <li>Check your email for your temporary password and verification link.</li>
                 <li>Your submitted details will stay pending while the admin reviews them.</li>
                 <li>After approval, you can log in and continue the onboarding flow.</li>
                 <li>Please keep your phone number and email active for updates.</li>

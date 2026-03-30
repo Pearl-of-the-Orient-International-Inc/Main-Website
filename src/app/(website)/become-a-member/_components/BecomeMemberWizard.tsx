@@ -289,7 +289,8 @@ export function BecomeMemberWizard() {
       await applyMemberMutation.mutateAsync(payload);
       toast({
         title: "Application submitted",
-        description: "Your membership application was submitted successfully.",
+        description:
+          "Your application was submitted. Check your email for your account credentials and verification link.",
         variant: "success",
       });
       router.push("/become-a-member/success");
@@ -350,8 +351,7 @@ export function BecomeMemberWizard() {
               email: currentUser?.email,
               avatar: currentUser?.avatar,
             }}
-            emailMode="locked"
-            emailHelperText="This email comes from your logged-in account and will be used for your member profile."
+            emailMode="editable"
             onSubmitAction={handleSubmit}
           />
 
