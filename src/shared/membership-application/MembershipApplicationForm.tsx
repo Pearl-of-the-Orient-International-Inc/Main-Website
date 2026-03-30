@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import { loadDraft, saveDraft } from "./draftStorage";
+import { clearDraft, loadDraft, saveDraft } from "./draftStorage";
 import { StepChurchBackground } from "./steps/StepChurchBackground";
 import { StepEducationMinistry } from "./steps/StepEducationMinistry";
 import { StepPersonalDetails } from "./steps/StepPersonalDetails";
@@ -30,7 +30,7 @@ export function MembershipApplicationForm({
   disabledSubmitMessage,
   submitLabel = "Submit application",
   submittingLabel = "Submitting...",
-  successMessage: _successMessage = "Application submitted successfully. Your status is now under review.",
+  clearDraftOnSuccess = false,
   onSubmitAction,
 }: {
   storageKey: string;
@@ -42,7 +42,7 @@ export function MembershipApplicationForm({
   disabledSubmitMessage?: string;
   submitLabel?: string;
   submittingLabel?: string;
-  successMessage?: string;
+  clearDraftOnSuccess?: boolean;
   onSubmitAction: (form: ApplicationFormState) => Promise<void>;
 }) {
   const { toast } = useToast();
@@ -159,6 +159,9 @@ export function MembershipApplicationForm({
     try {
       saveDraft(storageKey, form, DRAFT_STEP);
       await onSubmitAction(form);
+      if (clearDraftOnSuccess) {
+        clearDraft(storageKey);
+      }
     } catch (error) {
       const message = error instanceof Error ? error.message : "Submission failed.";
       const nextFieldErrors =

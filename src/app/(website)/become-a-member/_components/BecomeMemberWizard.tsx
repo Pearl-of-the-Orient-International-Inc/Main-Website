@@ -1,8 +1,18 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Info } from "lucide-react";
+import {
+  ArrowLeft,
+  CheckCircle2,
+  ChevronRight,
+  Clock3,
+  FileText,
+  Info,
+  MailCheck,
+  ShieldCheck,
+} from "lucide-react";
 import { MembershipApplicationForm } from "@/shared/membership-application/MembershipApplicationForm";
 import type {
   ApplicationFieldErrors,
@@ -20,6 +30,7 @@ import { getMunicipalities } from "@/constants/municipality";
 import { getProvinces } from "@/constants/province";
 import { getRegions } from "@/constants/region";
 import { toast } from "@/hooks/use-toast";
+import type { UserPublic } from "@/lib/api-types";
 
 const CIVIL_STATUS_MAP: Record<
   Exclude<ApplicationFormState["civilStatus"], "">,
@@ -75,6 +86,93 @@ const splitRegionSummary = (
 const joinList = (values: string[]): string | undefined => {
   const cleaned = values.map((value) => value.trim()).filter(Boolean);
   return cleaned.length > 0 ? cleaned.join(" | ") : undefined;
+};
+
+const getExistingApplicationContent = (currentUser: UserPublic) => {
+  const status = currentUser.memberProfile?.status;
+  const isEmailVerified = currentUser.isEmailVerified === true;
+
+  if (status === "APPROVED") {
+    return {
+      badgeLabel: "Application Approved",
+      badgeClassName: "border-emerald-200 bg-emerald-50 text-emerald-900",
+      icon: CheckCircle2,
+      title: "Your membership application is already approved.",
+      description: isEmailVerified
+        ? "You already have an approved application in the system. You can continue with the onboarding flow using your existing account."
+        : "Your application is already approved. Please verify your email first so you can continue the onboarding flow with your existing account.",
+      steps: isEmailVerified
+        ? [
+            "Continue to the onboarding flow to complete the remaining requirements.",
+            "Use your existing account when accessing your member onboarding pages.",
+            "Keep your contact details active for further updates.",
+          ]
+        : [
+            "Check your email and open the verification link that was sent to your account.",
+            "After verifying your email, continue to the onboarding flow.",
+            "Keep your contact details active for further updates.",
+          ],
+      primaryActionHref: isEmailVerified ? "/become-a-member/onboarding" : "/become-a-member/success",
+      primaryActionLabel: isEmailVerified
+        ? "Continue onboarding"
+        : "View application notice",
+      secondaryActionHref: "/",
+      secondaryActionLabel: "Back to home",
+      nextActionLabel: isEmailVerified
+        ? "Next action: Continue your onboarding requirements."
+        : "Next action: Use the verification link from your email, then continue onboarding.",
+    };
+  }
+
+  if (status === "REJECTED") {
+    return {
+      badgeLabel: "Application Recorded",
+      badgeClassName: "border-amber-200 bg-amber-50 text-amber-900",
+      icon: FileText,
+      title: "You already have a membership application on record.",
+      description:
+        "Your existing application is currently marked as not approved, so a new form submission is not available here. Please coordinate with the admin team before making any further changes.",
+      steps: [
+        "Check with the admin team for the status of your existing application.",
+        "Use your current account email for any follow-up communication.",
+        "Wait for further instructions before attempting a new application.",
+      ],
+      primaryActionHref: "/",
+      primaryActionLabel: "Back to home",
+      secondaryActionHref: "/become-a-member/success",
+      secondaryActionLabel: "View application notice",
+      nextActionLabel:
+        "Next action: Contact the admin team regarding your existing application record.",
+    };
+  }
+
+  return {
+    badgeLabel: "Application Pending",
+    badgeClassName: "border-amber-200 bg-amber-50 text-amber-900",
+    icon: Clock3,
+    title: "You already have a membership application under review.",
+    description: isEmailVerified
+      ? "Your application is already in the system and is currently pending admin review. The form is hidden here to avoid duplicate submissions."
+      : "Your application is already in the system and is currently pending admin review. Please verify your email if you have not done so yet, then wait for the admin team’s decision.",
+      steps: isEmailVerified
+      ? [
+          "Wait for the admin team to finish reviewing your application.",
+          "Once approved, you will be able to continue to onboarding.",
+          "Keep your email and phone number active for updates.",
+        ]
+      : [
+          "Check your email and use the verification link if your account is still not verified.",
+          "Wait for the admin team to finish reviewing your application.",
+          "Once approved, you will be able to continue to onboarding.",
+        ],
+    primaryActionHref: "/become-a-member/success",
+    primaryActionLabel: "View application notice",
+    secondaryActionHref: "/",
+    secondaryActionLabel: "Back to home",
+    nextActionLabel: isEmailVerified
+      ? "Next action: Wait for admin approval."
+      : "Next action: Use the verification link from your email, then wait for admin approval.",
+  };
 };
 
 class MembershipFormValidationError extends Error {
@@ -270,6 +368,7 @@ export function BecomeMemberWizard() {
   const router = useRouter();
   const applyMemberMutation = useApplyMemberMutation();
   const { data: currentUser } = useCurrentUserQuery();
+  const existingApplication = currentUser?.memberProfile;
 
   const handleSubmit = async (form: ApplicationFormState) => {
     const validationError = getApplyPayloadValidationError(form);
@@ -353,22 +452,27 @@ export function BecomeMemberWizard() {
         </div>
 
         <div className="grid items-start gap-5 lg:grid-cols-[minmax(0,1fr)_350px]">
-          <MembershipApplicationForm
-            storageKey="pearl-member-application-draft"
-            locationCatalog={{
-              getRegions,
-              getProvinces,
-              getMunicipalities,
-              getBarangays,
-            }}
-            currentUser={{
-              name: currentUser?.name,
-              email: currentUser?.email,
-              avatar: currentUser?.avatar,
-            }}
-            emailMode="editable"
-            onSubmitAction={handleSubmit}
-          />
+          {existingApplication ? (
+            <ExistingApplicationPanel currentUser={currentUser} />
+          ) : (
+            <MembershipApplicationForm
+              storageKey="pearl-member-application-draft"
+              clearDraftOnSuccess
+              locationCatalog={{
+                getRegions,
+                getProvinces,
+                getMunicipalities,
+                getBarangays,
+              }}
+              currentUser={{
+                name: currentUser?.name,
+                email: currentUser?.email,
+                avatar: currentUser?.avatar,
+              }}
+              emailMode="editable"
+              onSubmitAction={handleSubmit}
+            />
+          )}
 
           <aside className="self-start lg:sticky lg:top-6">
             <div className="overflow-hidden border border-black/10 bg-white">
@@ -376,66 +480,185 @@ export function BecomeMemberWizard() {
                 <h2 className="text-lg">Description</h2>
               </div>
               <div className="space-y-5 p-5 text-sm text-neutral-700">
-                <p>
-                  Please fill out this form and click submit. If you have
-                  questions, contact the leadership through the official Pearl
-                  of the Orient channels.
-                </p>
+                {existingApplication ? (
+                  <>
+                    <p>
+                      Your account already has a recorded membership
+                      application. This page stays available so you can check
+                      your current status and next action without creating a
+                      duplicate submission.
+                    </p>
 
-                <div className="space-y-3">
-                  <h3 className="font-serif text-base text-[#032a0d]">
-                    How the application works
-                  </h3>
-                  <ol className="space-y-2 text-xs sm:text-sm">
-                    <li>
-                      <span className="font-semibold text-[#032a0d]">
-                        1. Personal details
-                      </span>{" "}
-                      Basic contact information and civil status.
-                    </li>
-                    <li>
-                      <span className="font-semibold text-[#032a0d]">
-                        2. Church and background
-                      </span>{" "}
-                      Current role, affiliation, and service areas.
-                    </li>
-                    <li>
-                      <span className="font-semibold text-[#032a0d]">
-                        3. Education and ministry
-                      </span>{" "}
-                      Formation, skills, and ministry experience.
-                    </li>
-                    <li>
-                      <span className="font-semibold text-[#032a0d]">
-                        4. References and confirmation
-                      </span>{" "}
-                      Character references and signature before submission.
-                    </li>
-                  </ol>
-                </div>
-                <div className="flex gap-2 rounded border border-dashed border-[#032a0d]/25 bg-[#032a0d]/5 px-3 py-3 text-xs text-[#032a0d]/80">
-                  <Info className="mt-0.5 size-4 shrink-0 text-[#032a0d]" />
-                  <p>
-                    Your progress is automatically saved as a draft while you
-                    fill out the form.
-                  </p>
-                </div>
-                <div className="flex gap-2 rounded border border-dashed border-[#032a0d]/25 bg-[#032a0d]/5 px-3 py-3 text-xs text-[#032a0d]/80">
-                  <Info className="size-4 shrink-0 text-[#032a0d]" />
-                  <p>
-                    Fields marked with an asterisk (
-                    <span className="text-destructive">*</span>) are required.
-                  </p>
-                </div>
-                <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
-                  Submission is connected to the backend. Ensure all required
-                  fields are complete before submitting.
-                </p>
+                    <div className="rounded border border-dashed border-[#032a0d]/25 bg-[#032a0d]/5 px-3 py-3 text-xs text-[#032a0d]/80">
+                      <div className="flex gap-2">
+                        <ShieldCheck className="mt-0.5 size-4 shrink-0 text-[#032a0d]" />
+                        <p>
+                          Duplicate membership form submissions are disabled
+                          once an application already exists on your account.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="rounded border border-dashed border-[#032a0d]/25 bg-[#032a0d]/5 px-3 py-3 text-xs text-[#032a0d]/80">
+                      <div className="flex gap-2">
+                        <MailCheck className="mt-0.5 size-4 shrink-0 text-[#032a0d]" />
+                        <p>
+                          If your email verification is still pending, complete
+                          that first so you can access the next member steps
+                          when approval is granted.
+                        </p>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p>
+                      Please fill out this form and click submit. If you have
+                      questions, contact the leadership through the official Pearl
+                      of the Orient channels.
+                    </p>
+
+                    <div className="space-y-3">
+                      <h3 className="font-serif text-base text-[#032a0d]">
+                        How the application works
+                      </h3>
+                      <ol className="space-y-2 text-xs sm:text-sm">
+                        <li>
+                          <span className="font-semibold text-[#032a0d]">
+                            1. Personal details
+                          </span>{" "}
+                          Basic contact information and civil status.
+                        </li>
+                        <li>
+                          <span className="font-semibold text-[#032a0d]">
+                            2. Church and background
+                          </span>{" "}
+                          Current role, affiliation, and service areas.
+                        </li>
+                        <li>
+                          <span className="font-semibold text-[#032a0d]">
+                            3. Education and ministry
+                          </span>{" "}
+                          Formation, skills, and ministry experience.
+                        </li>
+                        <li>
+                          <span className="font-semibold text-[#032a0d]">
+                            4. References and confirmation
+                          </span>{" "}
+                          Character references and signature before submission.
+                        </li>
+                      </ol>
+                    </div>
+                    <div className="flex gap-2 rounded border border-dashed border-[#032a0d]/25 bg-[#032a0d]/5 px-3 py-3 text-xs text-[#032a0d]/80">
+                      <Info className="mt-0.5 size-4 shrink-0 text-[#032a0d]" />
+                      <p>
+                        Your progress is automatically saved as a draft while you
+                        fill out the form.
+                      </p>
+                    </div>
+                    <div className="flex gap-2 rounded border border-dashed border-[#032a0d]/25 bg-[#032a0d]/5 px-3 py-3 text-xs text-[#032a0d]/80">
+                      <Info className="size-4 shrink-0 text-[#032a0d]" />
+                      <p>
+                        Fields marked with an asterisk (
+                        <span className="text-destructive">*</span>) are required.
+                      </p>
+                    </div>
+                    <p className="rounded border border-amber-200 bg-amber-50 px-3 py-2 text-amber-900">
+                      Submission is connected to the backend. Ensure all required
+                      fields are complete before submitting.
+                    </p>
+                  </>
+                )}
               </div>
             </div>
           </aside>
         </div>
       </div>
     </section>
+  );
+}
+
+function ExistingApplicationPanel({ currentUser }: { currentUser: UserPublic }) {
+  const application = currentUser.memberProfile;
+  const content = getExistingApplicationContent(currentUser);
+  const StatusIcon = content.icon;
+
+  if (!application) return null;
+
+  return (
+    <div className="overflow-hidden border border-black/10 bg-white shadow-sm">
+      <div className="border-b border-black/10 bg-[#032a0d] px-6 py-5 text-white sm:px-8">
+        <p className="text-xs uppercase tracking-[0.22em] text-white/70">
+          Membership Application
+        </p>
+        <h2 className="mt-1 font-serif text-2xl sm:text-3xl">
+          Current Application Status
+        </h2>
+      </div>
+
+      <div className="space-y-6 px-6 py-8 sm:px-8">
+        <div className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-medium ${content.badgeClassName}`}>
+          <StatusIcon className="size-3.5" />
+          <span>{content.badgeLabel}</span>
+        </div>
+
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-5 text-emerald-950">
+          <p className="text-lg font-semibold">{content.title}</p>
+          <p className="mt-2 text-sm leading-6 text-emerald-900/85">
+            {content.description}
+          </p>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="rounded-xl border bg-neutral-50 p-4">
+            <p className="text-xs uppercase tracking-[0.16em] text-neutral-500">
+              Application Status
+            </p>
+            <p className="mt-2 text-lg font-semibold text-[#032a0d]">
+              {application.status}
+            </p>
+          </div>
+
+          <div className="rounded-xl border bg-neutral-50 p-4">
+            <p className="text-xs uppercase tracking-[0.16em] text-neutral-500">
+              Account Verification
+            </p>
+            <p className="mt-2 text-lg font-semibold text-[#032a0d]">
+              {currentUser.isEmailVerified ? "Verified" : "Pending verification"}
+            </p>
+          </div>
+        </div>
+
+        <div className="rounded-xl border bg-neutral-50 p-5">
+          <div className="flex items-center gap-2 text-[#032a0d]">
+            <Clock3 className="size-4" />
+            <p className="font-medium">What happens next</p>
+          </div>
+          <ul className="mt-3 space-y-2 text-sm leading-6 text-neutral-700">
+            {content.steps.map((step) => (
+              <li key={step}>{step}</li>
+            ))}
+          </ul>
+        </div>
+
+        <p className="rounded border border-[#032a0d]/15 bg-[#032a0d]/5 px-4 py-3 text-sm text-[#032a0d]">
+          {content.nextActionLabel}
+        </p>
+
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Button asChild className="bg-[#032a0d] hover:bg-[#032a0d]/90">
+            <Link href={content.primaryActionHref}>
+              {content.primaryActionLabel}
+              <ChevronRight className="size-4" />
+            </Link>
+          </Button>
+          <Button asChild variant="outline">
+            <Link href={content.secondaryActionHref}>
+              {content.secondaryActionLabel}
+            </Link>
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }

@@ -23,6 +23,22 @@ export interface UserPublic {
   accountStatus?: string;
   isEmailVerified?: boolean;
   isTwoFactorEnabled?: boolean;
+  memberProfile?: {
+    id: string;
+    uniqueId: string | null;
+    status: "PENDING" | "APPROVED" | "REJECTED";
+    createdAt: string;
+    onboardingProgress?: {
+      currentStep:
+        | "REQUIREMENTS"
+        | "PRE_ORIENTATION"
+        | "PAYMENT_CHECKOUT"
+        | "ONLINE_INTERVIEW"
+        | "ID_GENERATION"
+        | "CHAPLAINCY_101"
+        | "OATH_TAKING";
+    } | null;
+  } | null;
 }
 
 export interface AuthSuccessResponse {

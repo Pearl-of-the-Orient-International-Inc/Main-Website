@@ -110,3 +110,13 @@ export function saveDraft(
     // Ignore quota and serialization failures.
   }
 }
+
+export function clearDraft(storageKey: string): void {
+  if (typeof window === "undefined") return;
+
+  try {
+    localStorage.removeItem(storageKey);
+  } catch {
+    // Ignore storage failures.
+  }
+}
