@@ -202,7 +202,7 @@ export function StepPersonalDetails({
             placeholder="e.g. Juan"
           />
         </Field>
-        <Field label="Middle name" className="sm:col-span-3">
+        <Field label="Middle name" className="sm:col-span-2">
           <Input
             value={form.middleInitial}
             onChange={(e) => updateFieldAction("middleInitial", e.target.value)}
@@ -216,7 +216,7 @@ export function StepPersonalDetails({
             placeholder="e.g. Dela Cruz"
           />
         </Field>
-        <Field label="Extension name" className="sm:col-span-1">
+        <Field label="Ext. name" className="sm:col-span-2">
           <Input
             value={form.extensionName}
             onChange={(e) => updateFieldAction("extensionName", e.target.value)}
