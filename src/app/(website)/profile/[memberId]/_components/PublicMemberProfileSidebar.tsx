@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import { BadgeCheck, Building2, MapPinned, ShieldCheck } from "lucide-react";
@@ -11,7 +12,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { formatDate, formatEnumLabel, type PublicMember } from "./public-member-profile.shared";
+import { formatEnumLabel, type PublicMember } from "./public-member-profile.shared";
 
 type Props = {
   member: PublicMember;
@@ -65,32 +66,27 @@ export function PublicMemberProfileSidebar({
             </div>
           </div>
 
-          <div className="mt-5 grid gap-3 text-sm text-green-50/90 sm:grid-cols-2">
-            <div className="border border-white/10 bg-white/5 p-3">
-              <p className="text-xs uppercase text-green-200/75">
-                Member ID
+          <div className="relative mt-5 overflow-hidden border border-white/10">
+            <img
+              src="https://images.pexels.com/photos/7654193/pexels-photo-7654193.jpeg"
+              alt="Public verification"
+              className="h-44 w-full object-cover"
+            />
+            <div className="absolute inset-0 bg-linear-to-t from-[#032a0d]/85 via-[#032a0d]/25 to-transparent" />
+
+            <div className="absolute right-4 bottom-4 left-4">
+              <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1.5 backdrop-blur-md">
+                <ShieldCheck className="size-4 text-green-300" />
+                <span className="text-[11px] font-semibold tracking-wide text-white">
+                  Verified Public Record
+                </span>
+              </div>
+              <p className="mt-3 text-sm font-medium text-white">
+                {member.churchAffiliation || fullName}
               </p>
-              <p className="mt-2 font-semibold">{member.uniqueId || "N/A"}</p>
-            </div>
-            <div className="border border-white/10 bg-white/5 p-3">
-              <p className="text-xs uppercase text-green-200/75">
-                Badge number
+              <p className="mt-1 text-xs text-green-100/85">
+                {currentRole}
               </p>
-              <p className="mt-2 font-semibold">{member.badgeNumber || "N/A"}</p>
-            </div>
-            <div className="border border-white/10 bg-white/5 p-3">
-              <p className="text-xs uppercase text-green-200/75">
-                Member type
-              </p>
-              <p className="mt-2 font-semibold">
-                {formatEnumLabel(member.memberType)}
-              </p>
-            </div>
-            <div className="border border-white/10 bg-white/5 p-3">
-              <p className="text-xs uppercase text-green-200/75">
-                Application date
-              </p>
-              <p className="mt-2 font-semibold">{formatDate(member.createdAt)}</p>
             </div>
           </div>
         </div>
