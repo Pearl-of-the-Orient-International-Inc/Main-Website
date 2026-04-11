@@ -58,6 +58,10 @@ export function OnboardingStepIdGeneration({ uniqueId, onContinueAction }: Props
     const fullName = currentUser?.name?.trim();
     return fullName || fallback;
   }, [currentUser]);
+  const qrFileBaseName = useMemo(
+    () => buildQrFileBaseNameFromFullName(certificateRecipient, memberUniqueId),
+    [certificateRecipient, memberUniqueId],
+  );
 
   const certificateDateParts = new Intl.DateTimeFormat("en-PH", {
     timeZone: "Asia/Manila",
@@ -187,7 +191,7 @@ export function OnboardingStepIdGeneration({ uniqueId, onContinueAction }: Props
         throw new Error("Profile URL is not ready yet.");
       }
 
-      const qrFile = dataUrlToFile(qrDataUrl, `qr-${memberUniqueId}.png`);
+      const qrFile = dataUrlToFile(qrDataUrl, `${qrFileBaseName}.png`);
       const certificateFile = new File(
         [certificateBlob],
         `certificate-${memberUniqueId}.pdf`,
@@ -487,4 +491,25 @@ export function OnboardingStepIdGeneration({ uniqueId, onContinueAction }: Props
       </aside>
     </div>
   );
+}
+
+function buildQrFileBaseNameFromFullName(fullName: string, idNumber: string) {
+  const parts = fullName.trim().split(/\s+/).filter(Boolean);
+  const firstName = parts[0] ?? "Member";
+  const lastName = parts.length > 1 ? parts[parts.length - 1] : firstName;
+
+  return [
+    sanitizeFileNameSegment(lastName),
+    sanitizeFileNameSegment(firstName),
+    sanitizeFileNameSegment(idNumber),
+  ]
+    .filter(Boolean)
+    .join("-");
+}
+
+function sanitizeFileNameSegment(value: string) {
+  return value
+    .trim()
+    .replace(/[^a-zA-Z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }

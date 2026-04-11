@@ -17,6 +17,7 @@ export interface PublicMemberProfileResponse {
     lastName: string;
     extensionName: string | null;
     churchAffiliation: string | null;
+    churchAddress: string | null;
     currentPositionRole: string | null;
     currentPositionRoleOther: string | null;
     nationality: string | null;
@@ -26,6 +27,8 @@ export interface PublicMemberProfileResponse {
     barangay: string | null;
     preferredBranchOther: string | null;
     skillsTalents: string | null;
+    elementarySchool: string | null;
+    secondarySchool: string | null;
     tertiaryCollege: string | null;
     postGraduateStudies: string | null;
     createdAt: string;

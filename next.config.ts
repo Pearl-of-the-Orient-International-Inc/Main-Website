@@ -11,7 +11,19 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
+        hostname: "res.cloudinary.com",
+      },
+      {
+        protocol: "https",
         hostname: "scontent.fmnl19-1.fna.fbcdn.net",
+      },
+      {
+        protocol: "https",
+        hostname: "utfs.io",
+      },
+      {
+        protocol: "https",
+        hostname: "**.ufs.sh",
       },
     ],
   },

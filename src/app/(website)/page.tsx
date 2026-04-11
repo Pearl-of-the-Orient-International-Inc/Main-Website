@@ -19,6 +19,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
+import type { EventResource, PublicEventsResponse } from "@/features/events/event.types";
 
 const images = [
   "/hero-carousels/1.jpg",
@@ -30,83 +31,44 @@ const images = [
   "/hero-carousels/7.jpg",
 ];
 
-type NewsItem = {
+type HomepageEventItem = {
+  id: string;
+  title: string;
   date: string;
   image: string;
 };
 
-const items: NewsItem[] = [
-  {
-    date: "January 18, 2026",
-    image:
-      "https://scontent.fmnl19-1.fna.fbcdn.net/v/t39.30808-6/615887490_870611515816948_3404896555160632264_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHv0hRkR-4sPXpZFdBfYO-9mJHEq0Xd2wmYkcSrRd3bCV23sE9c5KC2bmB8pxLpph2avraoy5fm_HYEr840bhMF&_nc_ohc=dZcE1YHVrQgQ7kNvwHxu-pY&_nc_oc=AdnpSlNz-Xo3URXvUj9Dn2tHDnSQVB1beXgor2RC0Zjfrzt2DHu1v3H1j8kVfiSX9gY&_nc_zt=23&_nc_ht=scontent.fmnl19-1.fna&_nc_gid=Z_aaK8tTeJJ0fZSYFFYSLg&oh=00_AfpzpgDcZqqf9ZlpZl9R6ytpJoiV4VFJDG8TgpVFAutSug&oe=697C8DBF",
-  },
-  {
-    date: "December 7, 2025",
-    image:
-      "https://scontent.fmnl19-1.fna.fbcdn.net/v/t39.30808-6/594405361_839110632300370_739974065792773738_n.jpg?_nc_cat=101&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEqQEl8IgLsVXKDZSqDvVLal6614h-lZvSXrrXiH6Vm9Cv8d93Y1MMZRN9arOAQpr6n_LmrSd8Tz6ikBAQBVzQ6&_nc_ohc=xh-yhA-E8XQQ7kNvwGE9w73&_nc_oc=Adn4aL_x3S6oFYUVLArNcNCztdUwCN-kOEY4GaSD-C2FG2rStd5stGrXnnQvjBbHiFc&_nc_zt=23&_nc_ht=scontent.fmnl19-1.fna&_nc_gid=ow-v65rH4Ns_gxroKwUzcg&oh=00_Afqq5LLVHWv288WZ4-doXkWlJ8Ya5nyPahcQ7VSKttJ1ow&oe=697C875D",
-  },
-  {
-    date: "November 7, 2025",
-    image:
-      "https://scontent.fmnl19-1.fna.fbcdn.net/v/t39.30808-6/577447591_816157864595647_6322373054462900206_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHuAlBMAn1SPnsuZPlOK26Q9xi2RSd-hAj3GLZFJ36ECHe-5Hs3_I5tyc4_K0E4nz81uSvszJrAJ5zduWlMRyFO&_nc_ohc=kpQ9581DzloQ7kNvwF7rwsy&_nc_oc=AdmOHwufq5SGMJ5M4ZcyDWevuBem5a-JTCDiu5XV5QWQmwDwdoqcMtLdehp-AhFA8CE&_nc_zt=23&_nc_ht=scontent.fmnl19-1.fna&_nc_gid=yP3wZPDmiGW976Z-RxaEqw&oh=00_AfpZHQYWu8U25TGrh-ZazsdQwSvVqUweonj1x5_2hVDfkw&oe=697C8968",
-  },
-  {
-    date: "October 31, 2025",
-    image:
-      "https://scontent.fmnl19-1.fna.fbcdn.net/v/t39.30808-6/571680760_809824721895628_4402940141947498705_n.jpg?_nc_cat=108&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeG2vew6i5Ozb1FoLD-NEwF2pp-N8fc-DV-mn43x9z4NX6H54ZJ6K2a06VZsxCc_x7WR9l30lXQH2-xXmP2eqXcY&_nc_ohc=Sddyl-sUjB4Q7kNvwEb5nZ6&_nc_oc=Admj4oxA6KJhKFG5r2qKHyc0o_askS_2c3Iv6DMDJHGeGMDeXIys2fngyFuGf6xzJLo&_nc_zt=23&_nc_ht=scontent.fmnl19-1.fna&_nc_gid=ofGwootImN8vWuImGxD9yA&oh=00_AfpDXNGvH_PatJodeSGTe4Q__KZKTXFKGKr32p-FFpTodg&oe=697C85C6",
-  },
-  {
-    date: "October 31, 2025",
-    image:
-      "https://scontent.fmnl19-1.fna.fbcdn.net/v/t39.30808-6/571487378_809798511898249_9139413770376307687_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeF9FGyAHPy15rPgWHRHU8e1B1tAbktZiWIHW0BuS1mJYs9avvUgPATjNskOLwkxI8oNR0x4sqdfdiQykOwPAm6H&_nc_ohc=8KyeQI0L9O8Q7kNvwGPmqo5&_nc_oc=Adn3iZQS2hPa-8f6Fwodoq-XEIhButQ151R7LN1CjQ5brJ_6NLi42Jq8wZwLMtSKgMM&_nc_zt=23&_nc_ht=scontent.fmnl19-1.fna&_nc_gid=wChs1OjcP7BvzNXx5Gj8PQ&oh=00_Afqm4bZ55a7t7jsllXtQs-beXlKtik72L_-hfXJJ-LosKQ&oe=697C968D",
-  },
-  {
-    date: "October 20, 2025",
-    image:
-      "https://scontent.fmnl19-1.fna.fbcdn.net/v/t39.30808-6/564584977_801026729442094_5213524547290418868_n.jpg?_nc_cat=111&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeEn-pWbXbMXr14z7nTJ1odexb6ohmZZGI3FvqiGZlkYjRO2U20zuPNkDAjD0KDCTeDKp6kwgHb95tXfMD6Wvpds&_nc_ohc=ru46HUtkZhIQ7kNvwH9jKZh&_nc_oc=Admy8bsw9F7WyF6fh2YZQ_7YKtSnbo2PeO6M03xAVfJ0Fi-8WbIGAuZKnIJSZyfumxs&_nc_zt=23&_nc_ht=scontent.fmnl19-1.fna&_nc_gid=jsgh6gcIO4A6h4N8lnyLFQ&oh=00_AfoZUYVDeyywTBd7v8VRv_kAe740YGMicCHAjYu2uVtoYA&oe=697C9860",
-  },
-  {
-    date: "October 7, 2025",
-    image:
-      "https://scontent.fmnl19-1.fna.fbcdn.net/v/t39.30808-6/557204022_788704800674287_8552116038241307771_n.jpg?_nc_cat=103&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFdjiXq69e84UnQsunUU2f2dy8gHMtcH-V3LyAcy1wf5URiupjDephrPi2A-jc265Q0afYjmvgoAEcXxQEw9ZjJ&_nc_ohc=kV0AVK3V_QoQ7kNvwFNjHbj&_nc_oc=AdkL_xPzKM8855zvaQPaWHu9NiDR2cy1xRWxmUe2Dnu4WDILDVVBkPyeQD1spWcwlWc&_nc_zt=23&_nc_ht=scontent.fmnl19-1.fna&_nc_gid=iy-62l80ulFKM84KKgfllQ&oh=00_Afo-D2y_VSZ-75_FHQYmO2zRIgei73v7FUjV4DJmXfShNA&oe=697C9456",
-  },
-  {
-    date: "September 29, 2025",
-    image:
-      "https://scontent.fmnl19-1.fna.fbcdn.net/v/t39.30808-6/555822828_781725571372210_8791148310997938907_n.jpg?_nc_cat=106&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeF5Pxt8poyDcs7dihQXziEThJsBhP7NMNWEmwGE_s0w1elAN8hqDkc-vgrJeywVAPgUaMl7C3D3r7snkZ0HNKxC&_nc_ohc=KOQzUjRWXj8Q7kNvwHUQQ99&_nc_oc=AdkIWBPJ7K9I2GkMZxKM9jHORm8_DyEGccL6zKfGC0Kbk-uNheoE6xpOKrQniK1qV8I&_nc_zt=23&_nc_ht=scontent.fmnl19-1.fna&_nc_gid=Z4jpDEiKpXcXF56t4OI6bA&oh=00_AfpIiQI0-1bZSsZxR3KlNuDilKkr2Vs7G_J4xzpt6t6LWA&oe=697C7FE9",
-  },
-  {
-    date: "September 13, 2025",
-    image:
-      "https://scontent.fmnl19-1.fna.fbcdn.net/v/t39.30808-6/545576469_768259972718770_1757879799856552116_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeG_ysL-_b52FmSnPEehqGN75CIPHS3eqIzkIg8dLd6ojKX8-LYXZWbM8Hz_jea4LtFROP7iiICgo-SE_nqA5tv8&_nc_ohc=F-MMVC36-doQ7kNvwFdhMtz&_nc_oc=Adn5qObdeUI3B8XnUKaT2pqGcr_TTGNa0j0tA_KPPdWmLdYPP6O-dbT29_umae1hzTI&_nc_zt=23&_nc_ht=scontent.fmnl19-1.fna&_nc_gid=i6tOuNeHJfJnRrapevL0_Q&oh=00_Afrq7nrucgStWDdYt7owD5VRjwie3X1Dfjorjo60qZ-7pg&oe=697C74D2",
-  },
-  {
-    date: "August 29, 2025",
-    image:
-      "https://scontent.fmnl19-1.fna.fbcdn.net/v/t39.30808-6/539318544_756493890562045_1312984958528056726_n.jpg?_nc_cat=110&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFdVZOZhkjRFtIsk-SI3ZEUKjpuc5D9NWgqOm5zkP01aGdffx0D1oa5gpThsXt2LcvmWADCKLm5ppzw0mEHGdev&_nc_ohc=IrOcqJ3NFfAQ7kNvwGFFqn3&_nc_oc=AdnvFz3ElikNFFNNuxlo43i_2_HwMddg6RCrvR4TiTekp2HvtExq_z4H9hRFpfclQvM&_nc_zt=23&_nc_ht=scontent.fmnl19-1.fna&_nc_gid=FHEoITtCfTdXKTrcWxvEVw&oh=00_AfqNGv_i3bBlIaWe-1mXm1sNnUbQDDJnpraJk2VfWBCCWA&oe=697C9535",
-  },
-  {
-    date: "August 21, 2025",
-    image:
-      "https://scontent.fmnl19-1.fna.fbcdn.net/v/t39.30808-6/537183918_749875874557180_5059120973741787985_n.jpg?_nc_cat=107&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFDxmkoNojklOBZB-FQ6xxNBYp1_RffXq8FinX9F99er2D5Lq9w3MiXJq4C89gXUG4pgYjBUf8v3ojgD3nYGMYW&_nc_ohc=zGsmK3sr_r4Q7kNvwG4yA5A&_nc_oc=AdlrA9t5fI8TxtBI2drE5mVg-iAHurzshDhzxBUCDV-xEsAVgdNVJ5d8nqE6sQ8o9MM&_nc_zt=23&_nc_ht=scontent.fmnl19-1.fna&_nc_gid=utGDWaShctb0GNrhF-JpoA&oh=00_AfpRLHabwj4OW8hEh0oW0cfJyAR-wCgnoQVHDjGbvTLG2A&oe=697C9720",
-  },
-  {
-    date: "August 20, 2025",
-    image:
-      "https://scontent.fmnl19-1.fna.fbcdn.net/v/t39.30808-6/535881331_749046267973474_4535553279498715619_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeFPfvVjjfcxm-PwappYKZoAPdtC18NB4YE920LXw0Hhgbcwesrb6zyHksmExDOV6YhSXWirpTZb4KPWZSLAh2h_&_nc_ohc=6Zl2Isjn67UQ7kNvwFqvRkh&_nc_oc=AdkmtYEUO_m42QrvSu2TBRsPayOz_2uVmfDHv2lkxrGqcIVjSedJ6Zvv-rdgsveLv_Y&_nc_zt=23&_nc_ht=scontent.fmnl19-1.fna&_nc_gid=yuY3bwjZQmQgniZ-AAzF0A&oh=00_Afq6LDu1tiQUV5YknDfbk9a2dhOOhdisqEar9YpLJ9vIIA&oe=697C9A43",
-  },
-  {
-    date: "August 15, 2025",
-    image:
-      "https://scontent.fmnl19-1.fna.fbcdn.net/v/t39.30808-6/534230162_745234851687949_5773957815865136260_n.jpg?_nc_cat=100&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeHmUMizCXdOvHAuhcJq1vyvcfGHBjy2yVZx8YcGPLbJVoJYFN49wpTk-txUbUwONMEOM2XNqyH7N3ANdG7WAdR_&_nc_ohc=geGCNJdWCRMQ7kNvwE_egA7&_nc_oc=Adm3UB_BVzZ5B86ZXQDQ5AV9DmzR6uWOOS-n2Hw9hks-0Q-2T4mdKvOvwzbZL-yxYj0&_nc_zt=23&_nc_ht=scontent.fmnl19-1.fna&_nc_gid=TDOzi5xR1f4mZAV6WY4UPA&oh=00_AfqEie1Cbxrv-lnRAmQHSW4as7kj0yxcXv_OCBUFCIr_wQ&oe=697C88C2",
-  },
-  {
-    date: "August 6, 2025",
-    image:
-      "https://scontent.fmnl19-1.fna.fbcdn.net/v/t39.30808-6/519406969_737793909098710_5777518618617149127_n.jpg?_nc_cat=109&ccb=1-7&_nc_sid=833d8c&_nc_eui2=AeGs5PF_SDR_dHY4PM40D6MkdCVSjSVX_Sl0JVKNJVf9KXbFE9oV1CTUS90u_ODtId3zRkBngYy5eg7J6uFQqrhz&_nc_ohc=sStspT6_V9AQ7kNvwF8P5vc&_nc_oc=AdkwNHXXDnhSD-2FomoEhCA9PHJ5b7D8Ari6VVXe5QQikPwLuG6B6Naw5d3EqhSUiBo&_nc_zt=23&_nc_ht=scontent.fmnl19-1.fna&_nc_gid=1uonoilgpm-Bo_VxDoS7Hg&oh=00_Afq2U0b0JAJYg1bK_9pE1glUpMbBeJfdN0xPjJvC5AouXg&oe=697C9AA4",
-  },
-];
+const apiBaseUrl =
+  process.env.NODE_ENV === "development"
+    ? process.env.NEXT_PUBLIC_API_BASE_URL_DEV
+    : process.env.NEXT_PUBLIC_API_BASE_URL_PROD;
+
+async function getHomepageEvents(): Promise<HomepageEventItem[]> {
+  if (!apiBaseUrl) {
+    throw new Error("API base URL is not configured.");
+  }
+
+  try {
+    const response = await fetch(
+      `${apiBaseUrl}/events/public?limit=16&sortBy=startsAt&sortOrder=desc`,
+      {
+        next: { revalidate: 300 },
+      },
+    );
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload = (await response.json()) as PublicEventsResponse;
+
+    return payload.data
+      .filter((event) => Boolean(event.thumbnailUrl))
+      .map(mapEventToHomepageItem);
+  } catch {
+    return [];
+  }
+}
 
 const chaplaincyRoadmap = [
   {
@@ -266,11 +228,9 @@ const chaplaincyRoadmap = [
   },
 ];
 
-export default function Page() {
-  const groupedItems: NewsItem[][] = [];
-  for (let i = 0; i < items.length; i += 2) {
-    groupedItems.push(items.slice(i, i + 2));
-  }
+export default async function Page() {
+  const items = await getHomepageEvents();
+  const carouselColumns = buildEventColumns(items);
 
   return (
     <main className="min-h-screen">
@@ -292,11 +252,13 @@ export default function Page() {
 
               The best way to find yourself is to lose in the service of others
             </h1>
-            <Button
+            <Button asChild
               size="lg"
               className="mt-4 sm:mt-5 bg-[#032a0d] text-white rounded-full items-center flex hover:bg-[#032a0d]/95 text-sm sm:text-base"
             >
-              Become a member <ArrowRightIcon className="size-4 sm:size-5" />
+              <Link href="/become-a-member" target="_blank">
+                Become a member <ArrowRightIcon className="size-4 sm:size-5" />
+              </Link>
             </Button>
           </div>
 
@@ -520,43 +482,51 @@ export default function Page() {
         }}
       >
         <div className="relative h-full bg-white py-4 sm:py-5 px-2 sm:px-4">
-          <Carousel
-            opts={{
-              align: "start",
-              loop: true,
-            }}
-            className="relative w-full"
-          >
-            {/* LEFT FULL-HEIGHT ARROW */}
-            <div className="absolute left-0 top-0 z-10 h-full w-4 sm:w-5 bg-white flex items-center justify-center">
-              <CarouselPrevious className="static bg-white hover:bg-white shadow-none rounded-none ml-2 sm:ml-4 md:ml-10 size-8 sm:size-10 md:size-12 border-none" />
-            </div>
+          {carouselColumns.length > 0 ? (
+            <Carousel
+              opts={{
+                align: "start",
+                loop: true,
+              }}
+              className="relative w-full"
+            >
+              <div className="absolute left-0 top-0 z-10 h-full w-4 sm:w-5 bg-white flex items-center justify-center">
+                <CarouselPrevious className="static bg-white hover:bg-white shadow-none rounded-none ml-2 sm:ml-4 md:ml-10 size-8 sm:size-10 md:size-12 border-none" />
+              </div>
 
-            {/* RIGHT FULL-HEIGHT ARROW */}
-            <div className="absolute right-0 top-0 z-10 h-full w-4 sm:w-5 bg-white flex items-center justify-center">
-              <CarouselNext className="static bg-white hover:bg-white shadow-none rounded-none mr-2 sm:mr-4 md:mr-10 size-8 sm:size-10 md:size-12 border-none" />
-            </div>
+              <div className="absolute right-0 top-0 z-10 h-full w-4 sm:w-5 bg-white flex items-center justify-center">
+                <CarouselNext className="static bg-white hover:bg-white shadow-none rounded-none mr-2 sm:mr-4 md:mr-10 size-8 sm:size-10 md:size-12 border-none" />
+              </div>
 
-            {/* CONTENT */}
-            <CarouselContent className="-ml-2 md:-ml-4">
-              {groupedItems.map((group, groupIndex) => (
-                <CarouselItem
-                  key={groupIndex}
-                  className="pl-2 md:pl-4 basis-full md:basis-1/3 lg:basis-1/4"
-                >
-                  {groupIndex % 2 === 0 ? (
-                    <SingleCard item={group[0]} />
-                  ) : (
-                    <div className="flex flex-col h-full">
-                      {group.map((item, i) => (
-                        <StackedCard key={i} item={item} />
-                      ))}
-                    </div>
-                  )}
-                </CarouselItem>
-              ))}
-            </CarouselContent>
-          </Carousel>
+              <CarouselContent className="-ml-2 md:-ml-4">
+                {carouselColumns.map((column) => (
+                  <CarouselItem
+                    key={column.id}
+                    className="pl-2 md:pl-4 basis-full md:basis-1/3 lg:basis-1/4"
+                  >
+                    {column.layout === "single" ? (
+                      <SingleCard item={column.items[0]} />
+                    ) : (
+                      <div className="flex flex-col h-full">
+                        {column.items.map((item) => (
+                          <StackedCard key={item.id} item={item} />
+                        ))}
+                      </div>
+                    )}
+                  </CarouselItem>
+                ))}
+              </CarouselContent>
+            </Carousel>
+          ) : (
+            <div className="flex min-h-80 items-center justify-center border border-dashed border-[#032a0d]/20 bg-[#032a0d]/3 px-6 text-center">
+              <div>
+                <p className="font-serif text-2xl text-[#032a0d]">No events yet</p>
+                <p className="mt-2 text-sm text-[#032a0d]/70">
+                  Public events from the database will appear here once they are published.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
         <Button
           size="lg"
@@ -721,21 +691,21 @@ export default function Page() {
 }
 
 interface SingleCardProps {
-  item: NewsItem;
+  item: HomepageEventItem;
 }
 
 interface StackedCardProps {
-  item: NewsItem;
+  item: HomepageEventItem;
 }
 
 const SingleCard = ({ item }: SingleCardProps) => (
   <div className="group relative h-full bg-white border overflow-hidden">
-    <div className="relative h-200 w-full overflow-hidden bg-[#032a0d]/5">
+    <div className="relative h-82 w-full overflow-hidden bg-[#032a0d]/5">
       <Image
         src={item.image}
-        alt={item.date}
+        alt={item.title}
         fill
-        className="object-cover group-hover:scale-105 transition-transform duration-300"
+        className="object-contain group-hover:scale-105 transition-transform duration-300"
       />
 
       <div
@@ -751,7 +721,9 @@ const SingleCard = ({ item }: SingleCardProps) => (
         <h3 className="text-2xl sm:text-3xl md:text-4xl font-bold text-white">
           {item.date}
         </h3>
-        <p className="mt-2 text-xs sm:text-sm text-zinc-100">Vol.55 No.13</p>
+        <p className="mt-2 text-xs sm:text-sm text-zinc-100 line-clamp-2">
+          {item.title}
+        </p>
       </div>
     </div>
   </div>
@@ -762,7 +734,7 @@ const StackedCard = ({ item }: StackedCardProps) => (
     <div className="relative h-100 w-full overflow-hidden bg-[#032a0d]/5">
       <Image
         src={item.image}
-        alt={item.date}
+        alt={item.title}
         fill
         className="object-cover group-hover:scale-105 transition-transform duration-300"
       />
@@ -780,10 +752,63 @@ const StackedCard = ({ item }: StackedCardProps) => (
         <h3 className="text-xl sm:text-2xl md:text-3xl font-bold text-white">
           {item.date}
         </h3>
-        <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-zinc-100">
-          Vol.55 No.13
+        <p className="mt-1 sm:mt-2 text-xs sm:text-sm text-zinc-100 line-clamp-2">
+          {item.title}
         </p>
       </div>
     </div>
   </div>
 );
+
+function mapEventToHomepageItem(event: EventResource): HomepageEventItem {
+  return {
+    id: event.id,
+    title: event.name,
+    date: formatEventDate(event.startsAt),
+    image: event.thumbnailUrl,
+  };
+}
+
+function formatEventDate(value: string) {
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "Asia/Manila",
+  }).format(new Date(value));
+}
+
+function buildEventColumns(items: HomepageEventItem[]) {
+  const columns: Array<{
+    id: string;
+    layout: "single" | "stacked";
+    items: HomepageEventItem[];
+  }> = [];
+
+  let index = 0;
+  let useSingleLayout = true;
+
+  while (index < items.length) {
+    const remaining = items.length - index;
+
+    if (useSingleLayout || remaining === 1) {
+      columns.push({
+        id: `single-${items[index].id}`,
+        layout: "single",
+        items: [items[index]],
+      });
+      index += 1;
+    } else {
+      columns.push({
+        id: `stacked-${items[index].id}`,
+        layout: "stacked",
+        items: items.slice(index, index + Math.min(2, remaining)),
+      });
+      index += Math.min(2, remaining);
+    }
+
+    useSingleLayout = !useSingleLayout;
+  }
+
+  return columns;
+}
