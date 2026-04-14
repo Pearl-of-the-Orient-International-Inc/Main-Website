@@ -58,12 +58,12 @@ export const Navbar = () => {
               <Image
                 src="/main/logo.png"
                 alt="Site seal"
-                width={100}
-                height={100}
+                width={120}
+                height={120}
                 priority
-                className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-25 xl:h-25"
+                className="lg:size-32 size-20"
               />
-              <div className="mt-1 sm:mt-2 text-xs sm:text-sm md:text-base lg:text-lg xl:text-2xl font-serif px-2">
+              <div className="mt-3 text-xs sm:text-sm md:text-base lg:text-lg xl:text-2xl font-serif px-2">
                 PEARL OF THE ORIENT INTERNATIONAL AUXILARY
               </div>
               <div className="font-serif text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-xl px-2">
@@ -133,9 +133,9 @@ export const Navbar = () => {
               width={100}
               height={100}
               priority
-              className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-25 xl:h-25"
+              className="lg:size-32 size-20"
             />
-            <div className="mt-1 sm:mt-2 text-xs sm:text-sm md:text-base lg:text-lg xl:text-2xl font-serif px-2">
+            <div className="mt-3 text-xs sm:text-sm md:text-base lg:text-lg xl:text-2xl font-serif px-2">
               PEARL OF THE ORIENT INTERNATIONAL AUXILARY
             </div>
             <div className="font-serif text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-xl px-2">

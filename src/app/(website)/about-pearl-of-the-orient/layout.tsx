@@ -90,8 +90,7 @@ const AboutLayout = ({ children }: { children: ReactNode }) => {
             About Pearl of the Orient
           </h1>
           <blockquote className="italic border-l-3 pl-3 mt-5 text-sm sm:text-base">
-            &quot;The best way to find yourself is to lose in the service of
-            others.&quot;
+            &quot;The Best Way to Find Yourself Is to Lose Yourself in the Service of Others.&quot;
           </blockquote>
         </div>
       </section>

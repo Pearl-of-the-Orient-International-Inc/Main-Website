@@ -248,9 +248,9 @@ export default async function Page() {
               Join a community devoted to spiritual growth, leadership
               development, and kingdom service
             </div>
-            <h1 className="mt-6 sm:mt-8 md:mt-10 font-serif text-2xl sm:text-3xl capitalize md:text-4xl lg:text-5xl xl:text-6xl px-4">
+            <h1 className="mt-12 font-serif text-2xl sm:text-3xl capitalize md:text-4xl lg:text-5xl xl:text-6xl px-4">
 
-              The best way to find yourself is to lose in the service of others
+              The Best Way to Find Yourself Is to Lose Yourself in the Service of Others
             </h1>
             <Button asChild
               size="lg"
