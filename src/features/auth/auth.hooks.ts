@@ -31,6 +31,14 @@ export const useCurrentUserQuery = () =>
     refetchOnMount: "always",
   });
 
+export const useOptionalCurrentUserQuery = () =>
+  useQuery({
+    queryKey: ["auth", "current-user", "optional"],
+    queryFn: authApi.getOptionalCurrentUser,
+    staleTime: 0,
+    refetchOnMount: "always",
+  });
+
 export const useLogoutMutation = () => {
   const queryClient = useQueryClient();
 

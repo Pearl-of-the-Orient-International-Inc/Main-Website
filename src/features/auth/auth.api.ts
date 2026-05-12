@@ -3,9 +3,11 @@ import { authStore } from "@/lib/auth-store";
 import type {
   AuthSuccessResponse,
   UserEnvelopeResponse,
+  UserPublic,
   VerifyEmailResponse,
 } from "@/lib/api-types";
 import type { LoginRequest, RegisterRequest, VerifyEmailRequest } from "./auth.types";
+import axios from "axios";
 
 export async function login(payload: LoginRequest) {
   const { data } = await api.post<AuthSuccessResponse>("/auth/login", payload);
@@ -35,6 +37,21 @@ export async function verifyEmail(payload: VerifyEmailRequest) {
 export async function getCurrentUser() {
   const { data } = await api.get<UserEnvelopeResponse>("/users/current");
   return data.user;
+}
+
+export async function getOptionalCurrentUser(): Promise<UserPublic | null> {
+  try {
+    return await getCurrentUser();
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const status = error.response?.status;
+      if (status === 401 || status === 403) {
+        return null;
+      }
+    }
+
+    throw error;
+  }
 }
 
 export async function logout() {

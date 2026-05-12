@@ -63,3 +63,56 @@ export interface VerifyEmailResponse {
 export interface UserEnvelopeResponse {
   user: UserPublic;
 }
+
+export interface PublicDirectoryProvinceItem {
+  province: string;
+  memberCount: number;
+  municipalityCount: number;
+  barangayCount: number;
+  municipalities: PublicDirectoryMunicipalityItem[];
+}
+
+export interface PublicDirectoryBarangayItem {
+  barangay: string;
+  memberCount: number;
+}
+
+export interface PublicDirectoryMunicipalityItem {
+  municipalityCity: string;
+  memberCount: number;
+  barangayCount: number;
+  barangays: PublicDirectoryBarangayItem[];
+}
+
+export interface PublicDirectoryRegionLocation {
+  region: string;
+  memberCount: number;
+  provinceCount: number;
+  municipalityCount: number;
+  barangayCount: number;
+  provinces: PublicDirectoryProvinceItem[];
+}
+
+export interface PublicDirectoryLocationsData {
+  summary: {
+    totalMembers: number;
+    membersWithRegion: number;
+    regionsRepresented: number;
+    provincesRepresented: number;
+    municipalitiesRepresented: number;
+    barangaysRepresented: number;
+  };
+  headquarters: {
+    name: string;
+    address: string;
+    latitude: number;
+    longitude: number;
+  };
+  regionLocations: PublicDirectoryRegionLocation[];
+}
+
+export interface PublicDirectoryLocationsResponse {
+  code: string;
+  message: string;
+  data: PublicDirectoryLocationsData;
+}

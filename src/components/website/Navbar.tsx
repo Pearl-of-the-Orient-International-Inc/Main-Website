@@ -38,7 +38,7 @@ export const Navbar = () => {
 
   if (pathname !== "/") {
     return (
-      <header className={`fixed inset-x-0 top-0 z-50 text-white h-14 sm:h-16`}>
+      <header className={`fixed inset-x-0 top-0 z-999 text-white h-14 sm:h-16`}>
         {/* ::before pseudo element - Extended gradient background */}
         <div
           className={`pointer-events-none absolute left-0 top-0 w-full h-full bg-[#032a0d]`}

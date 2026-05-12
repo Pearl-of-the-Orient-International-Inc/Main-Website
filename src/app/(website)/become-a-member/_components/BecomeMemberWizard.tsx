@@ -23,7 +23,7 @@ import {
   toApiError,
   useApplyMemberMutation,
 } from "@/features/member/member.hooks";
-import { useCurrentUserQuery } from "@/features/auth/auth.hooks";
+import { useOptionalCurrentUserQuery } from "@/features/auth/auth.hooks";
 import type { ApplyMemberRequest } from "@/features/member/member.types";
 import { getBarangays } from "@/constants/barangay";
 import { getMunicipalities } from "@/constants/municipality";
@@ -367,7 +367,7 @@ const mapFormToApplyPayload = (
 export function BecomeMemberWizard() {
   const router = useRouter();
   const applyMemberMutation = useApplyMemberMutation();
-  const { data: currentUser } = useCurrentUserQuery();
+  const { data: currentUser } = useOptionalCurrentUserQuery();
   const existingApplication = currentUser?.memberProfile;
 
   const handleSubmit = async (form: ApplicationFormState) => {
