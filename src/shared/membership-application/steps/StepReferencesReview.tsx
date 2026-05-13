@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import SignatureInput from "@/components/ui/signature-input";
 import { Field } from "../Field";
 import type { ApplicationFieldErrors, ApplicationFormState } from "../types";
-import { readFileAsDataUrl } from "../utils";
+import { readImageFileAsOptimizedDataUrl } from "../utils";
 
 export function StepReferencesReview({
   form,
@@ -45,7 +45,7 @@ export function StepReferencesReview({
     if (!file || !file.type.startsWith("image/")) return;
 
     try {
-      const signatureDataUrl = await readFileAsDataUrl(file);
+      const signatureDataUrl = await readImageFileAsOptimizedDataUrl(file);
       handleSignatureChangeAction(signatureDataUrl);
     } catch {
       // Keep the current signature if file reading fails.
