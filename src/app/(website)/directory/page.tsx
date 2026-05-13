@@ -13,11 +13,11 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { DirectoryRegionMap } from "./_components/directory-region-map";
 import type {
   PublicDirectoryLocationsData,
   PublicDirectoryLocationsResponse,
 } from "@/lib/api-types";
+import { DirectoryRegionMapClient } from "./_components/directory-region-map-client";
 
 const apiBaseUrl =
   process.env.NODE_ENV === "development"
@@ -169,7 +169,7 @@ export default async function DirectoryPage() {
               </div>
               <div className="directory-map h-112 w-full bg-[#e9efe7] sm:h-136">
                 {directoryData ? (
-                  <DirectoryRegionMap data={directoryData} />
+                  <DirectoryRegionMapClient data={directoryData} />
                 ) : (
                   <div className="flex h-full items-center justify-center px-6 text-center">
                     <div>
