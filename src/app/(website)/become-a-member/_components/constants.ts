@@ -163,7 +163,7 @@ export const onboardingSteps: {
   {
     id: "payment_checkout",
     title: "Payment / checkout",
-    description: "Submit payment or promissory note.",
+    description: "Submit payment proof.",
   },
   {
     id: "online_interview",

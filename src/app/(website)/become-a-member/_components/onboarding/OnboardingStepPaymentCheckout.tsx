@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { Info } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -39,8 +38,6 @@ type PaymentBrand = {
 type StoredPaymentDraft = {
   method: PaymentMethod | "";
   proofDataUrl: string;
-  promissoryChecked: boolean;
-  promissoryDataUrl: string;
 };
 
 const PAYMENT_FEE_PHP = 500;
@@ -150,27 +147,17 @@ export function OnboardingStepPaymentCheckout({
   const [draft, setDraft] = useState<StoredPaymentDraft>({
     method: "",
     proofDataUrl: "",
-    promissoryChecked: false,
-    promissoryDataUrl: "",
   });
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod | null>(null);
   const [isMethodDialogOpen, setIsMethodDialogOpen] = useState(false);
-  const [uploading, setUploading] = useState<"proof" | "promissory" | null>(
-    null,
-  );
+  const [uploading, setUploading] = useState<"proof" | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const isCashSelected = draft.method === "cash";
   const hasPaymentProof = Boolean(draft.proofDataUrl);
-  const hasPromissory =
-    draft.promissoryChecked && Boolean(draft.promissoryDataUrl);
-  const canContinue = Boolean(draft.method) && (
-    isCashSelected
-      ? (!draft.promissoryChecked || hasPromissory)
-      : (draft.promissoryChecked ? hasPromissory : hasPaymentProof)
-  );
+  const canContinue = Boolean(draft.method) && (isCashSelected || hasPaymentProof);
 
   useEffect(() => {
     const existing = paymentCheckout?.data;
@@ -179,21 +166,16 @@ export function OnboardingStepPaymentCheckout({
     setDraft({
       method: PAYMENT_METHOD_FROM_BACKEND[existing.paymentMethod],
       proofDataUrl: existing.proofOfPaymentUrl ?? "",
-      promissoryChecked: existing.isPromissoryNote ?? false,
-      promissoryDataUrl: existing.promissoryNoteUrl ?? "",
     });
   }, [paymentCheckout]);
 
   const updateDraft = (next: Partial<StoredPaymentDraft>) =>
     setDraft((prev) => ({ ...prev, ...next }));
 
-  const handleFileUpload = async (
-    kind: "proof" | "promissory",
-    file: File | null,
-  ) => {
+  const handleFileUpload = async (file: File | null) => {
     if (!file) return;
     setError(null);
-    setUploading(kind);
+    setUploading("proof");
     try {
       const uploaded = await uploadPaymentDocumentMutation.mutateAsync(file);
       const dataUrl = uploaded?.ufsUrl || uploaded?.url;
@@ -202,11 +184,7 @@ export function OnboardingStepPaymentCheckout({
         throw new Error("Upload did not return a file URL.");
       }
 
-      if (kind === "proof") {
-        updateDraft({ proofDataUrl: dataUrl });
-      } else {
-        updateDraft({ promissoryDataUrl: dataUrl, promissoryChecked: true });
-      }
+      updateDraft({ proofDataUrl: dataUrl });
       toast({
         title: "File uploaded",
         description: "Payment document uploaded successfully.",
@@ -229,19 +207,14 @@ export function OnboardingStepPaymentCheckout({
         throw new Error("Please select a payment method.");
       }
 
-      if (method !== "cash" && !draft.promissoryChecked && !draft.proofDataUrl) {
+      if (method !== "cash" && !draft.proofDataUrl) {
         throw new Error("Attach proof of payment for non-cash payment method.");
-      }
-
-      if (draft.promissoryChecked && !draft.promissoryDataUrl) {
-        throw new Error("Attach signed promissory note before continuing.");
       }
 
       await upsertPaymentCheckoutMutation.mutateAsync({
         paymentMethod: PAYMENT_METHOD_TO_BACKEND[method],
         proofOfPaymentUrl: draft.proofDataUrl || undefined,
-        isPromissoryNote: draft.promissoryChecked,
-        promissoryNoteUrl: draft.promissoryDataUrl || undefined,
+        isPromissoryNote: false,
       });
 
       await Promise.resolve(onContinueAction());
@@ -299,8 +272,6 @@ export function OnboardingStepPaymentCheckout({
                           ...(cashSelected
                             ? {
                                 proofDataUrl: "",
-                                promissoryChecked: false,
-                                promissoryDataUrl: "",
                               }
                             : {}),
                         });
@@ -352,9 +323,7 @@ export function OnboardingStepPaymentCheckout({
                 <div className="h-px bg-black/10" />
                 <div className="w-full mt-2 max-w-4xl mx-auto min-h-50 border border-dashed bg-white dark:bg-black border-neutral-200 dark:border-neutral-800 rounded-lg">
                   <FileUpload
-                    onChange={(files) =>
-                      handleFileUpload("proof", files[0] ?? null)
-                    }
+                    onChange={(files) => handleFileUpload(files[0] ?? null)}
                   />
                   {uploading === "proof" && (
                     <span className="text-xs text-[#032a0d]/70">
@@ -365,63 +334,6 @@ export function OnboardingStepPaymentCheckout({
               </section>
             )}
 
-            <section className="space-y-3">
-              <h3 className="font-serif text-xl text-[#032a0d]">
-                Promissory Note (Alternative)
-              </h3>
-              <div className="h-px bg-black/10" />
-              <label className="flex items-center gap-2 text-sm text-[#032a0d]">
-                <Checkbox
-                  checked={draft.promissoryChecked}
-                  onCheckedChange={(checked) =>
-                    updateDraft({
-                      promissoryChecked: checked === true,
-                      promissoryDataUrl: checked === true
-                        ? draft.promissoryDataUrl
-                        : "",
-                    })
-                  }
-                />
-                I will submit a promissory note instead of immediate payment.
-              </label>
-
-              {draft.promissoryChecked && (
-                <div className="rounded border border-black/10 bg-white px-3 py-3">
-                  <p className="text-sm text-[#032a0d]">
-                    Upload signed promissory note
-                  </p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <input
-                      type="file"
-                      accept=".pdf,.jpg,.jpeg,.png"
-                      onChange={(e) =>
-                        handleFileUpload(
-                          "promissory",
-                          e.target.files?.[0] ?? null,
-                        )
-                      }
-                      className="text-xs sm:text-sm"
-                    />
-                    {uploading === "promissory" && (
-                      <span className="text-xs text-[#032a0d]/70">
-                        Uploading...
-                      </span>
-                    )}
-                    {draft.promissoryDataUrl && (
-                      <a
-                        href={draft.promissoryDataUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="text-xs text-[#032a0d] underline"
-                      >
-                        View file
-                      </a>
-                    )}
-                  </div>
-                </div>
-              )}
-            </section>
-
             {error && (
               <p className="text-sm text-red-600" role="alert">
                 {error}
@@ -430,8 +342,7 @@ export function OnboardingStepPaymentCheckout({
 
             <div className="flex flex-col gap-3 border-t border-black/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-neutral-500 sm:text-sm">
-                Continue to Online Interview after submitting payment proof or
-                promissory note.
+                Continue to Online Interview after submitting your payment proof.
               </p>
               <Button
                 type="button"
@@ -458,16 +369,16 @@ export function OnboardingStepPaymentCheckout({
                 completeLabel="Selected"
               />
               <StatusCard
-                title="Proof / Promissory"
-                complete={isCashSelected || hasPaymentProof || hasPromissory}
+                title="Proof of Payment"
+                complete={isCashSelected || hasPaymentProof}
                 pendingLabel={isCashSelected ? "Not required for cash" : "Pending"}
                 completeLabel={isCashSelected ? "Not required for cash" : "Submitted"}
               />
               <div className="flex gap-2 rounded border border-dashed border-[#032a0d]/25 bg-[#032a0d]/5 px-3 py-3 text-xs text-[#032a0d]/80">
                 <Info className="mt-0.5 size-4 shrink-0 text-[#032a0d]" />
                 <p>
-                  If you cannot pay immediately, submit a signed promissory note
-                  to continue.
+                  Promissory notes are not accepted. Please submit actual payment
+                  proof to continue.
                 </p>
               </div>
             </div>

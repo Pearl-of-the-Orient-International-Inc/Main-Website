@@ -205,6 +205,7 @@ export function StepPersonalDetails({
     setSelectedLocation(next);
     updateFieldAction("regionProvince", buildLocationSummary(next, locationCatalog));
   };
+  const today = new Date().toISOString().split("T")[0];
 
   return (
     <div className="space-y-4">
@@ -358,6 +359,7 @@ export function StepPersonalDetails({
           <Input
             type="date"
             value={form.birthday}
+            max={today}
             onChange={(event) => updateFieldAction("birthday", event.target.value)}
             aria-invalid={Boolean(fieldErrors.birthday)}
           />

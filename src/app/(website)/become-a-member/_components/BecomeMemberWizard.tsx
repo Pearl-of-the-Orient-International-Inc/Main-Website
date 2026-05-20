@@ -243,6 +243,20 @@ const getApplyPayloadValidationError = (
       emergencyCellphone: "Emergency contact mobile is required.",
     });
   }
+  const endorsedBy = form.characterReferences[0];
+  if (
+    !endorsedBy?.name.trim() ||
+    !endorsedBy.position.trim() ||
+    !endorsedBy.contactNumber.trim()
+  ) {
+    return new MembershipFormValidationError(
+      "Endorsed by name, relationship, and contact number are required.",
+      {
+        characterReferences:
+          "Endorsed by name, relationship, and contact number are required.",
+      },
+    );
+  }
 
   const location = splitRegionSummary(form.regionProvince);
   if (!location) {
@@ -274,6 +288,7 @@ const mapFormToApplyPayload = (
   const nationality = form.nationality.trim();
   const emergencyContactName = form.emergencyName.trim();
   const emergencyContactMobile = form.emergencyCellphone.trim();
+  const endorsedBy = form.characterReferences[0];
 
   if (!form.firstName.trim() || !form.lastName.trim()) return null;
   if (!form.emailAddress.trim()) return null;
@@ -281,6 +296,13 @@ const mapFormToApplyPayload = (
   if (!form.civilStatus) return null;
   if (!mobilePhoneNumber || !homeAddress || !nationality) return null;
   if (!emergencyContactName || !emergencyContactMobile) return null;
+  if (
+    !endorsedBy?.name.trim() ||
+    !endorsedBy.position.trim() ||
+    !endorsedBy.contactNumber.trim()
+  ) {
+    return null;
+  }
 
   const currentPositionRole = getFirstNonEmpty(form.position, form.positionOthers) ?? undefined;
 
@@ -402,12 +424,12 @@ export function BecomeMemberWizard() {
         variant: "success",
       });
 
-      const query = new URLSearchParams({
-        createdUser: createdUser ? "1" : "0",
-        verified: isEmailVerified ? "1" : "0",
-      });
-
-      router.push(`/become-a-member/success?${query.toString()}`);
+      const onboardingPath = "/become-a-member/onboarding";
+      router.push(
+        currentUser
+          ? onboardingPath
+          : `/sign-in?redirect=${encodeURIComponent(onboardingPath)}`,
+      );
     } catch (error) {
       const apiError = toApiError(error);
       const message =

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 
 import { useEffect, useRef } from "react";
@@ -41,7 +42,7 @@ type Props = {
 };
 
 export function OnboardingWizard({ application, onMetaChangeAction }: Props) {
-  const PRE_ORIENTATION_REQUIRED_LESSON_COUNT = 5;
+  const PRE_ORIENTATION_REQUIRED_LESSON_COUNT = 3;
   const { toast } = useToast();
   const uploadRequirementMutation = useUploadMemberRequirementMutation();
   const upsertRequirementsMutation = useUpsertMemberRequirementsMutation();
@@ -94,7 +95,13 @@ export function OnboardingWizard({ application, onMetaChangeAction }: Props) {
 
   const applyMetaUpdate = (
     update: Partial<
-      Pick<FrontendOnboardingMeta, "onboardingStep" | "requirementAttachments">
+      Pick<
+        FrontendOnboardingMeta,
+        | "onboardingStep"
+        | "requirementAttachments"
+        | "preOrientationReadingConfirmed"
+        | "preOrientationAssessmentAnswers"
+      >
     >,
   ) => {
     onMetaChangeAction({
@@ -104,6 +111,12 @@ export function OnboardingWizard({ application, onMetaChangeAction }: Props) {
       onboardingStep: update.onboardingStep ?? application.onboardingStep,
       requirementAttachments:
         update.requirementAttachments ?? application.requirementAttachments,
+      preOrientationReadingConfirmed:
+        update.preOrientationReadingConfirmed ??
+        application.preOrientationReadingConfirmed,
+      preOrientationAssessmentAnswers:
+        update.preOrientationAssessmentAnswers ??
+        application.preOrientationAssessmentAnswers,
     });
   };
 
@@ -173,7 +186,7 @@ export function OnboardingWizard({ application, onMetaChangeAction }: Props) {
     applyMetaUpdate({ onboardingStep: "pre_orientation" });
     toast({
       title: "Pre-orientation required",
-      description: "Finish all pre-orientation lessons before payment.",
+      description: "Finish the pre-orientation course before payment.",
       variant: "warning",
     });
   }, [currentOnboardingProgress, currentStepId, toast, updateOnboardingStepMutation]);
@@ -224,7 +237,7 @@ export function OnboardingWizard({ application, onMetaChangeAction }: Props) {
       applyMetaUpdate({ onboardingStep: "payment_checkout" });
       toast({
         title: "Payment requirements incomplete",
-        description: "Attach required proof or signed promissory note first.",
+        description: "Attach the required proof of payment first.",
         variant: "warning",
       });
     }
@@ -445,7 +458,10 @@ export function OnboardingWizard({ application, onMetaChangeAction }: Props) {
           initialCompletedLessonIds={
             currentOnboardingProgress?.data.preOrientationCompletedLessonIds ?? []
           }
+          initialReadingConfirmed={application.preOrientationReadingConfirmed}
+          initialAssessmentAnswers={application.preOrientationAssessmentAnswers}
           onProgressChangeAction={handlePreOrientationProgressChange}
+          onMetaProgressChangeAction={applyMetaUpdate}
           onContinueAction={handlePreOrientationContinue}
         />
       )}

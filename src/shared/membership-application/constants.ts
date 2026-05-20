@@ -37,8 +37,6 @@ export const emptyFormState: ApplicationFormState = {
   branchOfServiceOthers: "",
   characterReferences: [
     { name: "", position: "", contactNumber: "" },
-    { name: "", position: "", contactNumber: "" },
-    { name: "", position: "", contactNumber: "" },
   ],
   photoUrl: "",
   signatureUrl: "",

@@ -156,6 +156,7 @@ export function OnboardingStepChaplaincy101({
   const [activeLesson, setActiveLesson] = useState<LessonItem | null>(null);
   const [isLessonDialogOpen, setIsLessonDialogOpen] = useState(false);
   const [origin, setOrigin] = useState("");
+  const [hostname, setHostname] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -169,6 +170,7 @@ export function OnboardingStepChaplaincy101({
   useEffect(() => {
     if (typeof window === "undefined") return;
     setOrigin(window.location.origin);
+    setHostname(window.location.hostname);
   }, []);
 
   useEffect(() => {
@@ -250,6 +252,16 @@ export function OnboardingStepChaplaincy101({
     return `https://view.officeapps.live.com/op/embed.aspx?src=${encodeURIComponent(absoluteLessonUrl)}`;
   }, [activeLesson, origin]);
 
+  const isLocalPreviewHost = useMemo(
+    () =>
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0",
+    [hostname],
+  );
+
+  const canUseOfficePreview = Boolean(activeLessonViewerUrl) && !isLocalPreviewHost;
+
   const updateEssayAnswerAction = (questionId: number, value: string) => {
     setEssayAnswers((prev) => ({ ...prev, [questionId]: value }));
   };
@@ -326,7 +338,7 @@ export function OnboardingStepChaplaincy101({
 
             <div className="overflow-hidden rounded border border-black/10 bg-white">
               <Image
-                src="/main/landing.jpg"
+                src="/chaplaincy101.png"
                 alt="Chaplaincy 101 training preview"
                 width={520}
                 height={320}
@@ -502,21 +514,41 @@ export function OnboardingStepChaplaincy101({
               {activeLesson?.title ?? "Lesson"}
             </DialogTitle>
             <p className="text-xs text-[#032a0d]/70 sm:text-sm">
-              PowerPoint lesson preview. If viewer is unavailable, open the file
-              in a new tab.
+              {canUseOfficePreview
+                ? "PowerPoint lesson preview. If viewer is unavailable, open the file in a new tab."
+                : "PowerPoint web preview is unavailable on localhost. Open the lesson in a new tab to view or download it."}
             </p>
           </div>
 
           <div className="p-4 sm:p-5">
-            {activeLessonViewerUrl ? (
+            {canUseOfficePreview ? (
               <iframe
                 title={activeLesson?.title ?? "Chaplaincy lesson"}
                 src={activeLessonViewerUrl}
                 className="h-[70vh] w-full rounded border border-black/10 bg-white"
               />
             ) : (
-              <div className="flex h-[55vh] items-center justify-center rounded border border-dashed border-black/15 bg-neutral-50 text-sm text-[#032a0d]/70">
-                Preparing lesson preview...
+              <div className="flex h-[55vh] flex-col items-center justify-center gap-4 rounded border border-dashed border-black/15 bg-neutral-50 px-6 text-center text-sm text-[#032a0d]/70">
+                <div className="space-y-2">
+                  <p className="font-medium text-[#032a0d]">
+                    Preview unavailable in local development
+                  </p>
+                  <p>
+                    Microsoft Office web preview cannot open `localhost` lesson
+                    files. Use the button below to open the PowerPoint lesson in a
+                    new tab.
+                  </p>
+                </div>
+                {activeLesson ? (
+                  <a
+                    href={encodeURI(activeLesson.filePath)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex h-10 items-center rounded-md border border-[#032a0d]/30 px-4 text-sm text-[#032a0d] hover:bg-[#032a0d]/5"
+                  >
+                    Open Lesson in New Tab
+                  </a>
+                ) : null}
               </div>
             )}
 

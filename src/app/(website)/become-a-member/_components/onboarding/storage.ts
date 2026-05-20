@@ -28,6 +28,8 @@ function defaultMeta(): FrontendOnboardingMeta {
     applicationStatus: "Submitted",
     onboardingStep: "requirements",
     requirementAttachments: {},
+    preOrientationReadingConfirmed: false,
+    preOrientationAssessmentAnswers: {},
   };
 }
 
@@ -59,6 +61,18 @@ export function loadOnboardingMeta(): FrontendOnboardingMeta | null {
         parsed.requirementAttachments &&
         typeof parsed.requirementAttachments === "object"
           ? parsed.requirementAttachments
+          : {},
+      preOrientationReadingConfirmed:
+        parsed.preOrientationReadingConfirmed === true,
+      preOrientationAssessmentAnswers:
+        parsed.preOrientationAssessmentAnswers &&
+        typeof parsed.preOrientationAssessmentAnswers === "object"
+          ? Object.fromEntries(
+              Object.entries(parsed.preOrientationAssessmentAnswers).filter(
+                ([key, value]) =>
+                  typeof key === "string" && typeof value === "string",
+              ),
+            )
           : {},
     };
   } catch {

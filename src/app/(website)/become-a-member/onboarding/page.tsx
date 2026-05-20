@@ -56,9 +56,6 @@ export default function OnboardingPage() {
       return;
     }
 
-    if (currentMemberRequirements.data.status !== "APPROVED") {
-      router.replace("/become-a-member/success");
-    }
   }, [
     currentMemberRequirements,
     currentUser,
@@ -83,8 +80,7 @@ export default function OnboardingPage() {
 
   if (
     !currentUser ||
-    !currentMemberRequirements?.data ||
-    currentMemberRequirements.data.status !== "APPROVED"
+    !currentMemberRequirements?.data
   ) {
     return null;
   }

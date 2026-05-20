@@ -9,6 +9,8 @@ export type FrontendOnboardingMeta = {
   applicationStatus: "Submitted" | "Under Review" | "Approved";
   onboardingStep: OnboardingStepId;
   requirementAttachments: RequirementAttachments;
+  preOrientationReadingConfirmed: boolean;
+  preOrientationAssessmentAnswers: Record<string, string>;
 };
 
 export type FrontendOnboardingApplication = ApplicationFormState &
