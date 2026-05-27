@@ -190,4 +190,11 @@ export const useUpdateCurrentEducationMutation = () =>
     meta: { feature: "member.education.update" },
   });
 
+export const useUpdateCurrentBranchServicesMutation = () =>
+  useMutation({
+    mutationFn: memberApi.updateCurrentBranchServices,
+    throwOnError: false,
+    meta: { feature: "member.branchServices.update" },
+  });
+
 export { toApiError };

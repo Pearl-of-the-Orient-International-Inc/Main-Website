@@ -267,6 +267,24 @@ export interface UpdateCurrentEducationRequest {
   postGraduateStudiesEntries?: string[];
 }
 
+export interface CurrentBranchServicesResponse {
+  code: string;
+  message: string;
+  data: {
+    id: string;
+    uniqueId: string | null;
+    preferredBranchOther: string | null;
+    preferredBranches: Array<{
+      id: string;
+      title: string;
+    }>;
+  };
+}
+
+export interface UpdateCurrentBranchServicesRequest {
+  preferredBranchOther?: string;
+}
+
 export interface CreateCurrentMemberCertificateRequest {
   title: string;
   certificateUrl: string;

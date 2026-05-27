@@ -7,6 +7,7 @@ import type {
   CreateCurrentMemberPublicRecordRequest,
   CreateCurrentMemberPublicRecordResponse,
   CurrentEducationResponse,
+  CurrentBranchServicesResponse,
   CurrentChurchAffiliationResponse,
   MemberChaplaincyTrainingProgressResponse,
   CurrentMemberProfileBannerResponse,
@@ -25,6 +26,7 @@ import type {
   UpdateCurrentProfileBannerRequest,
   UpdateCurrentChurchAffiliationRequest,
   UpdateCurrentEducationRequest,
+  UpdateCurrentBranchServicesRequest,
 } from "./member.types";
 
 export async function applyMember(payload: ApplyMemberRequest) {
@@ -89,6 +91,16 @@ export async function updateCurrentEducation(
 ) {
   const { data } = await api.put<CurrentEducationResponse>(
     "/members/current/education",
+    payload,
+  );
+  return data;
+}
+
+export async function updateCurrentBranchServices(
+  payload: UpdateCurrentBranchServicesRequest,
+) {
+  const { data } = await api.put<CurrentBranchServicesResponse>(
+    "/members/current/branch-services",
     payload,
   );
   return data;

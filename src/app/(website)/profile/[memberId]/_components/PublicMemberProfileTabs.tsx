@@ -4,6 +4,7 @@
 import { useRef, useState } from "react";
 import {
   ArrowRight,
+  BriefcaseBusiness,
   CalendarClock,
   ChevronRight,
   Clock,
@@ -69,6 +70,7 @@ import {
   toApiError,
   useCreateCurrentMemberCertificateMutation,
   useCreateCurrentMemberPublicRecordMutation,
+  useUpdateCurrentBranchServicesMutation,
   useUploadMemberCertificateMutation,
   useUploadMemberPublicRecordAttachmentsMutation,
 } from "@/features/member/member.hooks";
@@ -129,6 +131,26 @@ const PUBLIC_RECORD_STATUS_OPTIONS: Array<{
   { value: "PUBLISHED", label: "Published" },
   { value: "DRAFT", label: "Draft" },
 ];
+
+const BRANCH_SERVICE_OPTIONS = [
+  "Humanitarian",
+  "Hospital and Care",
+  "Military/PNP",
+  "School",
+  "Corporate",
+  "Disaster & Rescue Operations",
+  "Prison",
+  "Security",
+  "Government",
+  "DSWD",
+  "Others",
+];
+
+const parseBranchServiceText = (value: string | null | undefined) =>
+  (value ?? "")
+    .split(/[,|]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
 
 function isPdfCertificateUrl(url: string) {
   const normalizedUrl = url.toLowerCase();
@@ -227,6 +249,8 @@ export function PublicMemberProfileTabs({
     useCreateCurrentMemberPublicRecordMutation();
   const uploadPublicRecordAttachmentsMutation =
     useUploadMemberPublicRecordAttachmentsMutation();
+  const updateBranchServicesMutation =
+    useUpdateCurrentBranchServicesMutation();
   const signedInMemberProfile = currentUser?.memberProfile;
   const canManageCertificates = Boolean(
     signedInMemberProfile &&
@@ -235,6 +259,7 @@ export function PublicMemberProfileTabs({
         signedInMemberProfile.uniqueId === member.uniqueId)),
   );
   const canManagePublicRecords = canManageCertificates;
+  const canManageBranchServices = canManageCertificates;
   const visibleEmailAddress =
     signedInMemberProfile?.id === member.id
       ? currentUser?.email || "Not publicly listed"
@@ -242,6 +267,27 @@ export function PublicMemberProfileTabs({
   const certificates = member.certificates ?? [];
   const publicProfileDocuments = publicDocuments ?? [];
   const publicRecords = member.publicRecords ?? [];
+  const initialBranchServiceEntries = parseBranchServiceText(
+    member.preferredBranchOther,
+  );
+  const initialBranchServiceSelections = BRANCH_SERVICE_OPTIONS.filter(
+    (option) =>
+      option !== "Others" && initialBranchServiceEntries.includes(option),
+  );
+  const initialCustomBranchService = initialBranchServiceEntries
+    .filter((entry) => !BRANCH_SERVICE_OPTIONS.includes(entry))
+    .join(", ");
+  const [isBranchServiceDialogOpen, setIsBranchServiceDialogOpen] =
+    useState(false);
+  const [selectedBranchServices, setSelectedBranchServices] = useState<
+    string[]
+  >([
+    ...initialBranchServiceSelections,
+    ...(initialCustomBranchService ? ["Others"] : []),
+  ]);
+  const [branchServiceOther, setBranchServiceOther] = useState(
+    initialCustomBranchService,
+  );
   const hasAnyCredentialContent =
     Boolean(certificateUrl) ||
     certificates.length > 0 ||
@@ -251,6 +297,14 @@ export function PublicMemberProfileTabs({
   const isSavingPublicRecord =
     createPublicRecordMutation.isPending ||
     uploadPublicRecordAttachmentsMutation.isPending;
+  const isSavingBranchServices = updateBranchServicesMutation.isPending;
+  const visibleBranchServices = [
+    ...member.preferredBranches.map((branch) => branch.title),
+    ...initialBranchServiceEntries,
+  ].filter(
+    (branch, index, list) =>
+      branch && list.findIndex((item) => item === branch) === index,
+  );
   const allCertificatesCount = certificates.length + (certificateUrl ? 1 : 0);
   const publicRecordCounts = {
     all: publicRecords.length,
@@ -326,6 +380,22 @@ export function PublicMemberProfileTabs({
     setRecordLocation("");
     setRecordStatus("PUBLISHED");
     setPublicRecordAttachments([]);
+  };
+
+  const resetBranchServiceDialog = () => {
+    setSelectedBranchServices([
+      ...initialBranchServiceSelections,
+      ...(initialCustomBranchService ? ["Others"] : []),
+    ]);
+    setBranchServiceOther(initialCustomBranchService);
+  };
+
+  const toggleBranchService = (service: string) => {
+    setSelectedBranchServices((current) =>
+      current.includes(service)
+        ? current.filter((item) => item !== service)
+        : [...current, service],
+    );
   };
 
   const handleCertificateFileChange = (file: File | null | undefined) => {
@@ -508,6 +578,49 @@ export function PublicMemberProfileTabs({
           (error instanceof Error
             ? error.message
             : "Unable to create the public record right now."),
+        variant: "error",
+      });
+    }
+  };
+
+  const handleUpdateBranchServices = async () => {
+    try {
+      const normalizedSelections = selectedBranchServices.filter(
+        (service) => service !== "Others",
+      );
+      const normalizedOther = branchServiceOther.trim();
+      const preferredBranchOther = [
+        ...normalizedSelections,
+        ...(selectedBranchServices.includes("Others") && normalizedOther
+          ? [normalizedOther]
+          : []),
+      ].join(", ");
+
+      if (!preferredBranchOther) {
+        throw new Error("Select at least one branch of service.");
+      }
+
+      await updateBranchServicesMutation.mutateAsync({
+        preferredBranchOther,
+      });
+
+      toast({
+        title: "Branch services updated",
+        description: "The public profile service branches are now updated.",
+        variant: "success",
+      });
+
+      setIsBranchServiceDialogOpen(false);
+      window.location.reload();
+    } catch (error) {
+      const apiError = toApiError(error);
+      toast({
+        title: "Branch service update failed",
+        description:
+          apiError.message ??
+          (error instanceof Error
+            ? error.message
+            : "Unable to update branch services right now."),
         variant: "error",
       });
     }
@@ -1243,34 +1356,67 @@ export function PublicMemberProfileTabs({
 
         <TabsContent value="service">
           <section className="overflow-hidden border bg-white shadow">
-            <div className="border-b px-5 py-4">
-              <h2 className="text-2xl font-semibold text-neutral-950">
-                Services
-              </h2>
+            <div className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <div className="flex items-center gap-2">
+                  <BriefcaseBusiness className="size-5 text-[#032a0d]" />
+                  <h2 className="text-2xl font-semibold text-neutral-950">
+                    Services
+                  </h2>
+                </div>
+                <p className="mt-2 text-sm text-neutral-500">
+                  Branches of service connected to this public member profile.
+                </p>
+              </div>
+              {canManageBranchServices ? (
+                <Button
+                  type="button"
+                  onClick={() => setIsBranchServiceDialogOpen(true)}
+                  size="sm"
+                  className="self-start bg-[#032a0d] hover:bg-[#043512]"
+                >
+                  <NotebookPen className="size-4" />
+                  {visibleBranchServices.length > 0
+                    ? "Edit branches"
+                    : "Add branch of service"}
+                </Button>
+              ) : null}
             </div>
             <div className="p-5">
-              <div className="flex flex-col items-center justify-center gap-2">
-                {member.preferredBranches.length > 0 ? (
-                  member.preferredBranches.map((branch) => (
+              {visibleBranchServices.length > 0 ? (
+                <div className="flex flex-wrap gap-2">
+                  {visibleBranchServices.map((branch) => (
                     <span
-                      key={branch.id}
+                      key={branch}
                       className="rounded-full border border-[#032a0d]/12 bg-[#032a0d]/5 px-4 py-2 text-sm text-[#032a0d]"
                     >
-                      {branch.title}
+                      {branch}
                     </span>
-                  ))
-                ) : (
-                  <div className="text-center">
-                    <p className="text-base font-medium">
-                      There are no branch of services yet.
-                    </p>
-                    <p className="mt-2 max-w-xl text-sm text-muted-foreground">
-                      When {fullName} starts serving in a branch and updates
-                      their profile, the branch information will appear here.
-                    </p>
+                  ))}
+                </div>
+              ) : (
+                <div className="flex min-h-72 flex-col items-center justify-center rounded-2xl border border-dashed border-neutral-300 bg-neutral-50 px-6 py-10 text-center">
+                  <div className="flex size-16 items-center justify-center rounded-full border border-neutral-200 bg-white text-neutral-400 shadow-sm">
+                    <BriefcaseBusiness className="size-8" />
                   </div>
-                )}
-              </div>
+                  <p className="mt-4 text-xl font-semibold text-neutral-900">
+                    No branch of service listed yet.
+                  </p>
+                  <p className="mt-2 max-w-xl text-sm text-neutral-500">
+                    Add service branches such as Humanitarian, Hospital and
+                    Care, School, Security, or other ministry areas.
+                  </p>
+                  {canManageBranchServices ? (
+                    <Button
+                      type="button"
+                      onClick={() => setIsBranchServiceDialogOpen(true)}
+                      className="mt-5 bg-[#032a0d] hover:bg-[#043512]"
+                    >
+                      <NotebookPen className="size-4" /> Add branch of service
+                    </Button>
+                  ) : null}
+                </div>
+              )}
             </div>
           </section>
         </TabsContent>
@@ -1681,6 +1827,93 @@ export function PublicMemberProfileTabs({
           </section>
         </TabsContent>
       </div>
+      <Dialog
+        open={isBranchServiceDialogOpen}
+        onOpenChange={(open) => {
+          setIsBranchServiceDialogOpen(open);
+          if (!open) resetBranchServiceDialog();
+        }}
+      >
+        <DialogContent className="max-w-4xl border-[#032a0d]/15">
+          <DialogHeader>
+            <DialogTitle className="text-[#032a0d]">
+              {visibleBranchServices.length > 0
+                ? "Edit branch of service"
+                : "Add branch of service"}
+            </DialogTitle>
+            <DialogDescription>
+              Select the ministry or service areas that should appear on this
+              public profile.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <div className="grid gap-2 md:grid-cols-2">
+              {BRANCH_SERVICE_OPTIONS.map((service) => {
+                const isSelected = selectedBranchServices.includes(service);
+
+                return (
+                  <button
+                    key={service}
+                    type="button"
+                    onClick={() => toggleBranchService(service)}
+                    className={`rounded-full border px-4 py-2 text-left text-base transition ${
+                      isSelected
+                        ? "border-[#032a0d] bg-[#032a0d] text-white shadow-sm"
+                        : "border-neutral-950 bg-white text-neutral-500 hover:border-[#032a0d] hover:text-[#032a0d]"
+                    }`}
+                    aria-pressed={isSelected}
+                  >
+                    {service}
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="space-y-2">
+              <Label
+                htmlFor="branch-service-other"
+                className="text-base font-semibold"
+              >
+                If Others, please specify (optional)
+              </Label>
+              <Input
+                id="branch-service-other"
+                value={branchServiceOther}
+                onChange={(event) => setBranchServiceOther(event.target.value)}
+                onFocus={() => {
+                  if (!selectedBranchServices.includes("Others")) {
+                    setSelectedBranchServices((current) => [
+                      ...current,
+                      "Others",
+                    ]);
+                  }
+                }}
+                placeholder="Specify other branch of service"
+                className="h-12 text-base"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsBranchServiceDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              onClick={() => void handleUpdateBranchServices()}
+              disabled={isSavingBranchServices}
+              className="bg-[#032a0d] hover:bg-[#043512]"
+            >
+              {isSavingBranchServices ? "Saving..." : "Save branches"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
       <Dialog
         open={isCertificateDialogOpen}
         onOpenChange={(open) => {
