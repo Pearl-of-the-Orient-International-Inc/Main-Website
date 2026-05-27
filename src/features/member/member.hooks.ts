@@ -1,8 +1,11 @@
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toApiError } from "@/lib/http-client";
 import * as memberApi from "./member.api";
+import { uploadMemberCertificate } from "./member-certificate-upload.api";
 import { uploadMemberRequirement } from "./member-requirement-upload.api";
 import { uploadMemberPaymentDocument } from "./member-payment-upload.api";
+import { uploadMemberProfileBanner } from "./member-profile-banner-upload.api";
+import { uploadMemberPublicRecordAttachments } from "./member-public-record-upload.api";
 
 export const useApplyMemberMutation = () =>
   useMutation({
@@ -15,6 +18,13 @@ export const useCurrentMemberRequirementsQuery = () =>
   useQuery({
     queryKey: ["member", "current", "requirements"],
     queryFn: memberApi.getCurrentMemberRequirements,
+    staleTime: 60_000,
+  });
+
+export const useCurrentMemberProfileBannerQuery = () =>
+  useQuery({
+    queryKey: ["member", "current", "profile-banner"],
+    queryFn: memberApi.getCurrentMemberProfileBanner,
     staleTime: 60_000,
   });
 
@@ -67,6 +77,27 @@ export const useUploadMemberRequirementMutation = () =>
     meta: { feature: "member.requirements.upload" },
   });
 
+export const useUploadMemberProfileBannerMutation = () =>
+  useMutation({
+    mutationFn: uploadMemberProfileBanner,
+    throwOnError: false,
+    meta: { feature: "member.profileBanner.upload" },
+  });
+
+export const useUploadMemberCertificateMutation = () =>
+  useMutation({
+    mutationFn: uploadMemberCertificate,
+    throwOnError: false,
+    meta: { feature: "member.certificate.upload" },
+  });
+
+export const useUploadMemberPublicRecordAttachmentsMutation = () =>
+  useMutation({
+    mutationFn: uploadMemberPublicRecordAttachments,
+    throwOnError: false,
+    meta: { feature: "member.publicRecord.uploadAttachments" },
+  });
+
 export const useUpdateCurrentMemberOnboardingStepMutation = () =>
   useMutation({
     mutationFn: memberApi.updateCurrentMemberOnboardingStep,
@@ -114,6 +145,49 @@ export const useUpsertCurrentMemberChaplaincyTrainingProgressMutation = () =>
     mutationFn: memberApi.upsertCurrentMemberChaplaincyTrainingProgress,
     throwOnError: false,
     meta: { feature: "member.chaplaincyTraining.upsertProgress" },
+  });
+
+export const useUpdateCurrentMemberProfileBannerMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: memberApi.updateCurrentMemberProfileBanner,
+    throwOnError: false,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: ["member", "current", "profile-banner"],
+      });
+    },
+    meta: { feature: "member.profileBanner.update" },
+  });
+};
+
+export const useCreateCurrentMemberCertificateMutation = () =>
+  useMutation({
+    mutationFn: memberApi.createCurrentMemberCertificate,
+    throwOnError: false,
+    meta: { feature: "member.certificate.create" },
+  });
+
+export const useCreateCurrentMemberPublicRecordMutation = () =>
+  useMutation({
+    mutationFn: memberApi.createCurrentMemberPublicRecord,
+    throwOnError: false,
+    meta: { feature: "member.publicRecord.create" },
+  });
+
+export const useUpdateCurrentChurchAffiliationMutation = () =>
+  useMutation({
+    mutationFn: memberApi.updateCurrentChurchAffiliation,
+    throwOnError: false,
+    meta: { feature: "member.churchAffiliation.update" },
+  });
+
+export const useUpdateCurrentEducationMutation = () =>
+  useMutation({
+    mutationFn: memberApi.updateCurrentEducation,
+    throwOnError: false,
+    meta: { feature: "member.education.update" },
   });
 
 export { toApiError };

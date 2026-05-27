@@ -5,6 +5,8 @@ export interface PublicMemberProfileResponse {
     id: string;
     uniqueId: string | null;
     badgeNumber: string | null;
+    profileBannerUrl: string | null;
+    profileBannerPositionY: number;
     status: "PENDING" | "APPROVED" | "REJECTED";
     memberType:
       | "ASSOCIATE_CHAPLAIN"
@@ -82,6 +84,36 @@ export interface PublicMemberProfileResponse {
       certificateUrl: string;
       generatedAt: string;
     } | null;
+    certificates: Array<{
+      credentialId: string;
+      title: string;
+      certificateUrl: string;
+      dateReceived: string;
+    }>;
+    publicRecords: Array<{
+      id: string;
+      title: string;
+      shortDescription: string;
+      type:
+        | "REPORT_ACTIVITY"
+        | "COMMUNITY_SERVICE"
+        | "TRAINING_CONDUCTED"
+        | "PARTICIPATION"
+        | "RECOGNITION";
+      eventAt: string;
+      location: string;
+      status: "PUBLISHED" | "DRAFT";
+      createdAt: string;
+      updatedAt: string;
+      attachments: Array<{
+        id: string;
+        fileUrl: string;
+        fileName: string | null;
+        mimeType: string | null;
+        sortOrder: number;
+        createdAt: string;
+      }>;
+    }>;
     chaplaincyTrainingProgress: {
       completedAt: string | null;
     } | null;

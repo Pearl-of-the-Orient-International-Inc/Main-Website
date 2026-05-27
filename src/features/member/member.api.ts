@@ -2,7 +2,14 @@ import { api } from "@/lib/http-client";
 import type {
   ApplyMemberRequest,
   ApplyMemberResponse,
+  CreateCurrentMemberCertificateRequest,
+  CreateCurrentMemberCertificateResponse,
+  CreateCurrentMemberPublicRecordRequest,
+  CreateCurrentMemberPublicRecordResponse,
+  CurrentEducationResponse,
+  CurrentChurchAffiliationResponse,
   MemberChaplaincyTrainingProgressResponse,
+  CurrentMemberProfileBannerResponse,
   MemberIdGenerationAssetResponse,
   MemberOnboardingProgressResponse,
   MemberOnlineInterviewAppointmentResponse,
@@ -15,6 +22,9 @@ import type {
   UpsertMemberIdGenerationAssetRequest,
   UpsertMemberPaymentCheckoutRequest,
   UpsertMemberRequirementsRequest,
+  UpdateCurrentProfileBannerRequest,
+  UpdateCurrentChurchAffiliationRequest,
+  UpdateCurrentEducationRequest,
 } from "./member.types";
 
 export async function applyMember(payload: ApplyMemberRequest) {
@@ -24,6 +34,63 @@ export async function applyMember(payload: ApplyMemberRequest) {
 
 export async function getCurrentMemberRequirements() {
   const { data } = await api.get<MemberRequirementsResponse>("/members/current/requirements");
+  return data;
+}
+
+export async function getCurrentMemberProfileBanner() {
+  const { data } = await api.get<CurrentMemberProfileBannerResponse>(
+    "/members/current/profile-banner",
+  );
+  return data;
+}
+
+export async function updateCurrentMemberProfileBanner(
+  payload: UpdateCurrentProfileBannerRequest,
+) {
+  const { data } = await api.put<CurrentMemberProfileBannerResponse>(
+    "/members/current/profile-banner",
+    payload,
+  );
+  return data;
+}
+
+export async function createCurrentMemberCertificate(
+  payload: CreateCurrentMemberCertificateRequest,
+) {
+  const { data } = await api.post<CreateCurrentMemberCertificateResponse>(
+    "/members/current/certificates",
+    payload,
+  );
+  return data;
+}
+
+export async function createCurrentMemberPublicRecord(
+  payload: CreateCurrentMemberPublicRecordRequest,
+) {
+  const { data } = await api.post<CreateCurrentMemberPublicRecordResponse>(
+    "/members/current/public-records",
+    payload,
+  );
+  return data;
+}
+
+export async function updateCurrentChurchAffiliation(
+  payload: UpdateCurrentChurchAffiliationRequest,
+) {
+  const { data } = await api.put<CurrentChurchAffiliationResponse>(
+    "/members/current/church-affiliation",
+    payload,
+  );
+  return data;
+}
+
+export async function updateCurrentEducation(
+  payload: UpdateCurrentEducationRequest,
+) {
+  const { data } = await api.put<CurrentEducationResponse>(
+    "/members/current/education",
+    payload,
+  );
   return data;
 }
 

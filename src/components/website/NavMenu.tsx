@@ -341,7 +341,7 @@ export const NavMenu = () => {
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  className="w-60"
+                  className="w-60 z-999"
                   align="end"
                   side="right"
                   sideOffset={8}
@@ -366,11 +366,11 @@ export const NavMenu = () => {
                   <DropdownMenuSeparator />
                   <DropdownMenuItem asChild>
                     <Link
-                      href="/account"
+                      href={`/profile/${currentUser?.memberProfile?.uniqueId}`}
                       className="flex w-full items-center gap-2"
                     >
                       <SettingsIcon className="size-4" />
-                      <span>Account settings</span>
+                      <span>Account</span>
                     </Link>
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>

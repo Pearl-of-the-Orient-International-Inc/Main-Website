@@ -228,6 +228,113 @@ const chaplaincyRoadmap = [
   },
 ];
 
+const membershipBenefits = [
+  {
+    number: "01",
+    title: "Chaplaincy Training and Education",
+    items: [
+      "Chaplaincy 101 seminars",
+      "School of Chaplaincy Education course to professionalize chaplains",
+      "Leadership development programs",
+      "Counseling and spiritual care training",
+      "Trainers training courses",
+      "Community and institutional chaplaincy orientation",
+    ],
+  },
+  {
+    number: "02",
+    title: "Spiritual Growth and Development",
+    items: [
+      "Strengthen faith and calling",
+      "Develop compassion and servant leadership",
+      "Grow in prayer, counseling, and ministry skills",
+      "Build strong moral and spiritual values",
+    ],
+  },
+  {
+    number: "03",
+    title: "Leadership Opportunities",
+    items: [
+      "Community chaplains",
+      "Government chaplains, national or local",
+      "School chaplains",
+      "Military chaplains",
+      "Outreach chaplains",
+      "Prayer leaders",
+      "National, regional, provincial, and local officers",
+    ],
+  },
+  {
+    number: "04",
+    title: "Community Service and Outreach",
+    items: [
+      "Hospital chaplains",
+      "Prison chaplains",
+      "Disaster response and relief operations",
+      "Drug awareness education advocacy and training",
+      "Feeding and humanitarian missions",
+    ],
+  },
+  {
+    number: "05",
+    title: "Networking and Fellowship",
+    items: [
+      "Fellowship with fellow chaplains and ministers",
+      "Conferences and conventions",
+      "Collaboration with churches and different organizations",
+      "Professional and spiritual support system",
+    ],
+  },
+  {
+    number: "06",
+    title: "Recognition and Certification",
+    items: [
+      "Certificates of training",
+      "Chaplaincy recognition",
+      "Ministry and chaplain appointment",
+      "License for CRASM",
+      "Chaplaincy ordination and commissioning",
+      "Leadership endorsements and appointments",
+    ],
+  },
+  {
+    number: "07",
+    title: "Opportunities for Ministry Expansion",
+    items: [
+      "Church planting ministries",
+      "School and campus chaplaincy",
+      "Community outreach programs",
+      "Counseling and care ministries",
+    ],
+  },
+  {
+    number: "08",
+    title: "Interfaith and Community Engagement",
+    items: [
+      "Unity and respect among different faith communities",
+      "Peace-building, cooperation, and collaboration",
+      "Service-centered ministry for all people",
+    ],
+  },
+  {
+    number: "09",
+    title: "Personal and Professional Development",
+    items: [
+      "Communication skills",
+      "Public speaking",
+      "Counseling ability",
+      "Crisis response and leadership skills",
+    ],
+  },
+  {
+    number: "10",
+    title: "Mission and Purpose",
+    items: [
+      "Bring hope, compassion, spiritual care, and transformation to communities through chaplaincy service.",
+    ],
+  },
+];
+
 export default async function Page() {
   const items = await getHomepageEvents();
   const carouselColumns = buildEventColumns(items);
@@ -337,13 +444,13 @@ export default async function Page() {
       <section
         className="relative min-h-[50vh] sm:min-h-[60vh] bg-cover bg-bottom text-white"
         style={{
-          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.5)), url(/main/landing.jpg)`,
+          backgroundImage: `linear-gradient(rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.5)), url(/chaplaincy101.png)`,
         }}
       >
         <div className="relative z-10 mx-auto max-w-6xl py-12 sm:py-16 md:py-20 px-4 sm:px-6">
           <div className="space-y-4 sm:space-y-6">
             {/* Category Heading */}
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] text-white/90">
+            <div className="text-xs sm:text-sm uppercase text-white/90">
               Chaplaincy and Values Education
             </div>
 
@@ -380,9 +487,9 @@ export default async function Page() {
           backgroundImage: `url(/main/paper-bg.jpg)`,
         }}
       >
-        <div className="max-w-6xl mx-auto py-12 sm:py-16 md:py-20 px-4 sm:px-6">
+        <div className="mx-auto max-w-6xl py-12 sm:py-16 md:py-20">
           <div className="text-center mb-8 sm:mb-10 md:mb-12">
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] text-[#032a0d]/70 mb-2">
+            <div className="text-xs sm:text-sm uppercase text-[#032a0d]/70 mb-2">
               Curriculum
             </div>
             <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-medium text-[#032a0d]">
@@ -545,7 +652,7 @@ export default async function Page() {
       >
         <div className="max-w-6xl relative overflow-clip mx-auto py-12 sm:py-16 md:py-20 px-4 sm:px-6">
           <div className="text-center mb-8 sm:mb-10 md:mb-12">
-            <div className="text-xs sm:text-sm uppercase tracking-[0.2em] text-[#032a0d]/70 mb-2">
+            <div className="text-xs sm:text-sm uppercase text-[#032a0d]/70 mb-2">
               Chaplaincy Roadmap
             </div>
             <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-medium text-[#032a0d] px-4">
@@ -561,11 +668,105 @@ export default async function Page() {
         </div>
       </section>
 
+      {/* Benefits of Being a Member of Pearl of the Orient International Auxiliary Chaplain Values Educators Inc  Inter-Faith Organization */}
+      <section
+        className="relative isolate min-h-[50vh] overflow-hidden bg-cover bg-center"
+        style={{
+          backgroundImage: `url(/main/paper-bg.jpg)`,
+        }}
+      >
+        <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-white/65 via-white/40 to-[#f7f1de]/80" />
+        <div className="pointer-events-none absolute -left-24 top-20 h-56 w-56 rounded-full bg-[#b98f38]/10 blur-3xl" />
+        <div className="pointer-events-none absolute -right-20 bottom-10 h-64 w-64 rounded-full bg-[#032a0d]/10 blur-3xl" />
+
+        <div className="relative max-w-6xl mx-auto py-12 sm:py-16 md:py-20">
+          <div className="mx-auto mb-8 max-w-4xl text-center sm:mb-10 md:mb-12">
+            <div className="mb-3 inline-flex items-center rounded-full border border-[#032a0d]/15 bg-white/80 px-4 py-1 text-xs font-semibold uppercase text-[#032a0d]/70 shadow-sm backdrop-blur-sm sm:text-sm">
+              Membership Benefits
+            </div>
+            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-medium text-[#032a0d] px-4">
+              Benefits of Being a Member
+            </h2>
+            <p className="mt-3 sm:mt-4 max-w-4xl mx-auto text-sm sm:text-base md:text-lg text-[#032a0d]/80 px-4">
+              Membership in Pearl of the Orient International Auxiliary
+              Chaplain Values Educators Inc. Inter-Faith Organization provides
+              opportunities for spiritual growth, leadership development,
+              community service, and chaplaincy training and education.
+            </p>
+          </div>
+
+          <div className="mb-8 grid grid-cols-1 gap-6 sm:mb-10 lg:grid-cols-[1.05fr_0.95fr] sm:gap-8">
+            <div className="relative overflow-hidden rounded-[2rem] border border-[#032a0d]/10 bg-white/95 p-6 shadow-[0_20px_60px_rgba(3,42,13,0.08)] backdrop-blur-sm sm:p-8">
+              <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-[#032a0d] via-[#b98f38] to-[#032a0d]" />
+              <div className="mb-4 flex items-center gap-3">
+                <div className="flex size-11 items-center justify-center rounded-full bg-[#032a0d] text-sm font-semibold text-white">
+                  PM
+                </div>
+                <div className="text-xs font-semibold uppercase text-[#032a0d]/60 sm:text-sm">
+                  Membership Motto
+                </div>
+              </div>
+              <p className="max-w-2xl font-serif text-2xl leading-tight text-[#032a0d] sm:text-3xl md:text-4xl">
+                Called to Serve, Equipped to Care, United in Compassion.
+              </p>
+            </div>
+
+            <div className="relative overflow-hidden rounded-[2rem] bg-[#032a0d] p-6 text-white shadow-[0_24px_60px_rgba(3,42,13,0.2)] sm:p-8">
+              <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
+              <div className="absolute bottom-0 left-0 h-24 w-24 rounded-full bg-[#b98f38]/20 blur-2xl" />
+              <div className="relative mb-4 text-xs font-semibold uppercase text-white/70 sm:text-sm">
+                Shared Mission
+              </div>
+              <p className="relative font-serif text-xl leading-relaxed md:text-2xl">
+                Bring hope, compassion, spiritual care, and transformation to
+                communities through chaplaincy service.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
+            {membershipBenefits.map((benefit, index) => (
+              <div
+                key={benefit.number}
+                className={`group relative overflow-hidden rounded-[1.75rem] border border-[#032a0d]/10 bg-white/95 p-5 shadow-[0_16px_45px_rgba(3,42,13,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-[#032a0d]/30 hover:shadow-[0_22px_55px_rgba(3,42,13,0.12)] sm:p-6 ${
+                  index === membershipBenefits.length - 1 ? "md:col-span-2" : ""
+                }`}
+              >
+                <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-[#032a0d] via-[#b98f38] to-transparent opacity-80" />
+                <div className="flex items-start gap-4">
+                  <div className="shrink-0">
+                    <div className="flex size-12 items-center justify-center rounded-2xl bg-[#032a0d] font-semibold text-white shadow-sm">
+                      {benefit.number}
+                    </div>
+                  </div>
+                  <div className="min-w-0">
+                    <h3 className="mb-3 pr-6 font-serif text-xl text-[#032a0d] sm:text-2xl">
+                      {benefit.title}
+                    </h3>
+                    <div className="space-y-2.5">
+                      {benefit.items.map((item) => (
+                        <div
+                          key={item}
+                          className="flex items-start gap-3 text-sm text-[#032a0d]/80 sm:text-base"
+                        >
+                          <span className="mt-2 block size-2 shrink-0 rounded-full bg-[#b98f38]" />
+                          <span>{item}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FAQs Section */}
       <section className="py-16 sm:py-20 lg:py-24 bg-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-10 sm:mb-12">
-            <div className="text-sm uppercase tracking-[0.2em] text-[#032a0d]/70 mb-2">
+            <div className="text-sm uppercase text-[#032a0d]/70 mb-2">
               Frequently Asked Questions
             </div>
             <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl font-medium text-[#032a0d]">

@@ -31,7 +31,17 @@ async function getPublicMemberProfile(
   }
 
   const payload = (await response.json()) as PublicMemberProfileResponse;
-  return payload.data;
+  return {
+    ...payload.data,
+    preferredBranches: payload.data.preferredBranches ?? [],
+    officerAssignments: payload.data.officerAssignments ?? [],
+    applicantRequirements: payload.data.applicantRequirements ?? [],
+    certificates: payload.data.certificates ?? [],
+    publicRecords: (payload.data.publicRecords ?? []).map((record) => ({
+      ...record,
+      attachments: record.attachments ?? [],
+    })),
+  };
 }
 
 export async function generateMetadata({

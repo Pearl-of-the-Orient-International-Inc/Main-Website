@@ -211,6 +211,134 @@ export interface MemberChaplaincyTrainingProgressResponse {
   data: MemberChaplaincyTrainingProgressData | null;
 }
 
+export interface CurrentMemberProfileBannerResponse {
+  code: string;
+  message: string;
+  data: {
+    id: string;
+    uniqueId: string | null;
+    profileBannerUrl: string | null;
+    profileBannerPositionY: number;
+  };
+}
+
+export interface UpdateCurrentProfileBannerRequest {
+  profileBannerUrl?: string;
+  profileBannerPositionY?: number;
+}
+
+export interface CurrentChurchAffiliationResponse {
+  code: string;
+  message: string;
+  data: {
+    id: string;
+    uniqueId: string | null;
+    churchAffiliation: string | null;
+    churchAddress: string | null;
+    currentPositionRole: string | null;
+    currentPositionRoleOther: string | null;
+  };
+}
+
+export interface UpdateCurrentChurchAffiliationRequest {
+  churchAffiliation?: string;
+  churchAddress?: string;
+  currentPositionRole?: string;
+  currentPositionRoleOther?: string;
+}
+
+export interface CurrentEducationResponse {
+  code: string;
+  message: string;
+  data: {
+    id: string;
+    uniqueId: string | null;
+    elementarySchool: string | null;
+    secondarySchool: string | null;
+    tertiaryCollege: string | null;
+    postGraduateStudies: string | null;
+  };
+}
+
+export interface UpdateCurrentEducationRequest {
+  elementarySchool?: string;
+  secondarySchool?: string;
+  tertiaryCollegeEntries?: string[];
+  postGraduateStudiesEntries?: string[];
+}
+
+export interface CreateCurrentMemberCertificateRequest {
+  title: string;
+  certificateUrl: string;
+  issuedAt: string;
+}
+
+export type MemberPublicRecordType =
+  | "REPORT_ACTIVITY"
+  | "COMMUNITY_SERVICE"
+  | "TRAINING_CONDUCTED"
+  | "PARTICIPATION"
+  | "RECOGNITION";
+
+export type MemberPublicRecordStatus = "PUBLISHED" | "DRAFT";
+
+export interface CreateCurrentMemberPublicRecordRequest {
+  title: string;
+  shortDescription: string;
+  type: MemberPublicRecordType;
+  eventAt: string;
+  location: string;
+  status: MemberPublicRecordStatus;
+  attachments?: Array<{
+    fileUrl: string;
+    fileName?: string;
+    mimeType?: string;
+  }>;
+}
+
+export interface MemberPublicRecordAttachmentItem {
+  id: string;
+  fileUrl: string;
+  fileName: string | null;
+  mimeType: string | null;
+  sortOrder: number;
+  createdAt: string;
+}
+
+export interface MemberPublicRecordItem {
+  id: string;
+  title: string;
+  shortDescription: string;
+  type: MemberPublicRecordType;
+  eventAt: string;
+  location: string;
+  status: MemberPublicRecordStatus;
+  createdAt: string;
+  updatedAt: string;
+  attachments: MemberPublicRecordAttachmentItem[];
+}
+
+export interface CreateCurrentMemberPublicRecordResponse {
+  code: string;
+  message: string;
+  data: MemberPublicRecordItem;
+}
+
+export interface MemberCertificateItem {
+  id: string;
+  credentialId: string;
+  title: string;
+  certificateUrl: string;
+  dateReceived: string;
+  createdAt: string;
+}
+
+export interface CreateCurrentMemberCertificateResponse {
+  code: string;
+  message: string;
+  data: MemberCertificateItem;
+}
+
 export interface UpsertMemberChaplaincyTrainingProgressRequest {
   completedLessonIds: number[];
   essayAnswers?: Record<string, string>;
