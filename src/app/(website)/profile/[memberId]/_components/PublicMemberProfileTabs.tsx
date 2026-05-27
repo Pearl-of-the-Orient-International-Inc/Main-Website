@@ -109,6 +109,7 @@ type RecentActivity = {
 };
 
 type PublicRecordView = "table" | "grid";
+type CertificatePreviewMode = "image" | "pdf";
 
 const PUBLIC_RECORD_TYPE_OPTIONS: Array<{
   value: MemberPublicRecordType;
@@ -128,6 +129,47 @@ const PUBLIC_RECORD_STATUS_OPTIONS: Array<{
   { value: "PUBLISHED", label: "Published" },
   { value: "DRAFT", label: "Draft" },
 ];
+
+function isPdfCertificateUrl(url: string) {
+  const normalizedUrl = url.toLowerCase();
+
+  return (
+    normalizedUrl.includes(".pdf") ||
+    normalizedUrl.includes("application/pdf") ||
+    normalizedUrl.includes("application%2fpdf")
+  );
+}
+
+function CertificatePreview({
+  title,
+  url,
+}: {
+  title: string;
+  url: string;
+}) {
+  const [previewMode, setPreviewMode] = useState<CertificatePreviewMode>(
+    isPdfCertificateUrl(url) ? "pdf" : "image",
+  );
+
+  if (previewMode === "pdf") {
+    return (
+      <iframe
+        src={getDocumentPreviewUrl(url, "application/pdf")}
+        title={title}
+        className="h-full w-full"
+      />
+    );
+  }
+
+  return (
+    <img
+      src={url}
+      alt={title}
+      className="h-full w-full object-contain"
+      onError={() => setPreviewMode("pdf")}
+    />
+  );
+}
 
 type Props = {
   member: PublicMember;
@@ -515,22 +557,10 @@ export function PublicMemberProfileTabs({
               Credential ID: {certificate.credentialId}
             </p>
             <div className="mt-4 h-80 overflow-hidden border bg-white">
-              {certificate.certificateUrl.toLowerCase().includes(".pdf") ? (
-                <iframe
-                  src={getDocumentPreviewUrl(
-                    certificate.certificateUrl,
-                    "application/pdf",
-                  )}
-                  title={certificate.title}
-                  className="h-full w-full"
-                />
-              ) : (
-                <img
-                  src={certificate.certificateUrl}
-                  alt={certificate.title}
-                  className="h-full w-full object-cover"
-                />
-              )}
+              <CertificatePreview
+                title={certificate.title}
+                url={certificate.certificateUrl}
+              />
             </div>
             <Button
               asChild
