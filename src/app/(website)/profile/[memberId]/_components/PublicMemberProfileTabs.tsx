@@ -7,12 +7,12 @@ import {
   BriefcaseBusiness,
   CalendarClock,
   ChevronRight,
-  Clock,
   FileCheck2,
   FileText,
   Flag,
   Grid2x2,
   GraduationCap,
+  ImageIcon,
   MapPin,
   NotebookPen,
   ScrollText,
@@ -27,6 +27,7 @@ import {
 import { TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { RichTextEditor } from "@/components/rich-text-editor/Editor";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   Dialog,
@@ -86,8 +87,17 @@ import {
   requirementLabels,
   type PublicMember,
 } from "./public-member-profile.shared";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 
 type PublicDocument = PublicMember["applicantRequirements"][number];
+type PublicRecord = PublicMember["publicRecords"][number];
 
 type AnalyticsDatum = {
   name: string;
@@ -152,6 +162,23 @@ const parseBranchServiceText = (value: string | null | undefined) =>
     .map((item) => item.trim())
     .filter(Boolean);
 
+const stripHtml = (value: string) =>
+  value
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+const sanitizeRichTextHtml = (value: string) =>
+  value
+    .replace(/<script[\s\S]*?<\/script>/gi, "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/\son\w+="[^"]*"/gi, "")
+    .replace(/\son\w+='[^']*'/gi, "")
+    .replace(/\s(href|src)=["']javascript:[^"']*["']/gi, "");
+
 function isPdfCertificateUrl(url: string) {
   const normalizedUrl = url.toLowerCase();
 
@@ -162,13 +189,7 @@ function isPdfCertificateUrl(url: string) {
   );
 }
 
-function CertificatePreview({
-  title,
-  url,
-}: {
-  title: string;
-  url: string;
-}) {
+function CertificatePreview({ title, url }: { title: string; url: string }) {
   const [previewMode, setPreviewMode] = useState<CertificatePreviewMode>(
     isPdfCertificateUrl(url) ? "pdf" : "image",
   );
@@ -230,6 +251,8 @@ export function PublicMemberProfileTabs({
   const [certificateIssuedAt, setCertificateIssuedAt] = useState("");
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [recordView, setRecordView] = useState<PublicRecordView>("table");
+  const [selectedPublicRecord, setSelectedPublicRecord] =
+    useState<PublicRecord | null>(null);
   const [isPublicRecordDialogOpen, setIsPublicRecordDialogOpen] =
     useState(false);
   const [recordTitle, setRecordTitle] = useState("");
@@ -242,15 +265,14 @@ export function PublicMemberProfileTabs({
   const [recordStatus, setRecordStatus] =
     useState<MemberPublicRecordStatus>("PUBLISHED");
   const publicRecordAttachmentInputRef = useRef<HTMLInputElement | null>(null);
-  const [publicRecordAttachments, setPublicRecordAttachments] = useState<File[]>(
-    [],
-  );
+  const [publicRecordAttachments, setPublicRecordAttachments] = useState<
+    File[]
+  >([]);
   const createPublicRecordMutation =
     useCreateCurrentMemberPublicRecordMutation();
   const uploadPublicRecordAttachmentsMutation =
     useUploadMemberPublicRecordAttachmentsMutation();
-  const updateBranchServicesMutation =
-    useUpdateCurrentBranchServicesMutation();
+  const updateBranchServicesMutation = useUpdateCurrentBranchServicesMutation();
   const signedInMemberProfile = currentUser?.memberProfile;
   const canManageCertificates = Boolean(
     signedInMemberProfile &&
@@ -335,14 +357,14 @@ export function PublicMemberProfileTabs({
 
           return {
             year:
-              index === years.length - 1
-                ? `${year} (YTD)`
-                : year.toString(),
+              index === years.length - 1 ? `${year} (YTD)` : year.toString(),
             activities: recordsForYear.length,
             communityImpact: recordsForYear.filter((item) =>
-              ["COMMUNITY_SERVICE", "PARTICIPATION", "REPORT_ACTIVITY"].includes(
-                item.type,
-              ),
+              [
+                "COMMUNITY_SERVICE",
+                "PARTICIPATION",
+                "REPORT_ACTIVITY",
+              ].includes(item.type),
             ).length,
           };
         })
@@ -512,8 +534,14 @@ export function PublicMemberProfileTabs({
         throw new Error("Record title is required.");
       }
 
-      if (!recordShortDescription.trim()) {
+      const recordDescriptionText = stripHtml(recordShortDescription);
+
+      if (!recordDescriptionText) {
         throw new Error("Short description is required.");
+      }
+
+      if (recordDescriptionText.length > 3000) {
+        throw new Error("Short description must not exceed 3000 characters.");
       }
 
       if (!recordDate) {
@@ -552,7 +580,7 @@ export function PublicMemberProfileTabs({
 
       await createPublicRecordMutation.mutateAsync({
         title: recordTitle.trim(),
-        shortDescription: recordShortDescription.trim(),
+        shortDescription: sanitizeRichTextHtml(recordShortDescription.trim()),
         type: recordType,
         eventAt: new Date(`${recordDate}T${recordTime}:00`).toISOString(),
         location: recordLocation.trim(),
@@ -791,10 +819,19 @@ export function PublicMemberProfileTabs({
       {publicRecords.map((record) => (
         <article
           key={record.id}
-          className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm"
+          role="button"
+          tabIndex={0}
+          onClick={() => setSelectedPublicRecord(record)}
+          onKeyDown={(event) => {
+            if (event.key === "Enter" || event.key === " ") {
+              event.preventDefault();
+              setSelectedPublicRecord(record);
+            }
+          }}
+          className="cursor-pointer overflow-hidden border bg-white transition hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#032a0d]"
         >
           {record.attachments[0] ? (
-            <div className="h-44 overflow-hidden border-b border-neutral-200 bg-neutral-100">
+            <div className="h-50 overflow-hidden bg-neutral-100">
               <img
                 src={record.attachments[0].fileUrl}
                 alt={record.title}
@@ -814,33 +851,33 @@ export function PublicMemberProfileTabs({
                 {formatEnumLabel(record.status)}
               </Badge>
             </div>
-            <h3 className="mt-4 text-xl font-semibold">{record.title}</h3>
-            <p className="mt-2 line-clamp-3 text-sm text-white/85">
-              {record.shortDescription}
-            </p>
+            <h3 className="mt-4 text-lg font-semibold">{record.title}</h3>
+            <div
+              className="mt-2 line-clamp-2 text-xs text-white/85 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+              dangerouslySetInnerHTML={{
+                __html: sanitizeRichTextHtml(record.shortDescription),
+              }}
+            />
           </div>
           <div className="space-y-4 px-5 py-5">
-            <div className="grid gap-3 text-sm text-neutral-600 sm:grid-cols-2">
+            <div className="grid gap-3 text-xs text-neutral-600">
               <div className="flex items-center gap-2">
-                <CalendarClock className="size-4 text-[#032a0d]" />
-                <span>{formatDate(record.eventAt)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Clock className="size-4 text-[#032a0d]" />
+                <CalendarClock className="size-3.5 text-[#032a0d]" />
                 <span>
+                  {formatDate(record.eventAt)},{" "}
                   {new Date(record.eventAt).toLocaleTimeString("en-PH", {
                     hour: "numeric",
                     minute: "2-digit",
                   })}
                 </span>
               </div>
-              <div className="flex items-center gap-2 sm:col-span-2">
-                <MapPin className="size-4 text-[#032a0d]" />
+              <div className="flex items-center gap-2">
+                <MapPin className="size-3.5 text-[#032a0d]" />
                 <span>{record.location}</span>
               </div>
               {record.attachments.length > 0 ? (
-                <div className="flex items-center gap-2 sm:col-span-2">
-                  <Upload className="size-4 text-[#032a0d]" />
+                <div className="flex items-center gap-2">
+                  <Upload className="size-3.5 text-[#032a0d]" />
                   <span>
                     {record.attachments.length} attachment
                     {record.attachments.length > 1 ? "s" : ""}
@@ -848,6 +885,19 @@ export function PublicMemberProfileTabs({
                 </div>
               ) : null}
             </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="rounded-none"
+              onClick={(event) => {
+                event.stopPropagation();
+                setSelectedPublicRecord(record);
+              }}
+            >
+              View full details
+              <ChevronRight className="size-4" />
+            </Button>
           </div>
         </article>
       ))}
@@ -855,62 +905,94 @@ export function PublicMemberProfileTabs({
   );
 
   const renderPublicRecordTable = () => (
-    <div className="overflow-hidden rounded-2xl border border-neutral-200">
-      <div className="hidden grid-cols-[minmax(0,2fr)_1.3fr_1.1fr_1.5fr_0.9fr] gap-4 border-b bg-neutral-50 px-5 py-3 text-xs font-semibold uppercase tracking-wide text-neutral-500 lg:grid">
-        <span>Record Title</span>
-        <span>Type</span>
-        <span>Date</span>
-        <span>Location</span>
-        <span>Status</span>
-      </div>
-      <div className="divide-y divide-neutral-200">
-        {publicRecords.map((record) => (
-          <div
-            key={record.id}
-            className="grid gap-3 px-5 py-4 lg:grid-cols-[minmax(0,2fr)_1.3fr_1.1fr_1.5fr_0.9fr] lg:items-center lg:gap-4"
-          >
-            <div>
-              <p className="text-base font-semibold text-neutral-950">
-                {record.title}
-              </p>
-              <p className="mt-1 text-sm text-neutral-500">
-                {record.shortDescription}
-              </p>
-              {record.attachments.length > 0 ? (
-                <p className="mt-2 text-xs text-neutral-500">
-                  {record.attachments.length} attachment
-                  {record.attachments.length > 1 ? "s" : ""}
-                </p>
-              ) : null}
-            </div>
-            <div>
-              <Badge
-                variant="outline"
-                className="border-[#032a0d]/12 bg-[#032a0d]/5 text-[#032a0d]"
+    <div className="w-full max-w-full overflow-hidden border border-neutral-200">
+      <div className="w-full max-w-full overflow-x-auto">
+        <Table className="w-full table-fixed">
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-[38%]">Record Title</TableHead>
+              <TableHead className="w-[17%]">Date</TableHead>
+              <TableHead className="w-[24%]">Location</TableHead>
+              <TableHead className="w-[13%]">Status</TableHead>
+              <TableHead className="w-[8%] text-right">Action</TableHead>
+            </TableRow>
+          </TableHeader>
+
+          <TableBody>
+            {publicRecords.map((record) => (
+              <TableRow
+                key={record.id}
+                role="button"
+                tabIndex={0}
+                onClick={() => setSelectedPublicRecord(record)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedPublicRecord(record);
+                  }
+                }}
+                className="cursor-pointer align-middle"
               >
-                {getPublicRecordTypeLabel(record.type)}
-              </Badge>
-            </div>
-            <div className="text-sm text-neutral-700">
-              <p>{formatDate(record.eventAt)}</p>
-              <p className="mt-1 text-neutral-500">
-                {new Date(record.eventAt).toLocaleTimeString("en-PH", {
-                  hour: "numeric",
-                  minute: "2-digit",
-                })}
-              </p>
-            </div>
-            <div className="text-sm text-neutral-700">{record.location}</div>
-            <div>
-              <Badge
-                variant="secondary"
-                className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100"
-              >
-                {formatEnumLabel(record.status)}
-              </Badge>
-            </div>
-          </div>
-        ))}
+                <TableCell className="max-w-0 align-middle">
+                  <p className="truncate font-semibold text-neutral-950">
+                    {record.title}
+                  </p>
+
+                  <div
+                    className="mt-1 line-clamp-1 break-words text-sm text-neutral-500 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeRichTextHtml(record.shortDescription),
+                    }}
+                  />
+
+                  {record.attachments.length > 0 && (
+                    <p className="mt-2 text-xs text-neutral-500">
+                      {record.attachments.length} attachment
+                      {record.attachments.length > 1 ? "s" : ""}
+                    </p>
+                  )}
+                </TableCell>
+
+                <TableCell className="align-middle text-sm">
+                  <p>{formatDate(record.eventAt)}</p>
+                  <p className="mt-1 text-neutral-500">
+                    {new Date(record.eventAt).toLocaleTimeString("en-PH", {
+                      hour: "numeric",
+                      minute: "2-digit",
+                    })}
+                  </p>
+                </TableCell>
+
+                <TableCell className="break-words align-middle text-sm text-neutral-700">
+                  {record.location}
+                </TableCell>
+
+                <TableCell className="align-middle">
+                  <Badge
+                    variant="secondary"
+                    className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100"
+                  >
+                    {formatEnumLabel(record.status)}
+                  </Badge>
+                </TableCell>
+
+                <TableCell className="align-middle text-right">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="xs"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      setSelectedPublicRecord(record);
+                    }}
+                  >
+                    View
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
       </div>
     </div>
   );
@@ -1266,9 +1348,7 @@ export function PublicMemberProfileTabs({
                       <p className="mt-2 text-2xl font-semibold text-neutral-950">
                         {publicRecordCounts.communityService}
                       </p>
-                      <p className="text-xs text-neutral-500">
-                        Activities
-                      </p>
+                      <p className="text-xs text-neutral-500">Activities</p>
                     </div>
                   </div>
                 </div>
@@ -1556,7 +1636,7 @@ export function PublicMemberProfileTabs({
                           align="center"
                           iconType="circle"
                           iconSize={8}
-                          wrapperStyle={{ paddingBottom: 15, }}
+                          wrapperStyle={{ paddingBottom: 15 }}
                         />
                         <Area
                           type="monotone"
@@ -1828,13 +1908,148 @@ export function PublicMemberProfileTabs({
         </TabsContent>
       </div>
       <Dialog
+        open={Boolean(selectedPublicRecord)}
+        onOpenChange={(open) => {
+          if (!open) setSelectedPublicRecord(null);
+        }}
+      >
+        <DialogContent className="max-h-[90vh] mt-8 max-w-4xl! gap-0 overflow-hidden border-[#032a0d]/15 p-0">
+          {selectedPublicRecord ? (
+            <>
+              <DialogHeader className="border-b px-6 py-5">
+                <div className="flex flex-wrap items-start justify-between gap-3 pr-8">
+                  <div>
+                    <DialogTitle className="text-2xl text-[#032a0d]">
+                      {selectedPublicRecord.title}
+                    </DialogTitle>
+                    <DialogDescription className="mt-2">
+                      Full public record details and attachments.
+                    </DialogDescription>
+                  </div>
+                  <Badge
+                    variant="secondary"
+                    className="bg-emerald-100 text-emerald-800 hover:bg-emerald-100"
+                  >
+                    {formatEnumLabel(selectedPublicRecord.status)}
+                  </Badge>
+                </div>
+              </DialogHeader>
+
+              <div className="max-h-[calc(90vh-8rem)] overflow-y-auto px-6 py-5">
+                <div className="grid gap-4 md:grid-cols-3">
+                  <div className="rounded-lg border bg-neutral-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                      Type
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-neutral-950">
+                      {getPublicRecordTypeLabel(selectedPublicRecord.type)}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border bg-neutral-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                      Date and time
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-neutral-950">
+                      {formatDate(selectedPublicRecord.eventAt)},{" "}
+                      {new Date(
+                        selectedPublicRecord.eventAt,
+                      ).toLocaleTimeString("en-PH", {
+                        hour: "numeric",
+                        minute: "2-digit",
+                      })}
+                    </p>
+                  </div>
+                  <div className="rounded-lg border bg-neutral-50 p-4">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                      Attachments
+                    </p>
+                    <p className="mt-2 text-sm font-semibold text-neutral-950">
+                      {selectedPublicRecord.attachments.length} images
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-5 rounded-lg border bg-white p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                    Location
+                  </p>
+                  <p className="mt-2 text-sm text-neutral-800">
+                    {selectedPublicRecord.location}
+                  </p>
+                </div>
+
+                <div className="mt-5 rounded-lg border bg-white p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-neutral-500">
+                    Description
+                  </p>
+                  <div
+                    className="prose prose-sm mt-3 max-w-none text-neutral-700 [&_a]:text-[#032a0d] [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+                    dangerouslySetInnerHTML={{
+                      __html: sanitizeRichTextHtml(
+                        selectedPublicRecord.shortDescription,
+                      ),
+                    }}
+                  />
+                </div>
+
+                <div className="mt-5">
+                  <div className="flex items-center gap-2">
+                    <ImageIcon className="size-4 text-[#032a0d]" />
+                    <h3 className="font-semibold text-neutral-950">
+                      Attachments
+                    </h3>
+                  </div>
+                  {selectedPublicRecord.attachments.length > 0 ? (
+                    <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                      {selectedPublicRecord.attachments.map((attachment) => (
+                        <a
+                          key={attachment.id}
+                          href={attachment.fileUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="overflow-hidden rounded-lg border bg-white shadow-sm transition hover:shadow-md"
+                        >
+                          <div className="h-36 bg-neutral-100">
+                            <img
+                              src={attachment.fileUrl}
+                              alt={
+                                attachment.fileName ??
+                                selectedPublicRecord.title
+                              }
+                              className="h-full w-full object-cover"
+                            />
+                          </div>
+                          <div className="px-3 py-2">
+                            <p className="truncate text-sm font-medium text-neutral-900">
+                              {attachment.fileName ??
+                                "Public record attachment"}
+                            </p>
+                            <p className="mt-1 text-xs text-neutral-500">
+                              Open attachment
+                            </p>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="mt-3 rounded-lg border border-dashed bg-neutral-50 p-4 text-sm text-neutral-500">
+                      No attachments were added to this public record.
+                    </p>
+                  )}
+                </div>
+              </div>
+            </>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+      <Dialog
         open={isBranchServiceDialogOpen}
         onOpenChange={(open) => {
           setIsBranchServiceDialogOpen(open);
           if (!open) resetBranchServiceDialog();
         }}
       >
-        <DialogContent className="max-w-4xl border-[#032a0d]/15">
+        <DialogContent className="max-w-4xl! border-[#032a0d]/15">
           <DialogHeader>
             <DialogTitle className="text-[#032a0d]">
               {visibleBranchServices.length > 0
@@ -2020,8 +2235,8 @@ export function PublicMemberProfileTabs({
           if (!open) resetPublicRecordDialog();
         }}
       >
-        <DialogContent className="max-w-4xl! border-[#032a0d]/15">
-          <DialogHeader>
+        <DialogContent className="max-w-5xl! mt-8! gap-0 overflow-hidden border-[#032a0d]/15 p-0">
+          <DialogHeader className="border-b px-6 py-5">
             <DialogTitle className="text-[#032a0d]">
               Create public records
             </DialogTitle>
@@ -2031,8 +2246,8 @@ export function PublicMemberProfileTabs({
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            <div className="space-y-2">
+          <div className="px-6 py-5 overflow-y-auto max-h-[calc(90vh-10rem)]">
+            <div className="space-y-2 mb-5">
               <Label htmlFor="public-record-title">Title</Label>
               <Input
                 id="public-record-title"
@@ -2042,174 +2257,175 @@ export function PublicMemberProfileTabs({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="public-record-description">
-                Short description
-              </Label>
-              <Input
-                id="public-record-description"
-                value={recordShortDescription}
-                onChange={(event) =>
-                  setRecordShortDescription(event.target.value)
-                }
-                placeholder="Feeding program for families in need"
-                
-              />
-            </div>
+            <div className="grid gap-5 md:grid-cols-2">
+              <div className="space-y-2 md:col-span-2">
+                <Label>Description</Label>
+                <RichTextEditor
+                  value={recordShortDescription}
+                  onChange={setRecordShortDescription}
+                  placeholder="Describe the public record, ministry task, or community activity..."
+                />
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="public-record-type">Type</Label>
-              <Select
-                value={recordType}
-                onValueChange={(value) =>
-                  setRecordType(value as MemberPublicRecordType)
-                }
-              >
-                <SelectTrigger id="public-record-type" className="h-11 w-full">
-                  <SelectValue placeholder="Select record type" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PUBLIC_RECORD_TYPE_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="public-record-status">Status</Label>
-              <Select
-                value={recordStatus}
-                onValueChange={(value) =>
-                  setRecordStatus(value as MemberPublicRecordStatus)
-                }
-              >
-                <SelectTrigger
-                  id="public-record-status"
-                  className="h-11 w-full"
+              <div className="space-y-2">
+                <Label htmlFor="public-record-type">Type</Label>
+                <Select
+                  value={recordType}
+                  onValueChange={(value) =>
+                    setRecordType(value as MemberPublicRecordType)
+                  }
                 >
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  {PUBLIC_RECORD_STATUS_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+                  <SelectTrigger
+                    id="public-record-type"
+                    className="h-11 w-full"
+                  >
+                    <SelectValue placeholder="Select record type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PUBLIC_RECORD_TYPE_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="public-record-date">Date</Label>
-              <Input
-                id="public-record-date"
-                type="date"
-                value={recordDate}
-                onChange={(event) => setRecordDate(event.target.value)}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="public-record-status">Status</Label>
+                <Select
+                  value={recordStatus}
+                  onValueChange={(value) =>
+                    setRecordStatus(value as MemberPublicRecordStatus)
+                  }
+                >
+                  <SelectTrigger
+                    id="public-record-status"
+                    className="h-11 w-full"
+                  >
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PUBLIC_RECORD_STATUS_OPTIONS.map((option) => (
+                      <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="public-record-time">Time</Label>
-              <Input
-                id="public-record-time"
-                type="time"
-                value={recordTime}
-                onChange={(event) => setRecordTime(event.target.value)}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="public-record-date">Date</Label>
+                <Input
+                  id="public-record-date"
+                  type="date"
+                  value={recordDate}
+                  onChange={(event) => setRecordDate(event.target.value)}
+                />
+              </div>
 
-            <div className="space-y-2 md:col-span-2">
-              <Label htmlFor="public-record-location">Location</Label>
-              <Input
-                id="public-record-location"
-                value={recordLocation}
-                onChange={(event) => setRecordLocation(event.target.value)}
-                placeholder="Dasmarinas City, Cavite"
-              />
-            </div>
+              <div className="space-y-2">
+                <Label htmlFor="public-record-time">Time</Label>
+                <Input
+                  id="public-record-time"
+                  type="time"
+                  value={recordTime}
+                  onChange={(event) => setRecordTime(event.target.value)}
+                />
+              </div>
 
-            <div className="space-y-2 md:col-span-2">
-              <Label>Attachments</Label>
-              <input
-                ref={publicRecordAttachmentInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={(event) => {
-                  handlePublicRecordAttachmentFiles(event.target.files);
-                  event.currentTarget.value = "";
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => publicRecordAttachmentInputRef.current?.click()}
-                onDragOver={(event) => {
-                  event.preventDefault();
-                }}
-                onDrop={(event) => {
-                  event.preventDefault();
-                  handlePublicRecordAttachmentFiles(event.dataTransfer.files);
-                }}
-                className="flex min-h-36 w-full flex-col items-center justify-center rounded-xl border border-dashed border-[#032a0d]/25 bg-[#032a0d]/3 px-4 py-6 text-center transition hover:bg-[#032a0d]/5"
-              >
-                <p className="text-sm font-semibold text-neutral-900">
-                  {publicRecordAttachments.length > 0
-                    ? `${publicRecordAttachments.length} attachment${
-                        publicRecordAttachments.length > 1 ? "s" : ""
-                      } selected`
-                    : "Upload record attachments"}
-                </p>
-                <p className="mt-2 text-xs text-neutral-500">
-                  Drag and drop one or more images here, or click to browse.
-                </p>
-                <p className="mt-2 text-xs text-neutral-400">
-                  Accepts single or multiple image files, up to 6 attachments.
-                </p>
-              </button>
+              <div className="space-y-2 md:col-span-2">
+                <Label htmlFor="public-record-location">Location</Label>
+                <Input
+                  id="public-record-location"
+                  value={recordLocation}
+                  onChange={(event) => setRecordLocation(event.target.value)}
+                  placeholder="Dasmarinas City, Cavite"
+                />
+              </div>
 
-              {publicRecordAttachments.length > 0 ? (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {publicRecordAttachments.map((file, index) => (
-                    <div
-                      key={`${file.name}-${file.lastModified}-${index}`}
-                      className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm"
-                    >
-                      <div className="relative h-28 overflow-hidden bg-neutral-100">
-                        <img
-                          src={URL.createObjectURL(file)}
-                          alt={file.name}
-                          className="h-full w-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => removePublicRecordAttachment(index)}
-                          className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-black/70 text-white transition hover:bg-black/80"
-                          aria-label={`Remove ${file.name}`}
-                        >
-                          <X className="size-4" />
-                        </button>
+              <div className="space-y-2 md:col-span-2">
+                <Label>Attachments</Label>
+                <input
+                  ref={publicRecordAttachmentInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className="hidden"
+                  onChange={(event) => {
+                    handlePublicRecordAttachmentFiles(event.target.files);
+                    event.currentTarget.value = "";
+                  }}
+                />
+                <button
+                  type="button"
+                  onClick={() =>
+                    publicRecordAttachmentInputRef.current?.click()
+                  }
+                  onDragOver={(event) => {
+                    event.preventDefault();
+                  }}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    handlePublicRecordAttachmentFiles(event.dataTransfer.files);
+                  }}
+                  className="flex min-h-36 w-full flex-col items-center justify-center rounded-xl border border-dashed border-[#032a0d]/25 bg-[#032a0d]/3 px-4 py-6 text-center transition hover:bg-[#032a0d]/5"
+                >
+                  <p className="text-sm font-semibold text-neutral-900">
+                    {publicRecordAttachments.length > 0
+                      ? `${publicRecordAttachments.length} attachment${
+                          publicRecordAttachments.length > 1 ? "s" : ""
+                        } selected`
+                      : "Upload record attachments"}
+                  </p>
+                  <p className="mt-2 text-xs text-neutral-500">
+                    Drag and drop one or more images here, or click to browse.
+                  </p>
+                  <p className="mt-2 text-xs text-neutral-400">
+                    Accepts single or multiple image files, up to 6 attachments.
+                  </p>
+                </button>
+
+                {publicRecordAttachments.length > 0 ? (
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {publicRecordAttachments.map((file, index) => (
+                      <div
+                        key={`${file.name}-${file.lastModified}-${index}`}
+                        className="overflow-hidden rounded-xl border border-neutral-200 bg-white shadow-sm"
+                      >
+                        <div className="relative h-28 overflow-hidden bg-neutral-100">
+                          <img
+                            src={URL.createObjectURL(file)}
+                            alt={file.name}
+                            className="h-full w-full object-cover"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => removePublicRecordAttachment(index)}
+                            className="absolute right-2 top-2 flex size-7 items-center justify-center rounded-full bg-black/70 text-white transition hover:bg-black/80"
+                            aria-label={`Remove ${file.name}`}
+                          >
+                            <X className="size-4" />
+                          </button>
+                        </div>
+                        <div className="space-y-1 px-3 py-2">
+                          <p className="truncate text-sm font-medium text-neutral-900">
+                            {file.name}
+                          </p>
+                          <p className="text-xs text-neutral-500">
+                            {(file.size / (1024 * 1024)).toFixed(2)} MB
+                          </p>
+                        </div>
                       </div>
-                      <div className="space-y-1 px-3 py-2">
-                        <p className="truncate text-sm font-medium text-neutral-900">
-                          {file.name}
-                        </p>
-                        <p className="text-xs text-neutral-500">
-                          {(file.size / (1024 * 1024)).toFixed(2)} MB
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="border-t bg-background px-6 py-4">
             <Button
               type="button"
               variant="outline"

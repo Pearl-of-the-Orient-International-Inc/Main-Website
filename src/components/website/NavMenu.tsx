@@ -4,6 +4,7 @@ import {
   ArrowRightIcon,
   BellIcon,
   ChevronRightIcon,
+  LockKeyholeIcon,
   LogOutIcon,
   SettingsIcon,
 } from "lucide-react";
@@ -375,13 +376,22 @@ export const NavMenu = () => {
                   </DropdownMenuItem>
                   <DropdownMenuItem asChild>
                     <Link
+                      href="/security-privacy"
+                      className="flex w-full items-center gap-2"
+                    >
+                      <LockKeyholeIcon className="size-4" />
+                      <span>Security & Privacy</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  {/* <DropdownMenuItem asChild>
+                    <Link
                       href="/notifications"
                       className="flex w-full items-center gap-2"
                     >
                       <BellIcon className="size-4" />
                       <span>Notifications</span>
                     </Link>
-                  </DropdownMenuItem>
+                  </DropdownMenuItem> */}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     onSelect={(event) => {

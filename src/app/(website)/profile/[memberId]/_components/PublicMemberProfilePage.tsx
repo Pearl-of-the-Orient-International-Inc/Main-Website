@@ -17,7 +17,10 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { useOptionalCurrentUserQuery } from "@/features/auth/auth.hooks";
+import {
+  useOptionalCurrentUserQuery,
+  useUploadAvatarMutation,
+} from "@/features/auth/auth.hooks";
 import {
   toApiError,
   useUploadMemberProfileBannerMutation,
@@ -46,6 +49,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
   const applicantRequirements = member.applicantRequirements ?? [];
   const bannerFrameRef = useRef<HTMLDivElement | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const avatarFileInputRef = useRef<HTMLInputElement | null>(null);
   const repositionDragRef = useRef<{
     pointerId: number;
     startY: number;
@@ -58,11 +62,19 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
   const [bannerImageSrc, setBannerImageSrc] = useState<string | null>(
     member.profileBannerUrl?.trim() || null,
   );
+  const [avatarImageSrc, setAvatarImageSrc] = useState<string | null>(
+    member.user.avatar?.trim() ||
+      member.applicantRequirements
+        .find((item) => item.type === "PHOTO_2X2")
+        ?.fileUrl.trim() ||
+      null,
+  );
   const [bannerPosition, setBannerPosition] = useState(
     member.profileBannerPositionY ?? 50,
   );
   const { toast } = useToast();
   const { data: currentUser } = useOptionalCurrentUserQuery();
+  const uploadAvatarMutation = useUploadAvatarMutation();
   const uploadBannerMutation = useUploadMemberProfileBannerMutation();
   const updateBannerMutation = useUpdateCurrentMemberProfileBannerMutation();
   const fullName = buildFullName(member);
@@ -76,6 +88,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
   );
   const isUploadingBanner =
     uploadBannerMutation.isPending || updateBannerMutation.isPending;
+  const isUploadingAvatar = uploadAvatarMutation.isPending;
   const profilePhoto = applicantRequirements.find(
     (item) => item.type === "PHOTO_2X2",
   );
@@ -128,6 +141,12 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
     setBannerImageSrc(member.profileBannerUrl?.trim() || null);
     setBannerPosition(member.profileBannerPositionY ?? 50);
   }, [member.profileBannerPositionY, member.profileBannerUrl]);
+
+  useEffect(() => {
+    setAvatarImageSrc(
+      member.user.avatar?.trim() || profilePhoto?.fileUrl.trim() || null,
+    );
+  }, [member.user.avatar, profilePhoto?.fileUrl]);
 
   const handleBannerFile = async (file: File | null | undefined) => {
     if (!file || !canManageBanner || isUploadingBanner) return;
@@ -186,6 +205,57 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
   const openBannerFilePicker = () => {
     if (!canManageBanner || isUploadingBanner) return;
     fileInputRef.current?.click();
+  };
+
+  const handleAvatarFile = async (file: File | null | undefined) => {
+    if (!file || !canManageBanner || isUploadingAvatar) return;
+
+    try {
+      if (!file.type.startsWith("image/")) {
+        throw new Error("Please choose a valid image file.");
+      }
+
+      if (file.size > 4 * 1024 * 1024) {
+        throw new Error("Profile picture must be 4MB or smaller.");
+      }
+
+      const uploaded = await uploadAvatarMutation.mutateAsync(file);
+      const fileUrl =
+        uploaded?.serverData?.avatarUrl ||
+        uploaded?.serverData?.fileUrl ||
+        uploaded?.ufsUrl ||
+        uploaded?.url ||
+        "";
+
+      if (!fileUrl) {
+        throw new Error("Upload finished without a profile picture URL.");
+      }
+
+      setAvatarImageSrc(fileUrl);
+
+      toast({
+        title: "Profile picture updated",
+        description: "Your profile picture has been saved successfully.",
+        variant: "success",
+      });
+    } catch (error) {
+      const apiError = toApiError(error);
+
+      toast({
+        title: "Profile picture upload failed",
+        description:
+          apiError.message ??
+          (error instanceof Error
+            ? error.message
+            : "Unable to upload the profile picture right now."),
+        variant: "error",
+      });
+    }
+  };
+
+  const openAvatarFilePicker = () => {
+    if (!canManageBanner || isUploadingAvatar) return;
+    avatarFileInputRef.current?.click();
   };
 
   const saveBannerPosition = async (position: number) => {
@@ -269,6 +339,16 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                     className="hidden"
                     onChange={(event) => {
                       void handleBannerFile(event.target.files?.[0]);
+                      event.currentTarget.value = "";
+                    }}
+                  />
+                  <input
+                    ref={avatarFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(event) => {
+                      void handleAvatarFile(event.target.files?.[0]);
                       event.currentTarget.value = "";
                     }}
                   />
@@ -416,12 +496,29 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                       {isUploadingBanner ? "Uploading..." : "Edit cover photo"}
                     </button>
                   ) : null}
-                  <Avatar className="absolute -bottom-10 left-10 size-25">
-                    <AvatarImage src={profilePhoto?.fileUrl} />
-                    <AvatarFallback className="border-4 border-emerald-500 bg-green-900! text-4xl font-bold text-white">
-                      {fullName.charAt(0)}
-                    </AvatarFallback>
-                  </Avatar>
+                  <div className="absolute -bottom-10 left-10 z-20">
+                    <Avatar className="size-25 border-4 border-white shadow-lg">
+                      <AvatarImage src={avatarImageSrc ?? undefined} />
+                      <AvatarFallback className="bg-green-900! text-4xl font-bold text-white">
+                        {fullName.charAt(0)}
+                      </AvatarFallback>
+                    </Avatar>
+                    {canManageBanner ? (
+                      <button
+                        type="button"
+                        onClick={openAvatarFilePicker}
+                        disabled={isUploadingAvatar}
+                        className="absolute -right-1 bottom-1 inline-flex size-9 items-center justify-center rounded-full border-2 border-white bg-[#032a0d] text-white shadow-lg transition hover:bg-[#064416] disabled:cursor-not-allowed disabled:opacity-70"
+                        aria-label="Upload profile picture"
+                      >
+                        {isUploadingAvatar ? (
+                          <LoaderCircle className="size-4 animate-spin" />
+                        ) : (
+                          <Camera className="size-4" />
+                        )}
+                      </button>
+                    ) : null}
+                  </div>
                 </div>
 
                 <div className="relative mt-10 px-6 pb-7 sm:px-8">

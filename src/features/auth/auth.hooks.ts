@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toApiError } from "@/lib/http-client";
 import * as authApi from "./auth.api";
+import { uploadAvatar } from "./avatar-upload.api";
 
 export const useLoginMutation = () =>
   useMutation({
@@ -38,6 +39,19 @@ export const useOptionalCurrentUserQuery = () =>
     staleTime: 0,
     refetchOnMount: "always",
   });
+
+export const useUploadAvatarMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: uploadAvatar,
+    throwOnError: false,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["auth"] });
+    },
+    meta: { feature: "auth.uploadAvatar" },
+  });
+};
 
 export const useLogoutMutation = () => {
   const queryClient = useQueryClient();

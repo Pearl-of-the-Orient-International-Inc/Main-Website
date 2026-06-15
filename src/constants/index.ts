@@ -12,6 +12,316 @@ import {
   TriangleAlert,
 } from "lucide-react";
 
+export type NavItem = {
+  label: string;
+  href: string;
+  children?: NavItem[];
+};
+
+export type NavGroup = {
+  group: string;
+  items: NavItem[];
+};
+
+export const DOCS_NAV: NavGroup[] = [
+  {
+    group: "Start Here",
+    items: [
+      { label: "Introduction", href: "/documentation" },
+      { label: "Getting Around", href: "/documentation/getting-around" },
+      {
+        label: "Sign In and Account Access",
+        href: "/documentation/account-access",
+      },
+      {
+        label: "Public Website Navigation",
+        href: "/documentation/website-navigation",
+      },
+      {
+        label: "Search and Directory",
+        href: "/documentation/search-directory",
+      },
+    ],
+  },
+  {
+    group: "Members",
+    items: [
+      {
+        label: "Become a Member",
+        href: "/documentation/become-a-member",
+        children: [
+          {
+            label: "Online Application",
+            href: "/documentation/become-a-member",
+          },
+          {
+            label: "Submission of Requirements",
+            href: "/documentation/become-a-member/requirements",
+          },
+          {
+            label: "Pre-orientation Course",
+            href: "/documentation/become-a-member/pre-orientation",
+          },
+          {
+            label: "Payment / Checkout",
+            href: "/documentation/become-a-member/payment-checkout",
+          },
+          {
+            label: "Online Interview",
+            href: "/documentation/become-a-member/online-interview",
+          },
+          {
+            label: "Member ID / QR and Certificate",
+            href: "/documentation/become-a-member/id-generation",
+          },
+          {
+            label: "Chaplaincy 101 Training",
+            href: "/documentation/become-a-member/chaplaincy-101",
+          },
+          {
+            label: "Oath Taking",
+            href: "/documentation/become-a-member/oath-taking",
+          },
+        ],
+      },
+      {
+        label: "View Profile and Public Record",
+        href: "/documentation#member-profile",
+      },
+      {
+        label: "Attach Certificates",
+        href: "/documentation#member-attach-certificates",
+      },
+      {
+        label: "Download Membership Certificate",
+        href: "/documentation#member-certificate",
+      },
+      { label: "Renew Membership", href: "/documentation#member-renewal" },
+    ],
+  },
+  {
+    group: "Officers",
+    items: [
+      { label: "Officer Dashboard", href: "/documentation#officer-dashboard" },
+      {
+        label: "Assigned Office and Role",
+        href: "/documentation#officer-assignment",
+      },
+      {
+        label: "Manage Assigned Members",
+        href: "/documentation#officer-members",
+      },
+      {
+        label: "Review Member Profiles",
+        href: "/documentation#officer-member-profiles",
+      },
+      {
+        label: "Use Organization Chart",
+        href: "/documentation#officer-organization-chart",
+      },
+      {
+        label: "Handle Ministry Activity",
+        href: "/documentation#officer-ministry-activity",
+      },
+      {
+        label: "Reports and Follow-ups",
+        href: "/documentation#officer-reports",
+      },
+    ],
+  },
+  {
+    group: "Admin Portal",
+    items: [
+      { label: "Dashboard Overview", href: "/documentation#dashboard-guide" },
+      {
+        label: "Members",
+        href: "/documentation#members-guide",
+        children: [
+          {
+            label: "Manage All Members",
+            href: "/documentation#admin-all-members",
+          },
+          {
+            label: "Review Pending Applications",
+            href: "/documentation#admin-pending-applications",
+          },
+          {
+            label: "Approve or Reject Applications",
+            href: "/documentation#admin-approve-applications",
+          },
+          {
+            label: "Process Renewals",
+            href: "/documentation#admin-renewal-members",
+          },
+          {
+            label: "Generate QR Codes",
+            href: "/documentation#admin-member-qr-codes",
+          },
+          {
+            label: "Assign Offices",
+            href: "/documentation#admin-office-assignment",
+          },
+        ],
+      },
+      {
+        label: "Certifications",
+        href: "/documentation#admin-certifications",
+        children: [
+          {
+            label: "Upload Certificate Layout",
+            href: "/documentation#admin-upload-certificate-layout",
+          },
+          {
+            label: "Place Certificate Fields",
+            href: "/documentation#admin-certificate-placement",
+          },
+          {
+            label: "Batch Generate Certificates",
+            href: "/documentation#admin-batch-certificates",
+          },
+        ],
+      },
+      {
+        label: "Branch of Services",
+        href: "/documentation#branch-services-guide",
+      },
+      {
+        label: "Organizational Structure",
+        href: "/documentation#organizational-structure-guide",
+      },
+      {
+        label: "Create News and Blogs",
+        href: "/documentation#news-and-blogs-guide",
+      },
+      {
+        label: "Events",
+        href: "/documentation#events-guide",
+        children: [
+          {
+            label: "Create an Event",
+            href: "/documentation#admin-create-event",
+          },
+          {
+            label: "Edit Event Details",
+            href: "/documentation#admin-edit-event",
+          },
+          {
+            label: "Invite Attendees",
+            href: "/documentation#admin-invite-attendees",
+          },
+          {
+            label: "Use Calendar View",
+            href: "/documentation#admin-events-calendar",
+          },
+        ],
+      },
+      { label: "Memo and Announcements", href: "/documentation#memo-guide" },
+      { label: "Reports and Analytics", href: "/documentation#reports-guide" },
+      { label: "Admin Accounts", href: "/documentation#admin-accounts-guide" },
+      { label: "System Logs", href: "/documentation#system-logs-guide" },
+      { label: "Backup Database", href: "/documentation#backup-guide" },
+    ],
+  },
+  {
+    group: "Admin Settings",
+    items: [
+      {
+        label: "Profile and Preferences",
+        href: "/documentation#admin-profile-settings",
+      },
+      { label: "Security and MFA", href: "/documentation#admin-security" },
+      {
+        label: "Email Configuration",
+        href: "/documentation#admin-email-configuration",
+      },
+      { label: "Branding and Logo", href: "/documentation#admin-branding" },
+      {
+        label: "Platform Information",
+        href: "/documentation#admin-platform-information",
+      },
+      {
+        label: "FAQs and Office Hours",
+        href: "/documentation#admin-faqs-office-hours",
+      },
+      {
+        label: "Policies and Cookies",
+        href: "/documentation#admin-policies-cookies",
+      },
+      {
+        label: "Restricted Users",
+        href: "/documentation#admin-restricted-users",
+      },
+    ],
+  },
+  {
+    group: "Seminary",
+    items: [
+      { label: "Seminary Website", href: "/documentation#seminary-website" },
+      { label: "Apply for Admission", href: "/documentation#seminary-apply" },
+      {
+        label: "Admission Steps",
+        href: "/documentation#seminary-admission-steps",
+      },
+      { label: "Student Resources", href: "/documentation#seminary-resources" },
+      {
+        label: "Seminary Admin",
+        href: "/documentation#seminary-admin",
+        children: [
+          {
+            label: "Admissions",
+            href: "/documentation#seminary-admin-admissions",
+          },
+          {
+            label: "Students and Faculty",
+            href: "/documentation#seminary-admin-users",
+          },
+          {
+            label: "Enrollment",
+            href: "/documentation#seminary-admin-enrollment",
+          },
+          {
+            label: "Programs and Courses",
+            href: "/documentation#seminary-admin-courses",
+          },
+          {
+            label: "Assignments and Exams",
+            href: "/documentation#seminary-admin-lms",
+          },
+          {
+            label: "Grades and Transcripts",
+            href: "/documentation#seminary-admin-grades",
+          },
+          {
+            label: "Attendance and Timetable",
+            href: "/documentation#seminary-admin-attendance",
+          },
+          {
+            label: "Fees and Payments",
+            href: "/documentation#seminary-admin-fees",
+          },
+          {
+            label: "Document Requests",
+            href: "/documentation#seminary-admin-document-requests",
+          },
+          { label: "Reports", href: "/documentation#seminary-admin-reports" },
+        ],
+      },
+    ],
+  },
+  {
+    group: "Help",
+    items: [
+      { label: "Forgot Password", href: "/documentation#forgot-password" },
+      { label: "Confirm Account", href: "/documentation#confirm-account" },
+      {
+        label: "Troubleshooting Uploads",
+        href: "/documentation#troubleshooting-uploads",
+      },
+      { label: "Contact Support", href: "/documentation#contact-support" },
+    ],
+  },
+];
+
 export const paymentMethods = [
   {
     name: "Visa",

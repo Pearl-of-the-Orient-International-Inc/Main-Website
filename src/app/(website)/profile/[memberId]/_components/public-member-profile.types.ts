@@ -37,6 +37,7 @@ export interface PublicMemberProfileResponse {
     updatedAt: string;
     user: {
       name: string;
+      avatar: string | null;
       role: "MEMBER" | "OFFICER" | "ADMIN";
       accountStatus: "ACTIVE" | "PENDING" | "SUSPENDED";
       isEmailVerified: boolean;

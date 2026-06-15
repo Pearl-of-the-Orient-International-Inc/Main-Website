@@ -50,6 +50,7 @@ import {
   formatEnumLabel,
   type PublicMember,
 } from "./public-member-profile.shared";
+import { downloadPublicProfilePdf } from "./public-member-profile-pdf";
 
 type Props = {
   member: PublicMember;
@@ -85,6 +86,7 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
 
   const [publicProfileUrl, setPublicProfileUrl] = useState("");
   const [isCopied, setIsCopied] = useState(false);
+  const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [isChurchDialogOpen, setIsChurchDialogOpen] = useState(false);
   const [isEducationDialogOpen, setIsEducationDialogOpen] = useState(false);
   const [churchAffiliationValue, setChurchAffiliationValue] = useState(
@@ -151,7 +153,6 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setPublicProfileUrl(window.location.href);
   }, []);
 
@@ -165,6 +166,33 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
   const encodedShareText = encodeURIComponent(
     `View ${fullName}'s public member profile`,
   );
+
+  async function handleDownloadPublicProfilePdf() {
+    try {
+      setIsDownloadingPdf(true);
+      await downloadPublicProfilePdf({
+        member,
+        fullName,
+        publicProfileUrl: resolvedPublicProfileUrl,
+      });
+      toast({
+        title: "PDF downloaded",
+        description: "The public profile PDF has been generated.",
+        variant: "success",
+      });
+    } catch (error) {
+      toast({
+        title: "PDF download failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to generate the public profile PDF right now.",
+        variant: "error",
+      });
+    } finally {
+      setIsDownloadingPdf(false);
+    }
+  }
 
   const quickActions = [
     {
@@ -180,11 +208,8 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
     {
       label: "Download Public Profile (PDF)",
       icon: Download,
-      onClick: () => {
-        if (typeof window !== "undefined") {
-          window.print();
-        }
-      },
+      onClick: () => void handleDownloadPublicProfilePdf(),
+      disabled: isDownloadingPdf,
     },
     {
       label: "Report an Issue",
@@ -624,11 +649,14 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
                   key={action.label}
                   type="button"
                   onClick={action.onClick}
-                  className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-neutral-50"
+                  disabled={"disabled" in action ? action.disabled : false}
+                  className="flex w-full items-center justify-between gap-3 px-5 py-4 text-left transition hover:bg-neutral-50 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   <span className="flex items-center gap-3 text-sm font-medium text-neutral-800">
                     <Icon className="size-4 text-neutral-500" />
-                    {action.label}
+                    {"disabled" in action && action.disabled
+                      ? "Preparing PDF..."
+                      : action.label}
                   </span>
                   <ChevronRight className="size-4 text-neutral-400" />
                 </button>

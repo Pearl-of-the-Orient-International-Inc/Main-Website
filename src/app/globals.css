@@ -180,3 +180,8 @@
 .directory-map .leaflet-control-zoom a {
   color: #032a0d;
 }
+
+html {
+  scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+}
