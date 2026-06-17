@@ -49,6 +49,10 @@ export const NavMenu = () => {
   };
 
   const isSignedIn = Boolean(currentUser);
+  const memberProfileUniqueId = currentUser?.memberProfile?.uniqueId?.trim();
+  const memberProfileHref = memberProfileUniqueId
+    ? `/profile/${encodeURIComponent(memberProfileUniqueId)}`
+    : null;
   const userInitials = currentUser?.name
     ? currentUser.name
         .split(" ")
@@ -374,15 +378,22 @@ export const NavMenu = () => {
                     </div>
                   </DropdownMenuLabel>
                   <DropdownMenuSeparator />
-                  <DropdownMenuItem asChild>
-                    <Link
-                      href={`/profile/${currentUser?.memberProfile?.uniqueId}`}
-                      className="flex w-full items-center gap-2"
-                    >
+                  {memberProfileHref ? (
+                    <DropdownMenuItem asChild>
+                      <Link
+                        href={memberProfileHref}
+                        className="flex w-full items-center gap-2"
+                      >
+                        <SettingsIcon className="size-4" />
+                        <span>Account</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  ) : (
+                    <DropdownMenuItem disabled>
                       <SettingsIcon className="size-4" />
-                      <span>Account</span>
-                    </Link>
-                  </DropdownMenuItem>
+                      <span>Account unavailable</span>
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem asChild>
                     <Link
                       href="/security-privacy"

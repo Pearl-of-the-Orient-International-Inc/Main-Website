@@ -14,17 +14,12 @@ export const useLoginMutation = () => {
         return;
       }
 
-      queryClient.setQueryData(["auth", "current-user"], response.user);
-      queryClient.setQueryData(
-        ["auth", "current-user", "optional"],
-        response.user,
-      );
+      const currentUser = await authApi.getCurrentUser().catch(() => response.user);
+
+      queryClient.setQueryData(["auth", "current-user"], currentUser);
+      queryClient.setQueryData(["auth", "current-user", "optional"], currentUser);
 
       await queryClient.invalidateQueries({ queryKey: ["auth"] });
-      await queryClient.refetchQueries({
-        queryKey: ["auth", "current-user"],
-        type: "active",
-      });
     },
     meta: { feature: "auth.login" },
   });
