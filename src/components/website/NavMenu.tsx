@@ -2,13 +2,12 @@
 
 import {
   ArrowRightIcon,
-  BellIcon,
   ChevronRightIcon,
   LockKeyholeIcon,
   LogOutIcon,
   SettingsIcon,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { BadgeCheckIcon } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import Link from "next/link";
@@ -27,13 +26,23 @@ import {
   useLogoutMutation,
 } from "@/features/auth/auth.hooks";
 import { useToast } from "@/hooks/use-toast";
+import { authStore } from "@/lib/auth-store";
 
 export const NavMenu = () => {
   const router = useRouter();
   const { toast } = useToast();
-  const { data: currentUser } = useCurrentUserQuery();
+  const { data: currentUser, refetch: refetchCurrentUser } =
+    useCurrentUserQuery();
   const logoutMutation = useLogoutMutation();
   const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    return authStore.subscribe((token) => {
+      if (token) {
+        void refetchCurrentUser();
+      }
+    });
+  }, [refetchCurrentUser]);
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);

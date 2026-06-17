@@ -3,12 +3,32 @@ import { toApiError } from "@/lib/http-client";
 import * as authApi from "./auth.api";
 import { uploadAvatar } from "./avatar-upload.api";
 
-export const useLoginMutation = () =>
-  useMutation({
+export const useLoginMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
     mutationFn: authApi.login,
     throwOnError: false,
+    onSuccess: async (response) => {
+      if (response.mfaRequired || !response.accessToken) {
+        return;
+      }
+
+      queryClient.setQueryData(["auth", "current-user"], response.user);
+      queryClient.setQueryData(
+        ["auth", "current-user", "optional"],
+        response.user,
+      );
+
+      await queryClient.invalidateQueries({ queryKey: ["auth"] });
+      await queryClient.refetchQueries({
+        queryKey: ["auth", "current-user"],
+        type: "active",
+      });
+    },
     meta: { feature: "auth.login" },
   });
+};
 
 export const useRegisterMutation = () =>
   useMutation({
