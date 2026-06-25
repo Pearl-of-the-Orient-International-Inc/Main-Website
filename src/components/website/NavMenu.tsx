@@ -249,10 +249,10 @@ export const NavMenu = () => {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/book-a-service"
                   className="block text-2xl tracking-wide transition-colors hover:underline"
                 >
-                  Chaplain Service
+                  Book a Service
                 </a>
               </li>
               <li>
@@ -265,10 +265,10 @@ export const NavMenu = () => {
               </li>
               <li>
                 <a
-                  href="#"
+                  href="/shop"
                   className="block text-2xl tracking-wide transition-colors hover:underline"
                 >
-                  Seminary & Community
+                  Chaplain Products
                 </a>
               </li>
               <li>

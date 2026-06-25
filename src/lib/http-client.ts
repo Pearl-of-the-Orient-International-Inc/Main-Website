@@ -40,6 +40,16 @@ async function refreshAccessToken(): Promise<string | null> {
   return refreshPromise;
 }
 
+export async function ensureAccessToken(): Promise<string | null> {
+  const currentToken = authStore.getAccessToken();
+
+  if (currentToken) {
+    return currentToken;
+  }
+
+  return refreshAccessToken();
+}
+
 export const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,

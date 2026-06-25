@@ -1,4 +1,4 @@
-import { api } from "@/lib/http-client";
+import { api, ensureAccessToken } from "@/lib/http-client";
 import { authStore } from "@/lib/auth-store";
 import type {
   AuthSuccessResponse,
@@ -35,6 +35,7 @@ export async function verifyEmail(payload: VerifyEmailRequest) {
 }
 
 export async function getCurrentUser() {
+  await ensureAccessToken();
   const { data } = await api.get<UserEnvelopeResponse>("/users/current");
   return data.user;
 }

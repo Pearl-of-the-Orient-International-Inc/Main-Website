@@ -1193,6 +1193,15 @@ export function PublicMemberProfileTabs({
                   profile.
                 </p>
               </div>
+              {canManageCertificates ? (
+                <Button
+                  type="button"
+                  onClick={() => setIsCertificateDialogOpen(true)}
+                  className="w-full bg-[#032a0d] hover:bg-[#043512] sm:w-auto"
+                >
+                  <Upload className="size-4" /> Add certificate
+                </Button>
+              ) : null}
             </div>
             <div className="grid gap-5 p-5 lg:grid-cols-2">
               {renderCertificateCards()}
