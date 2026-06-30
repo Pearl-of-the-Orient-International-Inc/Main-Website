@@ -391,7 +391,7 @@ export const NavMenu = () => {
                   ) : (
                     <DropdownMenuItem disabled>
                       <SettingsIcon className="size-4" />
-                      <span>Account unavailable</span>
+                      <span>No member profile linked</span>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>

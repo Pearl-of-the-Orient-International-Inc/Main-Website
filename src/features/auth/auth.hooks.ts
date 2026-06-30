@@ -14,12 +14,13 @@ export const useLoginMutation = () => {
         return;
       }
 
+      await queryClient.cancelQueries({ queryKey: ["auth"] });
+      queryClient.removeQueries({ queryKey: ["auth"] });
+
       const currentUser = await authApi.getCurrentUser().catch(() => response.user);
 
       queryClient.setQueryData(["auth", "current-user"], currentUser);
       queryClient.setQueryData(["auth", "current-user", "optional"], currentUser);
-
-      await queryClient.invalidateQueries({ queryKey: ["auth"] });
     },
     meta: { feature: "auth.login" },
   });
