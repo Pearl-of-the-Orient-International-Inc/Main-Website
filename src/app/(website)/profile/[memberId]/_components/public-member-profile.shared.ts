@@ -57,6 +57,36 @@ export function buildLocation(member: PublicMember) {
     .join(", ");
 }
 
+export function canBookMemberService(member: PublicMember) {
+  return (
+    member.memberType ===
+    "CERTIFIED_SPECIALIST_TRAINING_OFFICER_INSTRUCTOR"
+  );
+}
+
+export function getPrimaryOfficeAssignment(member: PublicMember) {
+  return member.officerAssignments[0] ?? null;
+}
+
+export function buildOfficeAssignmentTitle(member: PublicMember) {
+  const assignment = getPrimaryOfficeAssignment(member);
+  return assignment?.officeTitle.name ?? null;
+}
+
+export function buildOfficeAssignmentScope(
+  assignment: PublicMember["officerAssignments"][number],
+) {
+  return [
+    assignment.barangay,
+    assignment.cityMunicipality,
+    assignment.province,
+    assignment.region,
+    assignment.department,
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
 export function buildOverviewSummary(
   member: PublicMember,
   fullName: string,

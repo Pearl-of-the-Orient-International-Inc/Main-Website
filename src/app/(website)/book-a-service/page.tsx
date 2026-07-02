@@ -14,8 +14,45 @@ import {
   serviceTypes,
   values,
 } from "./book-a-service-data";
+import type {
+  PublicServiceChaplain,
+  PublicServiceChaplainsResponse,
+} from "@/lib/api-types";
 
-const Page = () => {
+const apiBaseUrl =
+  process.env.NODE_ENV === "development"
+    ? process.env.NEXT_PUBLIC_API_BASE_URL_DEV
+    : process.env.NEXT_PUBLIC_API_BASE_URL_PROD;
+
+async function getServiceChaplains(): Promise<PublicServiceChaplain[]> {
+  if (!apiBaseUrl) {
+    return [];
+  }
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/members/public/service-chaplains`, {
+      next: { revalidate: 300 },
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload = (await response.json()) as PublicServiceChaplainsResponse;
+
+    return payload.data.filter(
+      (member) =>
+        member.memberType ===
+        "CERTIFIED_SPECIALIST_TRAINING_OFFICER_INSTRUCTOR",
+    );
+  } catch {
+    return [];
+  }
+}
+
+const Page = async () => {
+  const chaplains = await getServiceChaplains();
+
   return (
     <div className="">
       <section className="relative overflow-hidden bg-[#032a0d] text-white">
@@ -166,9 +203,9 @@ const Page = () => {
                 Commissioned Chaplains
               </h2>
               <p className="mt-2 text-sm text-zinc-700">
-                Chaplains under the selected branch:{" "}
+                Showing only approved active members with member type:{" "}
                 <span className="font-semibold text-[#032a0d]">
-                  Humanitarian
+                  Certified Specialist Training Officer Instructor
                 </span>
               </p>
             </div>
@@ -191,7 +228,7 @@ const Page = () => {
             </div>
           </div>
 
-          <ChaplainDirectory />
+          <ChaplainDirectory chaplains={chaplains} />
 
           <div className="mt-8">
             <div className="grid gap-5 rounded-md border border-zinc-200 bg-white p-5 shadow-sm md:grid-cols-[1fr_1.2fr]">

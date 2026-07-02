@@ -2,10 +2,12 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import {
   Award,
   BadgeCheck,
   Calendar,
+  CalendarCheck,
   Camera,
   Clock,
   FileCheck2,
@@ -35,10 +37,14 @@ import {
   buildFullName,
   buildLocation,
   buildMapEmbedUrl,
+  buildOfficeAssignmentScope,
+  buildOfficeAssignmentTitle,
   buildOverviewSummary,
   buildRecentActivities,
+  canBookMemberService,
   formatDate,
   formatEnumLabel,
+  getPrimaryOfficeAssignment,
 } from "./public-member-profile.shared";
 
 export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
@@ -79,6 +85,15 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
   const updateBannerMutation = useUpdateCurrentMemberProfileBannerMutation();
   const fullName = buildFullName(member);
   const location = buildLocation(member);
+  const primaryOfficeAssignment = getPrimaryOfficeAssignment(member);
+  const officeTitle = buildOfficeAssignmentTitle(member);
+  const officeScope = primaryOfficeAssignment
+    ? buildOfficeAssignmentScope(primaryOfficeAssignment)
+    : "";
+  const canBookService = canBookMemberService(member);
+  const bookServiceHref = `/book-a-service?member=${encodeURIComponent(
+    member.uniqueId ?? member.id,
+  )}`;
   const signedInMemberProfile = currentUser?.memberProfile;
   const canManageBanner = Boolean(
     signedInMemberProfile &&
@@ -542,6 +557,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                         </div>
                         <p className="mt-2 text-sm leading-6 text-neutral-700 sm:text-base">
                           {formatEnumLabel(member.memberType)}
+                          {officeTitle ? ` • ${officeTitle}` : ""}
                           {location ? ` • ${location}` : ""}
                           {member.preferredBranches[0]
                             ? ` • ${member.preferredBranches[0].title}`
@@ -570,9 +586,24 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                           <Badge variant="outline">
                             <Calendar /> Since {formatDate(member.createdAt)}
                           </Badge>
+                          {officeTitle ? (
+                            <Badge variant="outline">
+                              <BadgeCheck /> Office: {officeTitle}
+                              {officeScope ? ` • ${officeScope}` : ""}
+                            </Badge>
+                          ) : null}
                         </div>
                       </div>
                     </div>
+                    {canBookService ? (
+                      <Link
+                        href={bookServiceHref}
+                        className="inline-flex h-11 items-center justify-center gap-2 bg-[#032a0d] px-5 text-sm font-semibold text-white transition hover:bg-[#064016]"
+                      >
+                        <CalendarCheck className="size-4" />
+                        Book a Service
+                      </Link>
+                    ) : null}
                   </div>
 
                   <div className="mt-3 grid gap-3 text-sm text-neutral-600 lg:grid-cols-4">

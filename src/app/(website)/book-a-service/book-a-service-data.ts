@@ -50,12 +50,12 @@ export type Chaplain = {
 export const bookingSteps = [
   {
     title: "Choose Service",
-    description: "Select the type of service you need.",
+    description: "Select the type of service.",
     icon: ClipboardList,
   },
   {
     title: "Select Chaplain",
-    description: "Find a chaplain under your preferred branch.",
+    description: "Find a chaplain under your branch.",
     icon: User,
   },
   {

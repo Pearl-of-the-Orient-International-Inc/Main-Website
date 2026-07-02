@@ -36,8 +36,53 @@ import {
 } from "@/components/ui/sheet"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
+import type { PublicServiceChaplain } from "@/lib/api-types"
 
-import { chaplains, type Chaplain } from "./book-a-service-data"
+type Chaplain = PublicServiceChaplain
+
+const buildFullName = (chaplain: Chaplain) =>
+  [
+    chaplain.firstName,
+    chaplain.middleInitial
+      ? chaplain.middleInitial.endsWith(".")
+        ? chaplain.middleInitial
+        : `${chaplain.middleInitial}.`
+      : null,
+    chaplain.lastName,
+    chaplain.extensionName,
+  ]
+    .filter(Boolean)
+    .join(" ")
+
+const buildLocation = (chaplain: Chaplain) =>
+  [
+    chaplain.municipalityCity,
+    chaplain.province,
+    chaplain.region,
+  ]
+    .filter(Boolean)
+    .join(", ") || "Location not publicly listed"
+
+const buildOfficeTitle = (chaplain: Chaplain) =>
+  chaplain.officerAssignments[0]?.officeTitle.name ??
+  "Certified Specialist Training Officer Instructor"
+
+const buildBranchList = (chaplain: Chaplain) => {
+  const customBranches = (chaplain.preferredBranchOther ?? "")
+    .split(/[,|]/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+
+  return [
+    ...chaplain.preferredBranches.map((branch) => branch.title),
+    ...customBranches,
+  ].filter((branch, index, list) => list.indexOf(branch) === index)
+}
+
+const buildProfileImage = (chaplain: Chaplain) =>
+  chaplain.user.avatar ??
+  chaplain.applicantRequirements[0]?.fileUrl ??
+  "/profile-empty.png"
 
 const calendarDays = [
   { label: "27", muted: true },
@@ -102,17 +147,17 @@ const LicensePreview = ({ chaplain }: { chaplain: Chaplain }) => (
       <div className="text-center">
         <div className="relative mx-auto size-28 overflow-hidden rounded-full bg-zinc-200">
           <Image
-            src={chaplain.image}
-            alt={chaplain.name}
+            src={buildProfileImage(chaplain)}
+            alt={buildFullName(chaplain)}
             fill
             sizes="112px"
             className="object-cover"
           />
         </div>
         <h3 className="mt-4 font-serif text-xl font-semibold">
-          {chaplain.name}
+          {buildFullName(chaplain)}
         </h3>
-        <p className="text-sm text-zinc-700">{chaplain.role}</p>
+        <p className="text-sm text-zinc-700">{buildOfficeTitle(chaplain)}</p>
       </div>
 
       <div className="mt-6 space-y-5 border-t border-zinc-200 pt-5 text-sm">
@@ -120,14 +165,18 @@ const LicensePreview = ({ chaplain }: { chaplain: Chaplain }) => (
           <Shield className="mt-0.5 size-5 shrink-0 text-[#032a0d]" />
           <div>
             <p className="font-medium">Branch of Service</p>
-            <p className="text-zinc-600">{chaplain.branch}</p>
+            <p className="text-zinc-600">
+              {buildBranchList(chaplain).join(", ") || "Not publicly listed"}
+            </p>
           </div>
         </div>
         <div className="flex gap-3">
           <LockKeyhole className="mt-0.5 size-5 shrink-0 text-[#032a0d]" />
           <div>
             <p className="font-medium">Chaplain ID</p>
-            <p className="text-zinc-600">{chaplain.chaplainId}</p>
+            <p className="text-zinc-600">
+              {chaplain.uniqueId ?? chaplain.badgeNumber ?? chaplain.id}
+            </p>
           </div>
         </div>
         <div className="flex gap-3">
@@ -135,7 +184,7 @@ const LicensePreview = ({ chaplain }: { chaplain: Chaplain }) => (
           <div>
             <p className="font-medium">Status</p>
             <span className="mt-1 inline-flex rounded bg-emerald-100 px-2 py-0.5 text-[11px] font-bold uppercase text-emerald-800">
-              {chaplain.status}
+              Active
             </span>
           </div>
         </div>
@@ -143,14 +192,20 @@ const LicensePreview = ({ chaplain }: { chaplain: Chaplain }) => (
           <Clock className="mt-0.5 size-5 shrink-0 text-[#032a0d]" />
           <div>
             <p className="font-medium">Commissioned Since</p>
-            <p className="text-zinc-600">{chaplain.commissionedSince}</p>
+            <p className="text-zinc-600">
+              {new Date(chaplain.createdAt).toLocaleDateString("en-PH", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
+              })}
+            </p>
           </div>
         </div>
         <div className="flex gap-3">
           <CheckCircle2 className="mt-0.5 size-5 shrink-0 text-[#032a0d]" />
           <div>
             <p className="font-medium">Validity</p>
-            <p className="text-zinc-600">{chaplain.validity}</p>
+            <p className="text-zinc-600">Verified public member profile</p>
           </div>
         </div>
       </div>
@@ -208,7 +263,7 @@ const LicensePreview = ({ chaplain }: { chaplain: Chaplain }) => (
       <div className="relative overflow-hidden rounded-md border border-zinc-200 bg-[#fffdf8] shadow-sm">
         <Image
           src="/sample-license.jpg"
-          alt={`Certificate of registration for ${chaplain.name}`}
+          alt={`Certificate of registration for ${buildFullName(chaplain)}`}
           width={1100}
           height={1500}
           className="h-auto w-full"
@@ -244,14 +299,14 @@ const AppointmentSheet = ({
     if (!open) return
     setSelectedTime("2:00 PM")
     setNotes("")
-  }, [open, chaplain?.name])
+  }, [open, chaplain?.id])
 
   if (!chaplain) return null
 
   const submitAppointment = () => {
     toast({
       title: "Appointment request submitted",
-      description: `${chaplain.name} will review your request for May 14, 2025 at ${selectedTime}.`,
+      description: `${buildFullName(chaplain)} will review your request for May 14, 2025 at ${selectedTime}.`,
       variant: "success",
     })
     onOpenChange(false)
@@ -270,8 +325,8 @@ const AppointmentSheet = ({
           <div className="flex gap-4">
             <div className="relative aspect-3/4 w-28 shrink-0 overflow-hidden rounded-md bg-zinc-100">
               <Image
-                src={chaplain.image}
-                alt={chaplain.name}
+                src={buildProfileImage(chaplain)}
+                alt={buildFullName(chaplain)}
                 fill
                 sizes="112px"
                 className="object-cover"
@@ -282,21 +337,21 @@ const AppointmentSheet = ({
                 Available
               </span>
               <h3 className="mt-2 font-serif text-xl font-semibold">
-                {chaplain.name}
+                {buildFullName(chaplain)}
               </h3>
-              <p className="text-sm text-zinc-700">{chaplain.role}</p>
+              <p className="text-sm text-zinc-700">{buildOfficeTitle(chaplain)}</p>
               <div className="mt-3 space-y-1 text-xs text-zinc-700">
                 <p className="flex items-center gap-2">
                   <Users className="size-3.5 text-[#032a0d]" />
-                  {chaplain.branch} Branch
+                  {buildBranchList(chaplain).join(", ") || "Not publicly listed"}
                 </p>
                 <p className="flex items-center gap-2">
                   <MapPin className="size-3.5 text-[#032a0d]" />
-                  {chaplain.location}
+                  {buildLocation(chaplain)}
                 </p>
                 <p className="flex items-center gap-2">
                   <Star className="size-3.5 fill-amber-400 text-amber-400" />
-                  {chaplain.rating} (124 reviews)
+                  Verified specialist
                 </p>
               </div>
             </div>
@@ -457,22 +512,34 @@ const AppointmentSheet = ({
   )
 }
 
-export function ChaplainDirectory() {
+export function ChaplainDirectory({ chaplains }: { chaplains: Chaplain[] }) {
   const [selectedChaplain, setSelectedChaplain] =
     React.useState<Chaplain | null>(null)
 
   return (
     <>
       <div className="space-y-4">
+        {chaplains.length === 0 ? (
+          <div className="rounded-md border border-dashed border-zinc-300 bg-white px-6 py-12 text-center">
+            <p className="font-serif text-2xl text-[#032a0d]">
+              No certified service chaplains available yet.
+            </p>
+            <p className="mx-auto mt-2 max-w-xl text-sm text-zinc-600">
+              Only approved active members with Certified Specialist Training
+              Officer Instructor status appear here.
+            </p>
+          </div>
+        ) : null}
+
         {chaplains.map((chaplain) => (
           <article
-            key={chaplain.name}
+            key={chaplain.id}
             className="grid gap-5 rounded-md border border-zinc-200 bg-white p-4 shadow-sm md:grid-cols-[124px_1fr_210px]"
           >
           <div className="relative aspect-3/4 overflow-hidden rounded-md bg-zinc-100">
             <Image
-              src={chaplain.image}
-              alt={chaplain.name}
+              src={buildProfileImage(chaplain)}
+              alt={buildFullName(chaplain)}
               fill
               sizes="124px"
               className="object-cover"
@@ -483,33 +550,38 @@ export function ChaplainDirectory() {
               Available
             </span>
             <h3 className="mt-3 font-serif text-xl font-semibold">
-              {chaplain.name}
+              {buildFullName(chaplain)}
             </h3>
             <div className="mt-1 flex flex-wrap items-center gap-3 text-sm">
-              <span>{chaplain.role}</span>
+              <span>{buildOfficeTitle(chaplain)}</span>
               <span className="flex items-center gap-1">
                 <Star
                   className="size-4 fill-amber-400 text-amber-400"
                   aria-hidden="true"
                 />
-                {chaplain.rating}
+                Verified specialist
               </span>
             </div>
             <div className="mt-3 space-y-1 text-sm text-zinc-700">
               <p className="flex items-center gap-2">
                 <Users className="size-4 text-[#032a0d]" />
-                {chaplain.branch} Branch
+                {buildBranchList(chaplain).join(", ") ||
+                  "Branch not publicly listed"}
               </p>
               <p className="flex items-center gap-2">
                 <MapPin className="size-4 text-[#032a0d]" />
-                {chaplain.location}
+                {buildLocation(chaplain)}
               </p>
             </div>
             <p className="mt-4 text-xs font-semibold text-zinc-700">
               Services Offered:
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {chaplain.services.map((service) => (
+              {[
+                "Solemnizing of Marriage",
+                "Baptismal Service",
+                "Memorial Service",
+              ].map((service) => (
                 <span
                   key={service}
                   className="rounded-full bg-zinc-100 px-3 py-1 text-xs text-zinc-700"
@@ -518,7 +590,7 @@ export function ChaplainDirectory() {
                 </span>
               ))}
               <span className="px-1 py-1 text-xs text-zinc-700">
-                {chaplain.more}
+                + more by request
               </span>
             </div>
           </div>

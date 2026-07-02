@@ -237,12 +237,13 @@ export const NavMenu = () => {
       >
         <div className="flex h-full flex-col">
           {/* Main Navigation Links */}
-          <div className="flex-1 overflow-y-auto no-scrollbar px-8 py-8 mt-20">
+          <div className="no-scrollbar mt-16 flex-1 overflow-y-auto px-5 py-6 sm:mt-20 sm:px-8 sm:py-8">
             <ul className="space-y-6 font-serif">
               <li>
                 <a
-                  href="#"
-                  className="block text-2xl tracking-wide transition-colors hover:underline"
+                  href="https://seminary.pearlchaplaincy.org"
+                  target="_blank"
+                  className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
                 >
                   School of Chaplaincy
                 </a>
@@ -250,23 +251,23 @@ export const NavMenu = () => {
               <li>
                 <a
                   href="/book-a-service"
-                  className="block text-2xl tracking-wide transition-colors hover:underline"
+                  className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
                 >
                   Book a Service
                 </a>
               </li>
               <li>
-                <a
-                  href="#"
-                  className="block text-2xl tracking-wide transition-colors hover:underline"
+                <Link
+                  href="/news-announcement"
+                  className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
                 >
                   News & Announcement
-                </a>
+                </Link>
               </li>
               <li>
                 <a
                   href="/shop"
-                  className="block text-2xl tracking-wide transition-colors hover:underline"
+                  className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
                 >
                   Chaplain Products
                 </a>
@@ -274,7 +275,7 @@ export const NavMenu = () => {
               <li>
                 <a
                   href="/become-a-member"
-                  className="block text-2xl tracking-wide transition-colors hover:underline"
+                  className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
                 >
                   Become a Member
                 </a>
@@ -282,7 +283,7 @@ export const NavMenu = () => {
             </ul>
 
             {/* Secondary Links */}
-            <div className="mt-16 space-y-4 border-t border-white/10 pt-8">
+            <div className="mt-10 space-y-4 border-t border-white/10 pt-6 sm:mt-16 sm:pt-8">
               <a
                 href="/about-pearl-of-the-orient"
                 className="block transition-colors hover:underline"
@@ -318,7 +319,7 @@ export const NavMenu = () => {
               </a>
             </div>
           </div>
-          <div className="mt-auto px-8 py-8">
+          <div className="mt-auto px-5 py-6 sm:px-8 sm:py-8">
             {!isSignedIn ? (
               <a
                 href="/sign-in"
@@ -329,7 +330,7 @@ export const NavMenu = () => {
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex w-full bg-[#051b0b] px-3 py-3 rounded-md transition-colors items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-[#032a0d] focus-visible:ring-white/70">
+                  <button className="flex w-full items-center gap-2 rounded-md bg-[#051b0b] px-3 py-3 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:ring-offset-2 focus-visible:ring-offset-[#032a0d]">
                     <div className="relative w-fit">
                       <Avatar className="size-10">
                         <AvatarImage
@@ -346,9 +347,9 @@ export const NavMenu = () => {
                       </span>
                     </div>
 
-                    <div className="text-left">
-                      <p className="text-sm">{currentUser?.name}</p>
-                      <p className="text-xs">{currentUser?.email}</p>
+                    <div className="min-w-0 text-left">
+                      <p className="truncate text-sm">{currentUser?.name}</p>
+                      <p className="truncate text-xs">{currentUser?.email}</p>
                     </div>
 
                     <ChevronRightIcon className="ml-auto size-4" />

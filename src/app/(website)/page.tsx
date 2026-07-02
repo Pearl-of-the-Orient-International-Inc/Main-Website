@@ -1,5 +1,20 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRightIcon, ChevronRightIcon } from "lucide-react";
+import {
+  Ambulance,
+  ArrowRightIcon,
+  BriefcaseBusiness,
+  ChevronRightIcon,
+  Cross,
+  Ellipsis,
+  Fence,
+  GraduationCap,
+  HandHeart,
+  Landmark,
+  MapPinned,
+  ShieldCheck,
+  ShieldIcon,
+  type LucideIcon,
+} from "lucide-react";
 import { ImagesSlider } from "@/components/magic-ui/ImagesSlider";
 import Link from "next/link";
 import { HeroVideoDialog } from "@/components/magic-ui/HeroVideoDialog";
@@ -13,13 +28,22 @@ import {
 } from "@/components/ui/carousel";
 import Image from "next/image";
 import { Timeline } from "@/components/magic-ui/Timeline";
+import { RecognitionGallery } from "@/components/website/RecognitionGallery";
 import {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import type { EventResource, PublicEventsResponse } from "@/features/events/event.types";
+import { DirectoryRegionMapClient } from "./directory/_components/directory-region-map-client";
+import type {
+  PublicDirectoryLocationsData,
+  PublicDirectoryLocationsResponse,
+} from "@/lib/api-types";
+import type {
+  EventResource,
+  PublicEventsResponse,
+} from "@/features/events/event.types";
 
 const images = [
   "/hero-carousels/1.jpg",
@@ -29,6 +53,110 @@ const images = [
   "/hero-carousels/5.jpg",
   "/hero-carousels/6.jpg",
   "/hero-carousels/7.jpg",
+];
+
+const recognitionImages = [
+  {
+    src: "/recognition/1.png",
+    alt: "Pearl of the Orient certificate of recognition",
+  },
+  {
+    src: "/recognition/2.jpg",
+    alt: "Pearl of the Orient recognition document",
+  },
+  {
+    src: "/recognition/3.png",
+    alt: "Pearl of the Orient certificate and recognition",
+  },
+  {
+    src: "/recognition/4.jpg",
+    alt: "Pearl of the Orient certificate of accreditation",
+  },
+];
+
+const branchesOfService: Array<{
+  title: string;
+  description: string;
+  image: string;
+  icon: LucideIcon;
+}> = [
+  {
+    title: "Humanitarian",
+    description: "Serving communities in need with love and compassion.",
+    image:
+      "https://images.pexels.com/photos/6299634/pexels-photo-6299634.jpeg?auto=compress&cs=tinysrgb&w=900",
+    icon: HandHeart,
+  },
+  {
+    title: "Military/PNP",
+    description: "Standing with those who protect and serve our nation.",
+    image:
+      "https://images.pexels.com/photos/13366452/pexels-photo-13366452.jpeg?auto=compress&cs=tinysrgb&w=900",
+    icon: ShieldCheck,
+  },
+  {
+    title: "Corporate",
+    description: "Supporting professionals and workplaces with values and care.",
+    image:
+      "https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=900",
+    icon: BriefcaseBusiness,
+  },
+  {
+    title: "Prison",
+    description: "Bringing hope, restoration, and second chances behind the walls.",
+    image:
+      "https://images.pexels.com/photos/20620622/pexels-photo-20620622.jpeg?auto=compress&cs=tinysrgb&w=900",
+    icon: Fence,
+  },
+  {
+    title: "Government",
+    description: "Upholding integrity and service in the public sector.",
+    image:
+      "https://images.pexels.com/photos/16151491/pexels-photo-16151491.jpeg?auto=compress&cs=tinysrgb&w=900",
+    icon: Landmark,
+  },
+  {
+    title: "Others",
+    description: "Reaching unique groups and special communities with Christ's love.",
+    image:
+      "https://images.pexels.com/photos/6646770/pexels-photo-6646770.jpeg?auto=compress&cs=tinysrgb&w=900",
+    icon: Ellipsis,
+  },
+  {
+    title: "Hospital and Care",
+    description: "Providing spiritual comfort and strength in times of illness and recovery.",
+    image:
+      "https://images.pexels.com/photos/6129685/pexels-photo-6129685.jpeg?auto=compress&cs=tinysrgb&w=900",
+    icon: Cross,
+  },
+  {
+    title: "School",
+    description: "Nurturing young minds and fostering character through faith.",
+    image:
+      "https://images.pexels.com/photos/5212329/pexels-photo-5212329.jpeg?auto=compress&cs=tinysrgb&w=900",
+    icon: GraduationCap,
+  },
+  {
+    title: "Disaster & Rescue Operations",
+    description: "Standing in the frontlines of crisis to bring hope and healing.",
+    image:
+      "https://images.pexels.com/photos/16105713/pexels-photo-16105713.jpeg?auto=compress&cs=tinysrgb&w=900",
+    icon: Ambulance,
+  },
+  {
+    title: "Security",
+    description: "Upholding safety and peace through integrity, vigilance, and compassion.",
+    image:
+      "https://images.pexels.com/photos/34680721/pexels-photo-34680721.jpeg?auto=compress&cs=tinysrgb&w=900",
+    icon: ShieldIcon,
+  },
+  {
+    title: "DSWD",
+    description: "Partnering in service to empower and uplift lives and families.",
+    image:
+      "https://images.pexels.com/photos/8205208/pexels-photo-8205208.jpeg?auto=compress&cs=tinysrgb&w=900",
+    icon: HandHeart,
+  },
 ];
 
 type HomepageEventItem = {
@@ -70,13 +198,37 @@ async function getHomepageEvents(): Promise<HomepageEventItem[]> {
   }
 }
 
+async function getDirectoryLocations(): Promise<PublicDirectoryLocationsData | null> {
+  if (!apiBaseUrl) {
+    return null;
+  }
+
+  try {
+    const response = await fetch(
+      `${apiBaseUrl}/members/public/directory-locations`,
+      {
+        next: { revalidate: 300 },
+      },
+    );
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const payload = (await response.json()) as PublicDirectoryLocationsResponse;
+    return payload.data;
+  } catch {
+    return null;
+  }
+}
+
 const chaplaincyRoadmap = [
   {
     title: "Phase 1",
     content: (
       <div>
-        <div className="mb-6 relative w-full lg:h-105 flex items-center justify-center">
-          <Image src="/roadmap/phase1.png" alt='Phase 1' fill className='size-full' />
+        <div className="relative mb-6 flex aspect-[4/3] w-full items-center justify-center lg:aspect-auto lg:h-105">
+          <Image src="/roadmap/phase1.png" alt="Phase 1" fill className="object-contain" />
         </div>
         <div className="mb-4">
           <h4 className="text-base md:text-lg font-semibold text-[#032a0d] mb-2">
@@ -115,8 +267,8 @@ const chaplaincyRoadmap = [
     title: "Phase 2",
     content: (
       <div>
-        <div className="mb-6 relative w-full lg:h-105 flex items-center justify-center">
-          <Image src="/roadmap/phase2.png" alt='Phase 2' fill className='size-full' />
+        <div className="relative mb-6 flex aspect-[4/3] w-full items-center justify-center lg:aspect-auto lg:h-105">
+          <Image src="/roadmap/phase2.png" alt="Phase 2" fill className="object-contain" />
         </div>
         <div className="mb-4">
           <h4 className="text-base md:text-lg font-semibold text-[#032a0d] mb-2">
@@ -151,8 +303,8 @@ const chaplaincyRoadmap = [
     title: "Phase 3",
     content: (
       <div>
-        <div className="mb-6 relative w-full lg:h-105 flex items-center justify-center">
-          <Image src="/roadmap/phase3.png" alt='Phase 3' fill className='size-full' />
+        <div className="relative mb-6 flex aspect-[4/3] w-full items-center justify-center lg:aspect-auto lg:h-105">
+          <Image src="/roadmap/phase3.png" alt="Phase 3" fill className="object-contain" />
         </div>
         <div className="mb-4">
           <h4 className="text-base md:text-lg font-semibold text-[#032a0d] mb-2">
@@ -190,8 +342,8 @@ const chaplaincyRoadmap = [
     title: "Phase 4",
     content: (
       <div>
-        <div className="mb-6 relative w-full lg:h-105 flex items-center justify-center">
-          <Image src="/roadmap/phase4.png" alt='Phase 4' fill className='size-full' />
+        <div className="relative mb-6 flex aspect-[4/3] w-full items-center justify-center lg:aspect-auto lg:h-105">
+          <Image src="/roadmap/phase4.png" alt="Phase 4" fill className="object-contain" />
         </div>
         <div className="mb-4">
           <h4 className="text-base md:text-lg font-semibold text-[#032a0d] mb-2">
@@ -337,7 +489,15 @@ const membershipBenefits = [
 
 export default async function Page() {
   const items = await getHomepageEvents();
+  const directoryData = await getDirectoryLocations();
   const carouselColumns = buildEventColumns(items);
+  const headquarters = directoryData?.headquarters ?? {
+    name: "Pearl of the Orient Headquarter",
+    address:
+      "Blk 151 Lot 14-20 Phase 1, Mabuhay City, Dasmarinas City, Cavite, Philippines",
+    latitude: 14.3298,
+    longitude: 120.9367,
+  };
 
   return (
     <main className="min-h-screen">
@@ -420,20 +580,20 @@ export default async function Page() {
           which of the Holy Ghost hath made you overseers, to feed the church of
           God, which he hath purchased with his own blood.
         </p>
-        <div className="flex items-center justify-between mt-10">
-          <Link href="#" className="flex items-center group gap-3">
-            <div className="border-2 border-[#032a0d] rounded-full text-[#032a0d] group-hover:text-white group-hover:bg-[#032a0d] transition-colors flex items-center justify-center size-10">
+        <div className="mt-8 flex flex-col gap-4 sm:mt-10 sm:flex-row sm:items-center sm:justify-between">
+          <Link href="#" className="group flex items-center gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-[#032a0d] text-[#032a0d] transition-colors group-hover:bg-[#032a0d] group-hover:text-white sm:size-10">
               <ChevronRightIcon strokeWidth={3} />
             </div>
-            <p className="uppercase font-medium group-hover:underline text-[#032a0d]">
+            <p className="text-sm font-medium uppercase text-[#032a0d] group-hover:underline sm:text-base">
               pearl of the orient theological seminary & colleges inc
             </p>
           </Link>
-          <Link href="#" className="flex items-center group gap-3">
-            <div className="border-2 border-[#032a0d] rounded-full text-[#032a0d] group-hover:text-white group-hover:bg-[#032a0d] transition-colors flex items-center justify-center size-10">
+          <Link href="#" className="group flex items-center gap-3">
+            <div className="flex size-9 shrink-0 items-center justify-center rounded-full border-2 border-[#032a0d] text-[#032a0d] transition-colors group-hover:bg-[#032a0d] group-hover:text-white sm:size-10">
               <ChevronRightIcon strokeWidth={3} />
             </div>
-            <p className="uppercase font-medium group-hover:underline text-[#032a0d]">
+            <p className="text-sm font-medium uppercase text-[#032a0d] group-hover:underline sm:text-base">
               About Pearl of the orient
             </p>
           </Link>
@@ -480,70 +640,192 @@ export default async function Page() {
         </div>
       </section>
 
-      {/* Course Outline */}
+      {/* Branches of Service */}
       <section
-        className="relative min-h-[50vh] sm:min-h-[60vh] bg-cover bg-center"
+        className="relative min-h-[50vh] bg-cover bg-center"
         style={{
           backgroundImage: `url(/main/paper-bg.jpg)`,
         }}
       >
-        <div className="mx-auto max-w-6xl py-12 sm:py-16 md:py-20">
-          <div className="text-center mb-8 sm:mb-10 md:mb-12">
-            <div className="text-xs sm:text-sm uppercase text-[#032a0d]/70 mb-2">
-              Curriculum
+        <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 sm:py-16 md:py-20">
+          <div className="mx-auto mb-8 max-w-3xl text-center sm:mb-10 md:mb-12">
+            <div className="mb-2 text-xs font-semibold uppercase text-[#032a0d]/70 sm:text-sm">
+              Branches of Service
             </div>
-            <h2 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-medium text-[#032a0d]">
-              Course Outline
+            <h2 className="font-serif text-3xl font-medium leading-tight text-[#032a0d] sm:text-4xl md:text-5xl lg:text-6xl">
+              Serving with Compassion. Across{" "}
+              <span className="text-[#b98f38]">Every</span> Sector.
             </h2>
+            <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-[#032a0d]/80 sm:text-base md:text-lg">
+              Our chaplains are called to bring hope, support, and spiritual
+              care to every community and workplace.
+            </p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-            {[
-              "Personality development of a chaplain",
-              "Pastoral Psychology & biblical counseling",
-              "Theology and practice of ordained chaplain",
-              "Chaplaincy ministry",
-              "Stress management & critical incident",
-              "Philippine constitution & family code",
-              "Governance & development",
-              "Ethics & Accountability of a chaplain",
-              "Christian leadership & management",
-            ].map((course, index) => (
-              <div
-                key={index}
-                className="group relative p-6 border-2 border-[#032a0d]/20 rounded-lg hover:border-[#032a0d] transition-all duration-300 hover:shadow-lg bg-white"
-              >
-                <div className="flex items-start gap-4">
-                  <div className="shrink-0 mt-1">
-                    <div className="size-8 rounded-full bg-[#032a0d]/10 group-hover:bg-[#032a0d] transition-colors flex items-center justify-center">
-                      <span className="text-sm font-semibold text-[#032a0d] group-hover:text-white transition-colors">
-                        {index + 1}
-                      </span>
-                    </div>
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {branchesOfService.map((branch) => {
+              const Icon = branch.icon;
+
+              return (
+                <article
+                  key={branch.title}
+                  className="group relative overflow-hidden rounded-lg border border-[#032a0d]/10 bg-white shadow-[0_14px_35px_rgba(3,42,13,0.08)] transition-all duration-300 hover:-translate-y-1 hover:border-[#b98f38]/50 hover:shadow-[0_22px_50px_rgba(3,42,13,0.14)]"
+                >
+                  <div className="relative h-40 w-full overflow-hidden bg-[#032a0d]/10">
+                    <Image
+                      src={branch.image}
+                      alt={`${branch.title} service`}
+                      fill
+                      sizes="(min-width: 1280px) 190px, (min-width: 1024px) 33vw, (min-width: 640px) 50vw, 100vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-b from-transparent to-[#032a0d]/20" />
                   </div>
-                  <p className="text-[#032a0d] font-medium leading-relaxed group-hover:text-[#032a0d]/90 transition-colors">
-                    {course}
-                  </p>
-                </div>
-              </div>
-            ))}
+
+                  <div className="relative px-4 pb-5 pt-9 text-center">
+                    <div className="absolute left-1/2 top-0 flex size-15 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border-2 border-[#b98f38] bg-[#032a0d] text-[#d4af5c] shadow-lg">
+                      <Icon className="size-7" strokeWidth={1.8} />
+                    </div>
+                    <h3 className="font-serif text-xl font-semibold leading-tight text-[#032a0d]">
+                      {branch.title}
+                    </h3>
+                    <p className="mt-3 min-h-18 text-sm leading-relaxed text-[#032a0d]/80">
+                      {branch.description}
+                    </p>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      {/* Around The World */}
-      <section className="py-12 sm:py-16 md:py-20 min-h-[60vh] sm:min-h-[70vh] md:h-screen overflow-hidden bg-[#032a0d] w-full">
-        <div className="max-w-7xl mx-auto text-center px-4 sm:px-6">
-          <div className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold leading-tight mb-2 sm:mb-4 text-white">
-            Around the World
+      {/* National Directory Map */}
+      <section className="overflow-hidden bg-[#032a0d] py-12 text-white sm:py-16 md:py-20">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="mx-auto max-w-4xl text-center">
+            <div className="mb-3 text-xs font-semibold uppercase tracking-[0.18em] text-[#d4a948] sm:text-sm">
+              National Chaplaincy Directory
+            </div>
+            <h2 className="font-serif text-4xl font-semibold leading-tight sm:text-5xl md:text-6xl lg:text-7xl">
+              Around the Philippines
+            </h2>
+            <p className="mx-auto mt-5 max-w-3xl text-sm leading-relaxed text-white/80 sm:text-base md:text-lg">
+              Explore our headquarters and regional member presence through the
+              same interactive map used in the public directory.
+            </p>
           </div>
-          <p className="text-xs sm:text-sm md:text-base lg:text-lg text-neutral-100 max-w-4xl mx-auto px-4">
-            To organize a chaplain team both here and abroad who are Lorem ipsum
-            dolor sit, amet consectetur adipisicing elit. Magni non blanditiis
-            cumque optio repellat rem, a similique neque excepturi consequuntur.
-          </p>
+
+          <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <div className="border border-white/10 bg-white/8 px-5 py-5 backdrop-blur-sm">
+              <p className="text-xs uppercase text-white/60">
+                Active Approved Members
+              </p>
+              <p className="mt-3 font-serif text-3xl text-white">
+                {directoryData?.summary.totalMembers.toLocaleString() ?? "0"}
+              </p>
+            </div>
+            <div className="border border-white/10 bg-white/8 px-5 py-5 backdrop-blur-sm">
+              <p className="text-xs uppercase text-white/60">
+                Regions Represented
+              </p>
+              <p className="mt-3 font-serif text-3xl text-white">
+                {directoryData?.summary.regionsRepresented.toLocaleString() ??
+                  "0"}
+              </p>
+            </div>
+            <div className="border border-white/10 bg-white/8 px-5 py-5 backdrop-blur-sm">
+              <p className="text-xs uppercase text-white/60">
+                Provinces Represented
+              </p>
+              <p className="mt-3 font-serif text-3xl text-white">
+                {directoryData?.summary.provincesRepresented.toLocaleString() ??
+                  "0"}
+              </p>
+            </div>
+            <div className="border border-white/10 bg-white/8 px-5 py-5 backdrop-blur-sm">
+              <p className="text-xs uppercase text-white/60">
+                Mapped Locations
+              </p>
+              <p className="mt-3 font-serif text-3xl text-white">
+                {directoryData?.summary.membersWithRegion.toLocaleString() ??
+                  "0"}
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-8 grid gap-6 xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
+            <section className="overflow-hidden border border-white/12 bg-white text-[#032a0d] shadow-[0_24px_70px_rgba(0,0,0,0.22)]">
+              <div className="border-b border-[#032a0d]/8 p-5 sm:p-6">
+                <p className="text-xs uppercase text-[#032a0d]/55">
+                  Interactive National Map
+                </p>
+                <h3 className="mt-2 font-serif text-2xl text-[#032a0d] sm:text-3xl">
+                  Zoom into our regional member presence
+                </h3>
+                <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#032a0d]/72">
+                  The gold marker identifies the headquarter, while the green
+                  circles show active approved members by region.
+                </p>
+              </div>
+              <div className="directory-map h-[24rem] w-full bg-[#e9efe7] sm:h-112 lg:h-136">
+                {directoryData ? (
+                  <DirectoryRegionMapClient data={directoryData} />
+                ) : (
+                  <div className="flex h-full items-center justify-center px-6 text-center">
+                    <div>
+                      <p className="font-serif text-2xl text-[#032a0d]">
+                        Map data is temporarily unavailable
+                      </p>
+                      <p className="mt-2 text-sm text-[#032a0d]/70">
+                        Headquarters information remains available beside the
+                        map.
+                      </p>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </section>
+
+            <aside className="space-y-6">
+              <div className="border border-white/10 bg-white p-6 text-[#032a0d] shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-full bg-[#032a0d]/6 p-2.5 text-[#032a0d]">
+                    <MapPinned className="size-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs uppercase text-[#032a0d]/55">
+                      Headquarter
+                    </p>
+                    <h3 className="mt-2 font-serif text-xl text-[#032a0d]">
+                      {headquarters.name}
+                    </h3>
+                    <p className="mt-3 text-sm leading-relaxed text-[#032a0d]/75">
+                      {headquarters.address}
+                    </p>
+                    <Link
+                      href="/directory"
+                      className="mt-4 inline-flex text-sm font-medium text-[#032a0d] underline decoration-[#d4a948] underline-offset-4"
+                    >
+                      View full directory
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              <div className="border border-white/10 bg-[#051f0b] p-6 shadow-sm">
+                <p className="text-xs uppercase text-white/60">
+                  Directory Note
+                </p>
+                <p className="mt-3 text-sm leading-relaxed text-white/78">
+                  Regional markers are based on active approved members with
+                  recorded Philippine address data in the system.
+                </p>
+              </div>
+            </aside>
+          </div>
         </div>
-        <div className="container mt-4 sm:mt-5 mx-auto px-4">
+        <div className="hidden">
           <WorldMap
             dots={[
               {
@@ -668,6 +950,32 @@ export default async function Page() {
         </div>
       </section>
 
+      {/* Certificate and Recognition */}
+      <section
+        className="relative isolate overflow-hidden bg-cover bg-center"
+        style={{
+          backgroundImage: `linear-gradient(rgba(255,255,255,0.72), rgba(255,255,255,0.86)), url(/main/paper-bg.jpg)`,
+        }}
+      >
+        <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 md:py-20">
+          <div className="mx-auto mb-8 max-w-4xl text-center sm:mb-10 md:mb-12">
+            <div className="mb-3 inline-flex items-center border border-[#032a0d]/15 bg-white/85 px-4 py-1 text-xs font-semibold uppercase text-[#032a0d]/70 shadow-sm backdrop-blur-sm sm:text-sm">
+              Certificate and Recognition
+            </div>
+            <h2 className="px-4 font-serif text-3xl font-medium text-[#032a0d] sm:text-4xl md:text-5xl lg:text-6xl">
+              Recognitions and Accreditations
+            </h2>
+            <p className="mx-auto mt-3 max-w-3xl px-4 text-sm text-[#032a0d]/80 sm:mt-4 sm:text-base md:text-lg">
+              Certificates, recognitions, and supporting documents that reflect
+              Pearl of the Orient&apos;s commitment to chaplaincy values
+              education, service, and organizational excellence.
+            </p>
+          </div>
+
+          <RecognitionGallery images={recognitionImages} />
+        </div>
+      </section>
+
       {/* Benefits of Being a Member of Pearl of the Orient International Auxiliary Chaplain Values Educators Inc  Inter-Faith Organization */}
       <section
         className="relative isolate min-h-[50vh] overflow-hidden bg-cover bg-center"
@@ -676,10 +984,8 @@ export default async function Page() {
         }}
       >
         <div className="pointer-events-none absolute inset-0 bg-linear-to-b from-white/65 via-white/40 to-[#f7f1de]/80" />
-        <div className="pointer-events-none absolute -left-24 top-20 h-56 w-56 rounded-full bg-[#b98f38]/10 blur-3xl" />
-        <div className="pointer-events-none absolute -right-20 bottom-10 h-64 w-64 rounded-full bg-[#032a0d]/10 blur-3xl" />
 
-        <div className="relative max-w-6xl mx-auto py-12 sm:py-16 md:py-20">
+        <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 sm:py-16 md:py-20">
           <div className="mx-auto mb-8 max-w-4xl text-center sm:mb-10 md:mb-12">
             <div className="mb-3 inline-flex items-center rounded-full border border-[#032a0d]/15 bg-white/80 px-4 py-1 text-xs font-semibold uppercase text-[#032a0d]/70 shadow-sm backdrop-blur-sm sm:text-sm">
               Membership Benefits
@@ -696,7 +1002,7 @@ export default async function Page() {
           </div>
 
           <div className="mb-8 grid grid-cols-1 gap-6 sm:mb-10 lg:grid-cols-[1.05fr_0.95fr] sm:gap-8">
-            <div className="relative overflow-hidden rounded-[2rem] border border-[#032a0d]/10 bg-white/95 p-6 shadow-[0_20px_60px_rgba(3,42,13,0.08)] backdrop-blur-sm sm:p-8">
+            <div className="relative overflow-hidden rounded-2xl border border-[#032a0d]/10 bg-white/95 p-6 shadow-[0_20px_60px_rgba(3,42,13,0.08)] backdrop-blur-sm sm:rounded-[2rem] sm:p-8">
               <div className="absolute inset-x-0 top-0 h-1 bg-linear-to-r from-[#032a0d] via-[#b98f38] to-[#032a0d]" />
               <div className="mb-4 flex items-center gap-3">
                 <div className="flex size-11 items-center justify-center rounded-full bg-[#032a0d] text-sm font-semibold text-white">
@@ -711,9 +1017,7 @@ export default async function Page() {
               </p>
             </div>
 
-            <div className="relative overflow-hidden rounded-[2rem] bg-[#032a0d] p-6 text-white shadow-[0_24px_60px_rgba(3,42,13,0.2)] sm:p-8">
-              <div className="absolute right-0 top-0 h-24 w-24 rounded-full bg-white/10 blur-2xl" />
-              <div className="absolute bottom-0 left-0 h-24 w-24 rounded-full bg-[#b98f38]/20 blur-2xl" />
+            <div className="relative overflow-hidden rounded-2xl bg-[#032a0d] p-6 text-white shadow-[0_24px_60px_rgba(3,42,13,0.2)] sm:rounded-[2rem] sm:p-8">
               <div className="relative mb-4 text-xs font-semibold uppercase text-white/70 sm:text-sm">
                 Shared Mission
               </div>
@@ -728,7 +1032,7 @@ export default async function Page() {
             {membershipBenefits.map((benefit, index) => (
               <div
                 key={benefit.number}
-                className={`group relative overflow-hidden rounded-[1.75rem] border border-[#032a0d]/10 bg-white/95 p-5 shadow-[0_16px_45px_rgba(3,42,13,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-[#032a0d]/30 hover:shadow-[0_22px_55px_rgba(3,42,13,0.12)] sm:p-6 ${
+                className={`group relative overflow-hidden rounded-2xl border border-[#032a0d]/10 bg-white/95 p-5 shadow-[0_16px_45px_rgba(3,42,13,0.06)] transition-all duration-300 hover:-translate-y-1 hover:border-[#032a0d]/30 hover:shadow-[0_22px_55px_rgba(3,42,13,0.12)] sm:rounded-[1.75rem] sm:p-6 ${
                   index === membershipBenefits.length - 1 ? "md:col-span-2" : ""
                 }`}
               >
@@ -901,7 +1205,7 @@ interface StackedCardProps {
 
 const SingleCard = ({ item }: SingleCardProps) => (
   <div className="group relative h-full bg-white border overflow-hidden">
-    <div className="relative h-82 w-full overflow-hidden bg-[#032a0d]/5">
+    <div className="relative h-64 w-full overflow-hidden bg-[#032a0d]/5 sm:h-72 md:h-82">
       <Image
         src={item.image}
         alt={item.title}
@@ -932,7 +1236,7 @@ const SingleCard = ({ item }: SingleCardProps) => (
 
 const StackedCard = ({ item }: StackedCardProps) => (
   <div className="group relative bg-white border overflow-hidden">
-    <div className="relative h-100 w-full overflow-hidden bg-[#032a0d]/5">
+    <div className="relative h-64 w-full overflow-hidden bg-[#032a0d]/5 sm:h-80 md:h-100">
       <Image
         src={item.image}
         alt={item.title}
