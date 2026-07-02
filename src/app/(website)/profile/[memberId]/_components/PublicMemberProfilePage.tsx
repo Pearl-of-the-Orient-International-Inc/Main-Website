@@ -536,17 +536,19 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                   </div>
                 </div>
 
-                <div className="relative mt-10 px-6 pb-7 sm:px-8">
-                  <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+                <div className="relative mt-10 px-4 pb-7 sm:px-8">
+                  <div className="space-y-5">
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-end">
                       <div className="max-w-3xl">
                         <div className="mt-4 flex items-center gap-2">
-                          <h1 className="text-4xl font-semibold">{fullName}</h1>
+                          <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
+                            {fullName}
+                          </h1>
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
                             viewBox="0 0 24 24"
                             fill="currentColor"
-                            className="mt-2 size-6 text-green-600"
+                            className="mt-1 size-6 shrink-0 text-green-600"
                           >
                             <path
                               fillRule="evenodd"
@@ -557,13 +559,12 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                         </div>
                         <p className="mt-2 text-sm leading-6 text-neutral-700 sm:text-base">
                           {formatEnumLabel(member.memberType)}
-                          {officeTitle ? ` • ${officeTitle}` : ""}
                           {location ? ` • ${location}` : ""}
                           {member.preferredBranches[0]
                             ? ` • ${member.preferredBranches[0].title}`
                             : ""}
                         </p>
-                        <div className="mt-4 flex flex-wrap gap-2">
+                        <div className="mt-4 flex min-w-0 flex-wrap gap-2">
                           <Badge
                             variant="outline"
                             className="border-green-200 bg-green-50 text-green-800"
@@ -587,9 +588,15 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                             <Calendar /> Since {formatDate(member.createdAt)}
                           </Badge>
                           {officeTitle ? (
-                            <Badge variant="outline">
-                              <BadgeCheck /> Office: {officeTitle}
-                              {officeScope ? ` • ${officeScope}` : ""}
+                            <Badge
+                              variant="outline"
+                              className="max-w-full border-[#032a0d]/20 bg-[#032a0d]/5 text-[#032a0d]"
+                            >
+                              <BadgeCheck className="shrink-0" />
+                              <span className="truncate">
+                                Office: {officeTitle}
+                                {officeScope ? ` • ${officeScope}` : ""}
+                              </span>
                             </Badge>
                           ) : null}
                         </div>
@@ -598,7 +605,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                     {canBookService ? (
                       <Link
                         href={bookServiceHref}
-                        className="inline-flex h-11 items-center justify-center gap-2 bg-[#032a0d] px-5 text-sm font-semibold text-white transition hover:bg-[#064016]"
+                        className="inline-flex h-12 w-full items-center justify-center gap-2 bg-[#032a0d] px-5 text-sm font-semibold text-white transition hover:bg-[#064016] sm:w-fit"
                       >
                         <CalendarCheck className="size-4" />
                         Book a Service
@@ -606,7 +613,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                     ) : null}
                   </div>
 
-                  <div className="mt-3 grid gap-3 text-sm text-neutral-600 lg:grid-cols-4">
+                  <div className="mt-5 grid gap-3 text-sm text-neutral-600 sm:grid-cols-2 lg:grid-cols-4">
                     <div className="border border-neutral-200 bg-neutral-50 px-4 py-3">
                       <p className="text-xs uppercase tracking-wide text-neutral-500">
                         Public records

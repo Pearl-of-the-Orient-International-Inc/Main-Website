@@ -5,7 +5,6 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   BadgeCheck,
-  Building2,
   CalendarCheck,
   Check,
   ChevronRight,
@@ -49,12 +48,8 @@ import {
 } from "@/features/member/member.hooks";
 import { useToast } from "@/hooks/use-toast";
 import {
-  buildOfficeAssignmentScope,
-  buildOfficeAssignmentTitle,
   canBookMemberService,
-  formatDate,
   formatEnumLabel,
-  getPrimaryOfficeAssignment,
   type PublicMember,
 } from "./public-member-profile.shared";
 import { downloadPublicProfilePdf } from "./public-member-profile-pdf";
@@ -137,11 +132,6 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
     member.currentPositionRoleOther ??
     member.currentPositionRole ??
     "Not publicly listed";
-  const primaryOfficeAssignment = getPrimaryOfficeAssignment(member);
-  const officeTitle = buildOfficeAssignmentTitle(member);
-  const officeScope = primaryOfficeAssignment
-    ? buildOfficeAssignmentScope(primaryOfficeAssignment)
-    : "";
   const canBookService = canBookMemberService(member);
   const memberProfilePath = `/profile/${member.uniqueId ?? member.id}`;
   const signedInMemberProfile = currentUser?.memberProfile;
@@ -477,35 +467,6 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
             </div>
           </div>
         </div>
-
-        {primaryOfficeAssignment && officeTitle ? (
-          <div className="border bg-white p-4 text-neutral-900 shadow-sm">
-            <div className="flex items-start gap-3">
-              <div className="rounded-full bg-[#032a0d]/6 p-2.5 text-[#032a0d]">
-                <Building2 className="size-5" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs uppercase tracking-wide text-neutral-500">
-                  Connected Office
-                </p>
-                <h4 className="mt-1 text-lg font-semibold text-neutral-950">
-                  {officeTitle}
-                </h4>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  {formatEnumLabel(primaryOfficeAssignment.officeTitle.level)}
-                </p>
-                {officeScope ? (
-                  <p className="mt-3 text-sm leading-relaxed text-neutral-700">
-                    {officeScope}
-                  </p>
-                ) : null}
-                <p className="mt-3 text-xs text-neutral-500">
-                  Serving since {formatDate(primaryOfficeAssignment.startDate)}
-                </p>
-              </div>
-            </div>
-          </div>
-        ) : null}
 
         <div className="border bg-white p-4 text-neutral-900 shadow-sm">
           <div className="flex items-center justify-between">
