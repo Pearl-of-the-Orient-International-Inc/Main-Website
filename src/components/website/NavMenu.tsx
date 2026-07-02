@@ -27,8 +27,10 @@ import {
 } from "@/features/auth/auth.hooks";
 import { useToast } from "@/hooks/use-toast";
 import { authStore } from "@/lib/auth-store";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export const NavMenu = () => {
+  const isMobile = useIsMobile();
   const router = useRouter();
   const { toast } = useToast();
   const { data: currentUser, refetch: refetchCurrentUser } =
@@ -46,6 +48,10 @@ export const NavMenu = () => {
 
   const toggleMenu = () => {
     setIsOpen(!isOpen);
+  };
+
+  const closeMenu = () => {
+    setIsOpen(false);
   };
 
   const isSignedIn = Boolean(currentUser);
@@ -243,90 +249,104 @@ export const NavMenu = () => {
                 <a
                   href="https://seminary.pearlchaplaincy.org"
                   target="_blank"
+                  rel="noreferrer"
+                  onClick={closeMenu}
                   className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
                 >
                   School of Chaplaincy
                 </a>
               </li>
               <li>
-                <a
+                <Link
                   href="/book-a-service"
+                  onClick={closeMenu}
                   className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
                 >
                   Book a Service
-                </a>
+                </Link>
               </li>
               <li>
                 <Link
                   href="/news-announcement"
+                  onClick={closeMenu}
                   className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
                 >
                   News & Announcement
                 </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/shop"
+                  onClick={closeMenu}
                   className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
                 >
                   Chaplain Products
-                </a>
+                </Link>
               </li>
               <li>
-                <a
+                <Link
                   href="/become-a-member"
+                  onClick={closeMenu}
                   className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
                 >
                   Become a Member
-                </a>
+                </Link>
               </li>
             </ul>
 
             {/* Secondary Links */}
             <div className="mt-10 space-y-4 border-t border-white/10 pt-6 sm:mt-16 sm:pt-8">
-              <a
+              <Link
                 href="/about-pearl-of-the-orient"
+                onClick={closeMenu}
                 className="block transition-colors hover:underline"
               >
                 About Pearl of the Orient
-              </a>
-              <a href="office-of-the-chief-chaplain" className="block transition-colors hover:underline">
+              </Link>
+              <Link
+                href="/office-of-the-chief-chaplain"
+                onClick={closeMenu}
+                className="block transition-colors hover:underline"
+              >
                 Office of the Chief Chaplain
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/organizational-structure"
+                onClick={closeMenu}
                 className="block transition-colors hover:underline"
               >
                 Organizational Structure
-              </a>
-              <a href="#" className="block transition-colors hover:underline">
+              </Link>
+              <a href="#" onClick={closeMenu} className="block transition-colors hover:underline">
                 What We Believe
               </a>
-              <a href="#" className="block transition-colors hover:underline">
+              <a href="#" onClick={closeMenu} className="block transition-colors hover:underline">
                 Contact & Inquiries
               </a>
-              <a href="#" className="block transition-colors hover:underline">
+              <a href="#" onClick={closeMenu} className="block transition-colors hover:underline">
                 Certifications
               </a>
-              <a href="#" className="block transition-colors hover:underline">
+              <a href="#" onClick={closeMenu} className="block transition-colors hover:underline">
                 Frequently Asked Questions
               </a>
-              <a
+              <Link
                 href="/directory"
+                onClick={closeMenu}
                 className="block transition-colors hover:underline"
               >
                 Directory
-              </a>
+              </Link>
             </div>
           </div>
           <div className="mt-auto px-5 py-6 sm:px-8 sm:py-8">
             {!isSignedIn ? (
-              <a
+              <Link
                 href="/sign-in"
+                onClick={closeMenu}
                 className="flex items-center gap-1 hover:gap-3 transition-all hover:underline"
               >
                 Sign in with your account <ArrowRightIcon className="size-3" />
-              </a>
+              </Link>
             ) : (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
@@ -358,7 +378,7 @@ export const NavMenu = () => {
                 <DropdownMenuContent
                   className="w-60 z-999"
                   align="end"
-                  side="right"
+                  side={isMobile ? "top" : "right"}
                   sideOffset={8}
                 >
                   <DropdownMenuLabel className="flex items-center gap-2">
@@ -372,7 +392,9 @@ export const NavMenu = () => {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex flex-1 flex-col">
-                      <span className="text-popover-foreground">{currentUser?.name}</span>
+                      <span className="text-popover-foreground">
+                        {currentUser?.name}
+                      </span>
                       <span className="text-muted-foreground text-xs">
                         {currentUser?.email}
                       </span>
@@ -383,6 +405,7 @@ export const NavMenu = () => {
                     <DropdownMenuItem asChild>
                       <Link
                         href={memberProfileHref}
+                        onClick={closeMenu}
                         className="flex w-full items-center gap-2"
                       >
                         <SettingsIcon className="size-4" />
@@ -398,6 +421,7 @@ export const NavMenu = () => {
                   <DropdownMenuItem asChild>
                     <Link
                       href="/security-privacy"
+                      onClick={closeMenu}
                       className="flex w-full items-center gap-2"
                     >
                       <LockKeyholeIcon className="size-4" />
@@ -422,7 +446,9 @@ export const NavMenu = () => {
                     disabled={logoutMutation.isPending}
                   >
                     <LogOutIcon className="size-4" />
-                    <span>{logoutMutation.isPending ? "Logging out..." : "Log out"}</span>
+                    <span>
+                      {logoutMutation.isPending ? "Logging out..." : "Log out"}
+                    </span>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
