@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import type { ReactNode } from "react"
 import { Heart, ShieldCheck } from "lucide-react"
 import { IconHeartFilled } from "@tabler/icons-react"
 
@@ -18,7 +19,11 @@ import { cn } from "@/lib/utils"
 
 const amounts = [500, 1000, 2500, 5000, 10000]
 
-export function DonateDialog() {
+type DonateDialogProps = {
+  trigger?: ReactNode
+}
+
+export function DonateDialog({ trigger }: DonateDialogProps) {
   const { toast } = useToast()
   const [selectedAmount, setSelectedAmount] = useState<number | "custom">(500)
   const [customAmount, setCustomAmount] = useState("")
@@ -76,13 +81,15 @@ export function DonateDialog() {
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button
-          className="fixed bottom-4 right-4 z-40 h-11 rounded-full border border-emerald-900/20 bg-white px-4 text-[#032a0d] shadow-lg shadow-black/10 hover:bg-emerald-50"
-          variant="outline"
-        >
-          <IconHeartFilled className="size-4 text-rose-600" />
-          Donate Now
-        </Button>
+        {trigger ?? (
+          <Button
+            className="fixed bottom-4 right-4 z-40 h-11 rounded-full border border-emerald-900/20 bg-white px-4 text-[#032a0d] shadow-lg shadow-black/10 hover:bg-emerald-50"
+            variant="outline"
+          >
+            <IconHeartFilled className="size-4 text-rose-600" />
+            Donate Now
+          </Button>
+        )}
       </DialogTrigger>
       <DialogContent className="max-h-[89vh]! max-w-lg! mt-8 overflow-y-auto p-0">
         <DialogHeader className="border-b px-5 py-4">

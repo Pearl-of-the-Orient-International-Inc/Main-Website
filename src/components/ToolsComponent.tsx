@@ -14,6 +14,7 @@ import {
   ChevronLeftIcon,
   ChevronRightIcon,
   FileQuestionIcon,
+  HeartIcon,
   PhoneIcon,
   PhoneOffIcon,
   RotateCwIcon,
@@ -33,6 +34,8 @@ import {
 import { StreamingResponse } from "@/components/elevenlabs/AIResponse";
 import { LiveWaveform } from "@/components/elevenlabs/LiveWaveForm";
 import { useVapi, type TranscriptMessage } from "@/hooks/use-vapi";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { DonateDialog } from "@/components/website/DonateDialog";
 
 function downloadTranscriptAsTxt(transcript: TranscriptMessage[]): void {
   if (transcript.length === 0) return;
@@ -83,7 +86,9 @@ const INITIAL_GREETING: ChatMessage = {
 };
 
 export const ToolsComponent = () => {
+  const isMobile = useIsMobile();
   const [isScrolled, setIsScrolled] = useState(false);
+  const [mobileToolsOpen, setMobileToolsOpen] = useState(false);
   const [messengerOpen, setMessengerOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([INITIAL_GREETING]);
   const [inputValue, setInputValue] = useState("");
@@ -262,13 +267,49 @@ export const ToolsComponent = () => {
     sendMessage(suggestion);
   };
 
+  const toolButtonClass = isMobile
+    ? "size-11 rounded-full border border-[#032a0d]/10 bg-white p-0 text-[#032a0d] shadow-lg shadow-black/10 hover:bg-emerald-50"
+    : "rounded-none w-full text-[11px] h-12 flex flex-col";
+
+  const toolLabelClass = isMobile ? "sr-only" : "";
+
   return (
-    <div className="fixed top-1/2 right-0 z-40">
+    <div
+      className={
+        isMobile
+          ? "fixed bottom-4 right-4 z-40"
+          : "fixed top-1/2 right-0 z-40"
+      }
+    >
       {/* TODO: Refactor and simplify the code to a seperate component. */}
       {isScrolled && (
-        <Card className="p-0! rounded-r-none border-r-none shadow-r-none">
+        <div className={isMobile ? "flex flex-col items-end gap-2" : ""}>
+          {isMobile ? (
+            <Button
+              type="button"
+              onClick={() => setMobileToolsOpen((current) => !current)}
+              className="order-2 flex size-12 rounded-full bg-[#032a0d] p-0 text-white shadow-xl shadow-black/20 hover:bg-[#064016]"
+              aria-label={mobileToolsOpen ? "Close tools" : "Open tools"}
+              aria-expanded={mobileToolsOpen}
+            >
+              {mobileToolsOpen ? (
+                <XIcon className="size-5" />
+              ) : (
+                <MdOutlineSupportAgent className="size-6" />
+              )}
+            </Button>
+          ) : null}
+
+        {(!isMobile || mobileToolsOpen) && (
+        <Card
+          className={
+            isMobile
+              ? "order-1 rounded-full border border-emerald-900/10 bg-white/95 p-1! shadow-xl shadow-black/15 backdrop-blur"
+              : "p-0! rounded-r-none border-r-none shadow-r-none"
+          }
+        >
           <CardContent className="p-0!">
-            <div className="space-y-2 p-1">
+            <div className={isMobile ? "flex flex-col gap-2 p-1" : "space-y-2 p-1"}>
               <Popover
                 open={messengerOpen}
                 onOpenChange={(open) => {
@@ -283,17 +324,18 @@ export const ToolsComponent = () => {
                 <PopoverTrigger asChild>
                   <Button
                     variant="ghost"
-                    className="rounded-none w-full text-[11px] h-12 flex flex-col"
+                    className={toolButtonClass}
+                    aria-label="Open messenger"
                   >
                     <MdOutlineSupportAgent className="size-5" />
-                    Messenger
+                    <span className={toolLabelClass}>Messenger</span>
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent
-                  side="left"
-                  align="center"
-                  sideOffset={-80}
-                  className="w-110 p-0 flex flex-col h-[90vh] rounded-xl shadow-lg border border-border/80"
+                  side={isMobile ? "top" : "left"}
+                  align={isMobile ? "end" : "center"}
+                  sideOffset={isMobile ? 12 : -80}
+                  className="flex h-[85vh] w-[calc(100vw-2rem)] max-w-110 flex-col rounded-xl border border-border/80 p-0 shadow-lg sm:h-[90vh]"
                 >
                   {assistantMode === "voice" ? (
                     /* Voice Assistant UI */
@@ -588,27 +630,54 @@ export const ToolsComponent = () => {
                 </PopoverContent>
               </Popover>
               <Separator />
+              <DonateDialog
+                trigger={
+                  <Button
+                    variant="ghost"
+                    className={toolButtonClass}
+                    aria-label="Donate"
+                  >
+                    <HeartIcon className="size-4 text-rose-600" />
+                    <span className={toolLabelClass}>Donate</span>
+                  </Button>
+                }
+              />
+              <Separator />
               <Link href="/survey" target="_blank">
                 <Button
                   variant="ghost"
-                  className="rounded-none w-full text-[11px] h-12 flex flex-col"
+                  className={toolButtonClass}
+                  aria-label="Open survey"
+                  onClick={() => {
+                    if (isMobile) {
+                      setMobileToolsOpen(false);
+                    }
+                  }}
                 >
                   <FileQuestionIcon className="size-4" />
-                  Survey
+                  <span className={toolLabelClass}>Survey</span>
                 </Button>
               </Link>
               <Separator />
               <Button
                 variant="ghost"
-                className="rounded-none w-full text-[11px] h-12 flex flex-col"
-                onClick={scrollToTop}
+                className={toolButtonClass}
+                aria-label="Back to top"
+                onClick={() => {
+                  scrollToTop();
+                  if (isMobile) {
+                    setMobileToolsOpen(false);
+                  }
+                }}
               >
                 <ArrowUpFromLineIcon className="size-4" />
-                Back to Top
+                <span className={toolLabelClass}>Back to Top</span>
               </Button>
             </div>
           </CardContent>
         </Card>
+        )}
+        </div>
       )}
     </div>
   );
