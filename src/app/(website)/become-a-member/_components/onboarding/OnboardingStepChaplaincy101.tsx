@@ -280,11 +280,24 @@ export function OnboardingStepChaplaincy101({
     setError(null);
     setLoading(true);
     try {
-      await onProgressChangeAction({
-        completedLessonIds,
-        essayAnswers,
-        isCompleted: canContinue,
-      });
+      const hasProgressToSave =
+        completedLessonIds.length > 0 ||
+        Object.values(essayAnswers).some((answer) => answer.trim().length > 0);
+
+      if (hasProgressToSave || canContinue) {
+        try {
+          await onProgressChangeAction({
+            completedLessonIds,
+            essayAnswers,
+            isCompleted: canContinue,
+          });
+        } catch (e) {
+          if (canContinue) {
+            throw e;
+          }
+        }
+      }
+
       await Promise.resolve(onContinueAction({ completedLessonIds, essayAnswers }));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to continue");
