@@ -7,7 +7,6 @@ import {
   Clock3,
   FileCheck2,
   IdCard,
-  Info,
   MapPinCheckInside,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";

@@ -157,7 +157,6 @@ export function OnboardingStepPaymentCheckout({
 
   const isCashSelected = draft.method === "cash";
   const hasPaymentProof = Boolean(draft.proofDataUrl);
-  const canContinue = Boolean(draft.method) && (isCashSelected || hasPaymentProof);
 
   useEffect(() => {
     const existing = paymentCheckout?.data;
@@ -198,24 +197,17 @@ export function OnboardingStepPaymentCheckout({
   };
 
   const handleContinue = async () => {
-    if (!canContinue) return;
     setError(null);
     setLoading(true);
     try {
       const method = draft.method;
-      if (!method) {
-        throw new Error("Please select a payment method.");
+      if (method && (method === "cash" || draft.proofDataUrl)) {
+        await upsertPaymentCheckoutMutation.mutateAsync({
+          paymentMethod: PAYMENT_METHOD_TO_BACKEND[method],
+          proofOfPaymentUrl: draft.proofDataUrl || undefined,
+          isPromissoryNote: false,
+        });
       }
-
-      if (method !== "cash" && !draft.proofDataUrl) {
-        throw new Error("Attach proof of payment for non-cash payment method.");
-      }
-
-      await upsertPaymentCheckoutMutation.mutateAsync({
-        paymentMethod: PAYMENT_METHOD_TO_BACKEND[method],
-        proofOfPaymentUrl: draft.proofDataUrl || undefined,
-        isPromissoryNote: false,
-      });
 
       await Promise.resolve(onContinueAction());
     } catch (e) {
@@ -342,12 +334,12 @@ export function OnboardingStepPaymentCheckout({
 
             <div className="flex flex-col gap-3 border-t border-black/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-neutral-500 sm:text-sm">
-                Continue to Online Interview after submitting your payment proof.
+                You can continue now and submit payment details later.
               </p>
               <Button
                 type="button"
                 onClick={handleContinue}
-                disabled={!canContinue || loading}
+                disabled={loading}
                 className="bg-[#032a0d] hover:bg-[#032a0d]/90"
               >
                 {loading ? "Saving..." : "Continue to Online Interview"}

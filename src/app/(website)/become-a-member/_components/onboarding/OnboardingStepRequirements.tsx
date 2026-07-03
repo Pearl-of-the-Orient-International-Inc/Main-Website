@@ -165,7 +165,6 @@ export function OnboardingStepRequirements({
   const [error, setError] = useState<string | null>(null);
   const [completing, setCompleting] = useState(false);
 
-  const requiredComplete = Boolean(attachments.photo_2x2);
   // TODO: Replace with backend-provided review decisions once available.
   const requirementDecisionByKey = useMemo<
     Partial<Record<RequirementKey, ReviewDecision>>
@@ -220,7 +219,6 @@ export function OnboardingStepRequirements({
   };
 
   const handleMarkComplete = async () => {
-    if (!requiredComplete) return;
     setError(null);
     setCompleting(true);
     try {
@@ -276,12 +274,12 @@ export function OnboardingStepRequirements({
 
           <div className="flex flex-col gap-3 border-t border-black/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-neutral-500 sm:text-sm">
-              Only the 2x2 ID picture is required to proceed to the next step.
+              You can continue now and upload remaining documents later.
             </p>
             <Button
               type="button"
               onClick={handleMarkComplete}
-              disabled={!requiredComplete || completing}
+              disabled={completing}
               className="bg-[#032a0d] hover:bg-[#032a0d]/90"
             >
               {completing ? "Saving..." : "Continue to Pre-orientation"}

@@ -12,8 +12,6 @@ import {
   toApiError,
   useCurrentMemberChaplaincyTrainingProgressQuery,
   useCurrentMemberOnboardingProgressQuery,
-  useCurrentMemberOnlineInterviewAppointmentQuery,
-  useCurrentMemberPaymentCheckoutQuery,
   useCurrentMemberIdGenerationAssetQuery,
   useCurrentMemberRequirementsQuery,
   useUpdateCurrentMemberOnboardingStepMutation,
@@ -42,7 +40,6 @@ type Props = {
 };
 
 export function OnboardingWizard({ application, onMetaChangeAction }: Props) {
-  const PRE_ORIENTATION_REQUIRED_LESSON_COUNT = 3;
   const { toast } = useToast();
   const uploadRequirementMutation = useUploadMemberRequirementMutation();
   const upsertRequirementsMutation = useUpsertMemberRequirementsMutation();
@@ -50,9 +47,6 @@ export function OnboardingWizard({ application, onMetaChangeAction }: Props) {
   const updatePreOrientationProgressMutation =
     useUpdateCurrentMemberPreOrientationProgressMutation();
   const { data: currentRequirements } = useCurrentMemberRequirementsQuery();
-  const { data: currentPaymentCheckout } = useCurrentMemberPaymentCheckoutQuery();
-  const { data: currentOnlineInterview } =
-    useCurrentMemberOnlineInterviewAppointmentQuery();
   const { data: currentIdGenerationAsset, refetch: refetchCurrentIdGenerationAsset } =
     useCurrentMemberIdGenerationAssetQuery();
   const { data: currentChaplaincyTraining } =
@@ -61,11 +55,6 @@ export function OnboardingWizard({ application, onMetaChangeAction }: Props) {
     useCurrentMemberOnboardingProgressQuery();
   const hasHydratedFromBackendRef = useRef(false);
   const hasHydratedProgressRef = useRef(false);
-  const hasEnforcedPreOrientationGuardRef = useRef(false);
-  const hasEnforcedPaymentGuardRef = useRef(false);
-  const hasEnforcedOnlineInterviewGuardRef = useRef(false);
-  const hasEnforcedIdGenerationGuardRef = useRef(false);
-  const hasEnforcedChaplaincyGuardRef = useRef(false);
   const upsertChaplaincyTrainingProgressMutation =
     useUpsertCurrentMemberChaplaincyTrainingProgressMutation();
 
@@ -159,180 +148,6 @@ export function OnboardingWizard({ application, onMetaChangeAction }: Props) {
   }, [currentOnboardingProgress]);
 
   useEffect(() => {
-    const progressData = currentOnboardingProgress?.data;
-    if (!progressData) return;
-    if (hasEnforcedPreOrientationGuardRef.current) return;
-
-    const completedCount =
-      progressData.preOrientationCompletedLessonIds?.length ?? 0;
-    const preOrientationIncomplete =
-      completedCount < PRE_ORIENTATION_REQUIRED_LESSON_COUNT;
-    const isBeyondPreOrientation = [
-      "payment_checkout",
-      "online_interview",
-      "id_generation",
-      "chaplaincy_101",
-      "oath_taking",
-    ].includes(currentStepId);
-
-    if (!preOrientationIncomplete || !isBeyondPreOrientation) return;
-
-    hasEnforcedPreOrientationGuardRef.current = true;
-
-    void updateOnboardingStepMutation.mutateAsync({
-      currentStep: "PRE_ORIENTATION",
-    });
-
-    applyMetaUpdate({ onboardingStep: "pre_orientation" });
-    toast({
-      title: "Pre-orientation required",
-      description: "Finish the pre-orientation course before payment.",
-      variant: "warning",
-    });
-  }, [currentOnboardingProgress, currentStepId, toast, updateOnboardingStepMutation]);
-
-  useEffect(() => {
-    if (typeof currentPaymentCheckout === "undefined") return;
-    const paymentData = currentPaymentCheckout?.data;
-    if (hasEnforcedPaymentGuardRef.current) return;
-
-    const isBeyondPayment = [
-      "online_interview",
-      "id_generation",
-      "chaplaincy_101",
-      "oath_taking",
-    ].includes(currentStepId);
-
-    if (!isBeyondPayment) return;
-
-    const hasPaymentSubmission = Boolean(paymentData);
-    if (!hasPaymentSubmission) {
-      hasEnforcedPaymentGuardRef.current = true;
-      void updateOnboardingStepMutation.mutateAsync({
-        currentStep: "PAYMENT_CHECKOUT",
-      });
-      applyMetaUpdate({ onboardingStep: "payment_checkout" });
-      toast({
-        title: "Payment required",
-        description: "Complete payment checkout before the next step.",
-        variant: "warning",
-      });
-      return;
-    }
-
-    const hasProof = Boolean(paymentData?.proofOfPaymentUrl);
-    const hasPromissory = Boolean(paymentData?.promissoryNoteUrl);
-    const invalidNonCash =
-      paymentData?.paymentMethod !== "CASH" &&
-      !paymentData?.isPromissoryNote &&
-      !hasProof;
-    const invalidPromissory =
-      paymentData?.isPromissoryNote === true && !hasPromissory;
-
-    if (invalidNonCash || invalidPromissory) {
-      hasEnforcedPaymentGuardRef.current = true;
-      void updateOnboardingStepMutation.mutateAsync({
-        currentStep: "PAYMENT_CHECKOUT",
-      });
-      applyMetaUpdate({ onboardingStep: "payment_checkout" });
-      toast({
-        title: "Payment requirements incomplete",
-        description: "Attach the required proof of payment first.",
-        variant: "warning",
-      });
-    }
-  }, [currentPaymentCheckout, currentStepId, toast, updateOnboardingStepMutation]);
-
-  useEffect(() => {
-    if (typeof currentOnlineInterview === "undefined") return;
-    if (hasEnforcedOnlineInterviewGuardRef.current) return;
-
-    const interviewData = currentOnlineInterview?.data;
-    const isBeyondOnlineInterview = [
-      "id_generation",
-      "chaplaincy_101",
-      "oath_taking",
-    ].includes(currentStepId);
-
-    if (!isBeyondOnlineInterview) return;
-
-    const hasCompleteInterviewData =
-      Boolean(interviewData?.interviewerId) &&
-      Boolean(interviewData?.day) &&
-      Boolean(interviewData?.timeSlot) &&
-      Boolean(interviewData?.zoomLink);
-
-    if (hasCompleteInterviewData) return;
-
-    hasEnforcedOnlineInterviewGuardRef.current = true;
-    void updateOnboardingStepMutation.mutateAsync({
-      currentStep: "ONLINE_INTERVIEW",
-    });
-    applyMetaUpdate({ onboardingStep: "online_interview" });
-    toast({
-      title: "Interview appointment required",
-      description:
-        "Select interviewer, day, slot, and confirm Zoom appointment first.",
-      variant: "warning",
-    });
-  }, [currentOnlineInterview, currentStepId, toast, updateOnboardingStepMutation]);
-
-  useEffect(() => {
-    if (typeof currentIdGenerationAsset === "undefined") return;
-    if (hasEnforcedIdGenerationGuardRef.current) return;
-
-    const isBeyondIdGeneration = ["chaplaincy_101", "oath_taking"].includes(
-      currentStepId,
-    );
-    if (!isBeyondIdGeneration) return;
-
-    const hasCompleteIdGeneration =
-      Boolean(currentIdGenerationAsset.data.asset?.qrCodeUrl) &&
-      Boolean(currentIdGenerationAsset.data.asset?.certificateUrl);
-
-    if (hasCompleteIdGeneration) return;
-
-    hasEnforcedIdGenerationGuardRef.current = true;
-    void updateOnboardingStepMutation.mutateAsync({
-      currentStep: "ID_GENERATION",
-    });
-    applyMetaUpdate({ onboardingStep: "id_generation" });
-    toast({
-      title: "ID generation required",
-      description: "Save member ID QR and certificate before proceeding.",
-      variant: "warning",
-    });
-  }, [currentIdGenerationAsset, currentStepId, toast, updateOnboardingStepMutation]);
-
-  useEffect(() => {
-    if (typeof currentChaplaincyTraining === "undefined") return;
-    if (hasEnforcedChaplaincyGuardRef.current) return;
-    if (currentStepId !== "oath_taking") return;
-
-    const training = currentChaplaincyTraining?.data;
-    const lessonCount = training?.completedLessonIds.length ?? 0;
-    const answers = training?.essayAnswers ?? {};
-    const answeredCount = Object.values(answers).filter((value) =>
-      value?.trim().length > 0,
-    ).length;
-    const isComplete =
-      lessonCount >= 8 && answeredCount >= 10 && Boolean(training?.completedAt);
-
-    if (isComplete) return;
-
-    hasEnforcedChaplaincyGuardRef.current = true;
-    void updateOnboardingStepMutation.mutateAsync({
-      currentStep: "CHAPLAINCY_101",
-    });
-    applyMetaUpdate({ onboardingStep: "chaplaincy_101" });
-    toast({
-      title: "Chaplaincy 101 required",
-      description: "Complete all lessons and assessment answers first.",
-      variant: "warning",
-    });
-  }, [currentChaplaincyTraining, currentStepId, toast, updateOnboardingStepMutation]);
-
-  useEffect(() => {
     if (currentStepId !== "oath_taking") return;
     if (currentIdGenerationAsset?.data.uniqueId) return;
 
@@ -370,19 +185,18 @@ export function OnboardingWizard({ application, onMetaChangeAction }: Props) {
         item !== null,
     );
 
-    if (attachments.length === 0) {
-      throw new Error("Please upload at least your 2x2 picture.");
-    }
-
     try {
-      const response = await upsertRequirementsMutation.mutateAsync({ attachments });
-
-      const latestAttachments = response.data.attachments;
       const mergedAttachments = { ...application.requirementAttachments };
-      for (const key of REQUIREMENT_KEYS) {
-        const url = latestAttachments[key];
-        if (typeof url === "string" && url.trim()) {
-          mergedAttachments[key] = url;
+
+      if (attachments.length > 0) {
+        const response = await upsertRequirementsMutation.mutateAsync({ attachments });
+
+        const latestAttachments = response.data.attachments;
+        for (const key of REQUIREMENT_KEYS) {
+          const url = latestAttachments[key];
+          if (typeof url === "string" && url.trim()) {
+            mergedAttachments[key] = url;
+          }
         }
       }
 

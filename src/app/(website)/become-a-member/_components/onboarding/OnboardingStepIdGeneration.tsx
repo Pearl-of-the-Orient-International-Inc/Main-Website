@@ -174,47 +174,35 @@ export function OnboardingStepIdGeneration({ uniqueId, onContinueAction }: Props
   };
 
   const handleContinue = async () => {
-    if (!paymentVerified) return;
     setError(null);
     setLoading(true);
     try {
-      if (!memberUniqueId) {
-        throw new Error("Member ID is not available yet.");
-      }
-      if (!qrDataUrl) {
-        throw new Error("QR code is not ready yet.");
-      }
-      if (!certificateBlob) {
-        throw new Error("Certificate is not ready yet.");
-      }
-      if (!profileUrl) {
-        throw new Error("Profile URL is not ready yet.");
-      }
+      if (paymentVerified && memberUniqueId && qrDataUrl && certificateBlob && profileUrl) {
+        const qrFile = dataUrlToFile(qrDataUrl, `${qrFileBaseName}.png`);
+        const certificateFile = new File(
+          [certificateBlob],
+          `certificate-${memberUniqueId}.pdf`,
+          { type: "application/pdf" },
+        );
 
-      const qrFile = dataUrlToFile(qrDataUrl, `${qrFileBaseName}.png`);
-      const certificateFile = new File(
-        [certificateBlob],
-        `certificate-${memberUniqueId}.pdf`,
-        { type: "application/pdf" },
-      );
+        const uploadedQr = await uploadDocumentMutation.mutateAsync(qrFile);
+        const uploadedCertificate =
+          await uploadDocumentMutation.mutateAsync(certificateFile);
 
-      const uploadedQr = await uploadDocumentMutation.mutateAsync(qrFile);
-      const uploadedCertificate =
-        await uploadDocumentMutation.mutateAsync(certificateFile);
+        const qrCodeUrl = uploadedQr?.ufsUrl || uploadedQr?.url;
+        const certificateStoredUrl =
+          uploadedCertificate?.ufsUrl || uploadedCertificate?.url;
 
-      const qrCodeUrl = uploadedQr?.ufsUrl || uploadedQr?.url;
-      const certificateStoredUrl =
-        uploadedCertificate?.ufsUrl || uploadedCertificate?.url;
+        if (!qrCodeUrl || !certificateStoredUrl) {
+          throw new Error("Failed to upload QR code or certificate.");
+        }
 
-      if (!qrCodeUrl || !certificateStoredUrl) {
-        throw new Error("Failed to upload QR code or certificate.");
+        await upsertIdGenerationAssetMutation.mutateAsync({
+          profileUrl,
+          qrCodeUrl,
+          certificateUrl: certificateStoredUrl,
+        });
       }
-
-      await upsertIdGenerationAssetMutation.mutateAsync({
-        profileUrl,
-        qrCodeUrl,
-        certificateUrl: certificateStoredUrl,
-      });
 
       await Promise.resolve(onContinueAction());
     } catch (e) {
@@ -401,12 +389,12 @@ export function OnboardingStepIdGeneration({ uniqueId, onContinueAction }: Props
 
           <div className="flex flex-col gap-3 border-t border-black/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-neutral-500 sm:text-sm">
-              Next step after member ID/certificate: Chaplaincy 101 Training.
+              You can continue now and generate member ID/certificate later.
             </p>
             <Button
               type="button"
               onClick={handleContinue}
-              disabled={!paymentVerified || loading}
+              disabled={loading}
               className="bg-[#032a0d] hover:bg-[#032a0d]/90"
             >
               {loading ? "Saving..." : "Continue to Chaplaincy 101"}

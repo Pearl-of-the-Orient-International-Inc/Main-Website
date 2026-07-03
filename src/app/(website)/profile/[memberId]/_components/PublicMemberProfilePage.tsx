@@ -166,6 +166,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
   const canUseFollow = Boolean(
     currentUser && signedInMemberProfile && !isOwnProfile,
   );
+  const canShowBookService = canBookService && !isOwnProfile;
   const signInToFollowHref = `/sign-in?redirect=${encodeURIComponent(
     `/profile/${member.uniqueId ?? member.id}`,
   )}`;
@@ -763,7 +764,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                         )
                       ) : null}
 
-                      {canBookService ? (
+                      {canShowBookService ? (
                         <Button
                           type="button"
                           size="sm"
@@ -876,7 +877,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
           <PublicMemberProfileSidebar member={member} fullName={fullName} />
         </div>
         <AppointmentSheet
-          chaplain={canBookService ? bookingChaplain : null}
+          chaplain={canShowBookService ? bookingChaplain : null}
           open={isBookingSheetOpen}
           onOpenChange={setIsBookingSheetOpen}
         />

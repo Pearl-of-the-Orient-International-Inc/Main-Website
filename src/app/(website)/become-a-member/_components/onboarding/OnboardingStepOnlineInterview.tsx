@@ -127,7 +127,6 @@ export function OnboardingStepOnlineInterview({
 
   const isScheduleComplete =
     Boolean(draft.instructorId) && Boolean(draft.day) && Boolean(draft.slot);
-  const canContinue = draft.booked && Boolean(draft.zoomLink);
 
   const handleBookAppointment = () => {
     if (!isScheduleComplete) return;
@@ -161,30 +160,25 @@ export function OnboardingStepOnlineInterview({
   };
 
   const handleContinue = async () => {
-    if (!canContinue) return;
     setError(null);
     setLoading(true);
     try {
       const selectedDay = draft.day === "saturday" ? "SATURDAY" : "SUNDAY";
-      if (!draft.instructorId || !draft.day || !draft.slot || !draft.zoomLink) {
-        throw new Error(
-          "Select interviewer, day, slot, and confirm appointment first.",
-        );
+      if (draft.instructorId && draft.day && draft.slot && draft.zoomLink) {
+        const instructorName =
+          INTERVIEWERS.find((item) => item.id === draft.instructorId)?.name ??
+          draft.instructorId;
+
+        await upsertOnlineInterviewMutation.mutateAsync({
+          interviewerId: draft.instructorId,
+          interviewerName: instructorName,
+          day: selectedDay as InterviewDay,
+          timeSlot: draft.slot,
+          zoomLink: draft.zoomLink,
+          meetingId: draft.meetingId || undefined,
+          passcode: draft.passcode || undefined,
+        });
       }
-
-      const instructorName =
-        INTERVIEWERS.find((item) => item.id === draft.instructorId)?.name ??
-        draft.instructorId;
-
-      await upsertOnlineInterviewMutation.mutateAsync({
-        interviewerId: draft.instructorId,
-        interviewerName: instructorName,
-        day: selectedDay as InterviewDay,
-        timeSlot: draft.slot,
-        zoomLink: draft.zoomLink,
-        meetingId: draft.meetingId || undefined,
-        passcode: draft.passcode || undefined,
-      });
 
       await Promise.resolve(onContinueAction());
     } catch (e) {
@@ -418,13 +412,12 @@ export function OnboardingStepOnlineInterview({
 
           <div className="flex flex-col gap-3 border-t border-black/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-neutral-500 sm:text-sm">
-              Continue to Member ID / Certificate generation after your online
-              interview appointment is confirmed.
+              You can continue now and confirm interview appointment later.
             </p>
             <Button
               type="button"
               onClick={handleContinue}
-              disabled={!canContinue || loading}
+              disabled={loading}
               className="bg-[#032a0d] hover:bg-[#032a0d]/90"
             >
               {loading ? "Saving..." : "Continue to Member ID Generation"}

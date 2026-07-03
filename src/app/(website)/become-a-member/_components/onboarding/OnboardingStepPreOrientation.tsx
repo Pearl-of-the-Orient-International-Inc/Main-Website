@@ -49,8 +49,6 @@ type VideoLesson = {
   videoUrl: string;
 };
 
-const MINIMUM_WATCH_TIME_SECONDS = 5 * 60;
-
 const PRE_ORIENTATION_VIDEOS: VideoLesson[] = [
   {
     id: 1,
@@ -232,9 +230,6 @@ export function OnboardingStepPreOrientation({
   const [error, setError] = useState<string | null>(null);
 
   const videoRef = useRef<HTMLVideoElement | null>(null);
-  const maxWatchedTimeRef = useRef(0);
-  const suppressSeekRef = useRef(false);
-  const watchedTimeByVideoRef = useRef<Record<number, number>>({});
 
   useEffect(() => {
     setCompletedLessonIds(
@@ -254,8 +249,6 @@ export function OnboardingStepPreOrientation({
 
   const activeVideo =
     PRE_ORIENTATION_VIDEOS.find((video) => video.id === activeVideoId) ?? null;
-  const activeVideoCompleted =
-    activeVideoId !== null && completedLessonIds.includes(activeVideoId);
   const videosCompleted =
     PRE_ORIENTATION_VIDEOS.filter((video) =>
       completedLessonIds.includes(video.id),
@@ -275,93 +268,21 @@ export function OnboardingStepPreOrientation({
   const progressPercent = (completedRequirements / totalRequirements) * 100;
   const canContinue = videosCompleted && readingConfirmed && assessmentPassed;
 
-  const openVideoDialogAction = (videoId: number) => {
-    setActiveVideoId(videoId);
-    maxWatchedTimeRef.current = watchedTimeByVideoRef.current[videoId] ?? 0;
-    setIsVideoDialogOpen(true);
-  };
+  const markVideoComplete = (videoId: number) => {
+    if (completedLessonIds.includes(videoId)) return;
 
-  const handleVideoLoadedMetadataAction = () => {
-    const video = videoRef.current;
-    if (!video || !activeVideoId) return;
-
-    const resumeTime = watchedTimeByVideoRef.current[activeVideoId] ?? 0;
-    if (resumeTime > 0) {
-      video.currentTime = Math.min(resumeTime, video.duration || resumeTime);
-    }
-
-    maxWatchedTimeRef.current = resumeTime;
-  };
-
-  const handleVideoTimeUpdateAction = () => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    if (video.currentTime > maxWatchedTimeRef.current) {
-      maxWatchedTimeRef.current = video.currentTime;
-    }
-    if (
-      !activeVideoId ||
-      video.currentTime <= (watchedTimeByVideoRef.current[activeVideoId] ?? 0)
-    ) {
-      return;
-    }
-
-    watchedTimeByVideoRef.current[activeVideoId] = video.currentTime;
-
-    if (
-      activeVideoId &&
-      !completedLessonIds.includes(activeVideoId) &&
-      maxWatchedTimeRef.current >= MINIMUM_WATCH_TIME_SECONDS
-    ) {
-      const nextCompletedLessonIds = [...completedLessonIds, activeVideoId].sort(
-        (a, b) => a - b,
-      );
-
-      setCompletedLessonIds(nextCompletedLessonIds);
-      void onProgressChangeAction(nextCompletedLessonIds);
-    }
-  };
-
-  const handleVideoSeekingAction = () => {
-    const video = videoRef.current;
-    if (!video || suppressSeekRef.current) return;
-    if (activeVideoId && completedLessonIds.includes(activeVideoId)) return;
-
-    const allowedTime = maxWatchedTimeRef.current + 0.75;
-    if (video.currentTime <= allowedTime) return;
-
-    suppressSeekRef.current = true;
-    video.currentTime = maxWatchedTimeRef.current;
-    window.setTimeout(() => {
-      suppressSeekRef.current = false;
-    }, 0);
-  };
-
-  const handleVideoRateChangeAction = () => {
-    const video = videoRef.current;
-    if (!video) return;
-    if (video.playbackRate !== 1) {
-      video.playbackRate = 1;
-    }
-  };
-
-  const handleVideoEndedAction = () => {
-    if (!activeVideoId) return;
-
-    const nextCompletedLessonIds = completedLessonIds.includes(activeVideoId)
-      ? completedLessonIds
-      : [...completedLessonIds, activeVideoId].sort((a, b) => a - b);
-
-    if (videoRef.current?.duration) {
-      watchedTimeByVideoRef.current[activeVideoId] = videoRef.current.duration;
-      maxWatchedTimeRef.current = videoRef.current.duration;
-    }
+    const nextCompletedLessonIds = [...completedLessonIds, videoId].sort(
+      (a, b) => a - b,
+    );
 
     setCompletedLessonIds(nextCompletedLessonIds);
-    if (nextCompletedLessonIds !== completedLessonIds) {
-      void onProgressChangeAction(nextCompletedLessonIds);
-    }
+    void onProgressChangeAction(nextCompletedLessonIds);
+  };
+
+  const openVideoDialogAction = (videoId: number) => {
+    setActiveVideoId(videoId);
+    markVideoComplete(videoId);
+    setIsVideoDialogOpen(true);
   };
 
   const handleVideoDialogOpenChange = (open: boolean) => {
@@ -369,8 +290,6 @@ export function OnboardingStepPreOrientation({
       setIsVideoDialogOpen(true);
       return;
     }
-
-    if (!activeVideoCompleted) return;
 
     setIsVideoDialogOpen(false);
     setActiveVideoId(null);
@@ -399,12 +318,6 @@ export function OnboardingStepPreOrientation({
   };
 
   const handleContinue = async () => {
-    if (!canContinue) {
-      setError(
-        "Finish all three videos, confirm the reading, and answer all five assessment questions correctly before continuing.",
-      );
-      return;
-    }
     setError(null);
     setLoading(true);
     try {
@@ -502,7 +415,7 @@ export function OnboardingStepPreOrientation({
                       </span>
                     ) : (
                       <span className="inline-flex items-center justify-center rounded-md border border-dashed border-[#032a0d]/20 px-2 py-1 text-xs text-[#032a0d]/70">
-                        Watch video to complete
+                        Open video to complete
                       </span>
                     )}
                   </div>
@@ -638,13 +551,13 @@ export function OnboardingStepPreOrientation({
           )}
 
           <div className="flex flex-col gap-3 border-t border-black/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs text-neutral-500 sm:text-sm">
-              Finish all videos, the reading, and the assessment to unlock payment.
+              <p className="text-xs text-neutral-500 sm:text-sm">
+              You can continue now and finish this orientation later.
             </p>
             <Button
               type="button"
               onClick={handleContinue}
-              disabled={!canContinue || loading}
+              disabled={loading}
               className="bg-[#032a0d] hover:bg-[#032a0d]/90"
             >
               {loading ? "Saving..." : "Continue to Payment"}
@@ -679,27 +592,13 @@ export function OnboardingStepPreOrientation({
       </aside>
 
       <Dialog open={isVideoDialogOpen} onOpenChange={handleVideoDialogOpenChange}>
-        <DialogContent
-          className="max-w-4xl! p-0"
-          showCloseButton={activeVideoCompleted}
-          onInteractOutside={(event) => {
-            if (!activeVideoCompleted) {
-              event.preventDefault();
-            }
-          }}
-          onEscapeKeyDown={(event) => {
-            if (!activeVideoCompleted) {
-              event.preventDefault();
-            }
-          }}
-        >
+        <DialogContent className="max-w-4xl! p-0">
           <div className="space-y-3 p-4 sm:p-5">
             <DialogTitle className="font-serif text-lg text-[#032a0d] sm:text-xl">
               {activeVideo?.title ?? "Pre-orientation video"}
             </DialogTitle>
             <p className="text-xs text-[#032a0d]/70 sm:text-sm">
-              Fast forward is disabled. Watch at least 5 minutes to mark this
-              video as completed automatically.
+              This video is marked complete when opened. You can close it anytime.
             </p>
           </div>
           <VideoPlayer className="overflow-hidden">
@@ -711,11 +610,6 @@ export function OnboardingStepPreOrientation({
               preload="auto"
               playsInline
               className="h-auto max-h-[70vh] w-full"
-              onLoadedMetadata={handleVideoLoadedMetadataAction}
-              onTimeUpdate={handleVideoTimeUpdateAction}
-              onSeeking={handleVideoSeekingAction}
-              onRateChange={handleVideoRateChangeAction}
-              onEnded={handleVideoEndedAction}
               onContextMenu={(event) => event.preventDefault()}
             />
             <VideoPlayerControlBar>

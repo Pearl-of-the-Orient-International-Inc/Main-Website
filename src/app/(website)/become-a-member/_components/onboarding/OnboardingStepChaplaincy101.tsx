@@ -277,14 +277,13 @@ export function OnboardingStepChaplaincy101({
   };
 
   const handleContinue = async () => {
-    if (!canContinue) return;
     setError(null);
     setLoading(true);
     try {
       await onProgressChangeAction({
         completedLessonIds,
         essayAnswers,
-        isCompleted: true,
+        isCompleted: canContinue,
       });
       await Promise.resolve(onContinueAction({ completedLessonIds, essayAnswers }));
     } catch (e) {
@@ -462,13 +461,12 @@ export function OnboardingStepChaplaincy101({
 
           <div className="flex flex-col gap-3 border-t border-black/10 pt-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-neutral-500 sm:text-sm">
-              Complete the PPT lessons and essay assessment to unlock the next
-              step.
+              You can continue now and finish training progress later.
             </p>
             <Button
               type="button"
               onClick={handleContinue}
-              disabled={!canContinue || loading}
+              disabled={loading}
               className="bg-[#032a0d] hover:bg-[#032a0d]/90"
             >
               {loading ? "Saving..." : "Continue to Oath Taking"}
