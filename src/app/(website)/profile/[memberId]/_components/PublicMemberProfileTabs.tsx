@@ -17,6 +17,7 @@ import {
   NotebookPen,
   ScrollText,
   SearchX,
+  Share2,
   ShieldCheck,
   Table2,
   X,
@@ -24,6 +25,8 @@ import {
   Trophy,
   Users,
 } from "lucide-react";
+import { FaFacebookF, FaLinkedin } from "react-icons/fa";
+import { FaXTwitter } from "react-icons/fa6";
 import { TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -161,6 +164,15 @@ const parseBranchServiceText = (value: string | null | undefined) =>
     .split(/[,|]/)
     .map((item) => item.trim())
     .filter(Boolean);
+
+const getPublicProfileOrigin = () => {
+  const configuredUrl = process.env.NEXT_PUBLIC_WEBSITE_URL?.replace(/\/$/, "");
+
+  if (configuredUrl) return configuredUrl;
+  if (typeof window === "undefined") return "";
+
+  return window.location.origin.replace(/\/$/, "");
+};
 
 const stripHtml = (value: string) =>
   value
@@ -344,6 +356,82 @@ export function PublicMemberProfileTabs({
     ).length,
     recognitions: publicRecords.filter((item) => item.type === "RECOGNITION")
       .length,
+  };
+  const publicProfilePath = `/profile/${member.uniqueId ?? member.id}`;
+  const buildPublicRecordShareUrl = (record: PublicRecord) =>
+    `${getPublicProfileOrigin()}${publicProfilePath}#record-${record.id}`;
+  const buildPublicRecordShareText = (record: PublicRecord) =>
+    `View ${record.title} from ${fullName}'s public records`;
+
+  const copyPublicRecordShareUrl = async (record: PublicRecord) => {
+    try {
+      await navigator.clipboard.writeText(buildPublicRecordShareUrl(record));
+      toast({
+        title: "Record link copied",
+        description: "Public record link is ready to share.",
+        variant: "success",
+      });
+    } catch {
+      toast({
+        title: "Copy failed",
+        description: "Unable to copy the public record link right now.",
+        variant: "error",
+      });
+    }
+  };
+
+  const renderPublicRecordSocialShare = (
+    record: PublicRecord,
+    className = "",
+  ) => {
+    const shareUrl = buildPublicRecordShareUrl(record);
+    const encodedShareUrl = encodeURIComponent(shareUrl);
+    const encodedShareText = encodeURIComponent(
+      buildPublicRecordShareText(record),
+    );
+
+    return (
+      <div
+        className={`flex items-center gap-2 ${className}`}
+        onClick={(event) => event.stopPropagation()}
+      >
+        <a
+          href={`https://www.facebook.com/sharer/sharer.php?u=${encodedShareUrl}`}
+          target="_blank"
+          rel="noreferrer"
+          className="flex size-8 items-center justify-center rounded-full bg-[#1877F2] text-white transition hover:opacity-90"
+          aria-label={`Share ${record.title} on Facebook`}
+        >
+          <FaFacebookF className="size-3.5" />
+        </a>
+        <a
+          href={`https://twitter.com/intent/tweet?url=${encodedShareUrl}&text=${encodedShareText}`}
+          target="_blank"
+          rel="noreferrer"
+          className="flex size-8 items-center justify-center rounded-full bg-black text-white transition hover:opacity-90"
+          aria-label={`Share ${record.title} on X`}
+        >
+          <FaXTwitter className="size-3.5" />
+        </a>
+        <a
+          href={`https://www.linkedin.com/sharing/share-offsite/?url=${encodedShareUrl}`}
+          target="_blank"
+          rel="noreferrer"
+          className="flex size-8 items-center justify-center rounded-full bg-[#0A66C2] text-white transition hover:opacity-90"
+          aria-label={`Share ${record.title} on LinkedIn`}
+        >
+          <FaLinkedin className="size-3.5" />
+        </a>
+        <button
+          type="button"
+          onClick={() => void copyPublicRecordShareUrl(record)}
+          className="flex size-8 items-center justify-center rounded-full bg-neutral-600 text-white transition hover:opacity-90"
+          aria-label={`Copy ${record.title} public record link`}
+        >
+          <Share2 className="size-3.5" />
+        </button>
+      </div>
+    );
   };
   const impactYears = Array.from(
     new Set(publicRecords.map((item) => new Date(item.eventAt).getFullYear())),
@@ -819,6 +907,7 @@ export function PublicMemberProfileTabs({
       {publicRecords.map((record) => (
         <article
           key={record.id}
+          id={`record-${record.id}`}
           role="button"
           tabIndex={0}
           onClick={() => setSelectedPublicRecord(record)}
@@ -898,6 +987,7 @@ export function PublicMemberProfileTabs({
               View full details
               <ChevronRight className="size-4" />
             </Button>
+            {renderPublicRecordSocialShare(record)}
           </div>
         </article>
       ))}
@@ -922,6 +1012,7 @@ export function PublicMemberProfileTabs({
             {publicRecords.map((record) => (
               <TableRow
                 key={record.id}
+                id={`record-${record.id}`}
                 role="button"
                 tabIndex={0}
                 onClick={() => setSelectedPublicRecord(record)}
@@ -951,6 +1042,7 @@ export function PublicMemberProfileTabs({
                       {record.attachments.length > 1 ? "s" : ""}
                     </p>
                   )}
+                  {renderPublicRecordSocialShare(record, "mt-3")}
                 </TableCell>
 
                 <TableCell className="align-middle text-sm">
@@ -1934,6 +2026,10 @@ export function PublicMemberProfileTabs({
                     <DialogDescription className="mt-2">
                       Full public record details and attachments.
                     </DialogDescription>
+                    {renderPublicRecordSocialShare(
+                      selectedPublicRecord,
+                      "mt-4",
+                    )}
                   </div>
                   <Badge
                     variant="secondary"
