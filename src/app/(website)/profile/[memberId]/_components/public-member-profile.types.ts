@@ -28,6 +28,7 @@ export interface PublicMemberProfileResponse {
     municipalityCity: string | null;
     barangay: string | null;
     preferredBranchOther: string | null;
+    followerCount: number;
     skillsTalents: string | null;
     elementarySchool: string | null;
     secondarySchool: string | null;

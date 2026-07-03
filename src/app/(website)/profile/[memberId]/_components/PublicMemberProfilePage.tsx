@@ -9,7 +9,6 @@ import {
   Calendar,
   CalendarCheck,
   Camera,
-  Clock,
   FileCheck2,
   IdCard,
   LayersPlus,
@@ -35,6 +34,8 @@ import {
   useUpdateCurrentMemberProfileBannerMutation,
 } from "@/features/member/member.hooks";
 import { useToast } from "@/hooks/use-toast";
+import type { PublicServiceChaplain } from "@/lib/api-types";
+import { AppointmentSheet } from "@/app/(website)/book-a-service/ChaplainDirectory";
 import { PublicMemberProfileSidebar } from "./PublicMemberProfileSidebar";
 import { PublicMemberProfileTabs } from "./PublicMemberProfileTabs";
 import type { PublicMember } from "./public-member-profile.shared";
@@ -87,6 +88,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
   const [isRepositionMode, setIsRepositionMode] = useState(false);
   const [isDraggingCover, setIsDraggingCover] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
+  const [isBookingSheetOpen, setIsBookingSheetOpen] = useState(false);
   const [bannerImageSrc, setBannerImageSrc] = useState<string | null>(
     member.profileBannerUrl?.trim() || null,
   );
@@ -113,9 +115,32 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
     ? buildOfficeAssignmentScope(primaryOfficeAssignment)
     : "";
   const canBookService = canBookMemberService(member);
-  const bookServiceHref = `/book-a-service?member=${encodeURIComponent(
-    member.uniqueId ?? member.id,
-  )}`;
+  const bookingChaplain: PublicServiceChaplain = {
+    id: member.id,
+    uniqueId: member.uniqueId,
+    badgeNumber: member.badgeNumber,
+    memberType: "CERTIFIED_SPECIALIST_TRAINING_OFFICER_INSTRUCTOR",
+    firstName: member.firstName,
+    middleInitial: member.middleInitial,
+    lastName: member.lastName,
+    extensionName: member.extensionName,
+    region: member.region,
+    province: member.province,
+    municipalityCity: member.municipalityCity,
+    barangay: member.barangay,
+    preferredBranchOther: member.preferredBranchOther,
+    createdAt: member.createdAt,
+    user: {
+      name: member.user.name,
+      avatar: member.user.avatar,
+      isEmailVerified: member.user.isEmailVerified,
+    },
+    preferredBranches,
+    officerAssignments,
+    applicantRequirements: applicantRequirements.map((requirement) => ({
+      fileUrl: requirement.fileUrl,
+    })),
+  };
   const signedInMemberProfile = currentUser?.memberProfile;
   const isOwnProfile = Boolean(
     signedInMemberProfile &&
@@ -138,6 +163,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
     unfollowMemberMutation.data ??
     followStateQuery.data;
   const isFollowing = followState?.isFollowing ?? false;
+  const followerCount = followState?.followerCount ?? member.followerCount ?? 0;
   const isFollowBusy =
     followStateQuery.isLoading ||
     followMemberMutation.isPending ||
@@ -162,7 +188,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
       value: publicRecords.length,
     },
     { name: "Branches", value: visibleServiceBranches.length },
-    { name: "Offices", value: officerAssignments.length },
+    { name: "Followers", value: followerCount },
     { name: "Milestones", value: recentActivities.length },
   ];
   const analyticsPieData = [
@@ -725,14 +751,13 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
 
                       {canBookService ? (
                         <Button
-                          asChild
+                          type="button"
                           size="sm"
+                          onClick={() => setIsBookingSheetOpen(true)}
                           className="w-full bg-[#032a0d] text-white hover:bg-[#064016] sm:w-fit"
                         >
-                          <Link href={bookServiceHref}>
-                            <CalendarCheck className="size-4" />
-                            Book a Service
-                          </Link>
+                          <CalendarCheck className="size-4" />
+                          Book a Service
                         </Button>
                       ) : null}
                     </div>
@@ -759,11 +784,11 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                     </div>
                     <div className="border border-neutral-200 bg-neutral-50 px-4 py-3">
                       <p className="text-xs uppercase tracking-wide text-neutral-500">
-                        Timeline entries
+                        Followers
                       </p>
                       <p className="mt-2 flex items-center gap-2 text-lg font-semibold text-neutral-950">
-                        <Clock className="size-4 text-[#032a0d]" />
-                        {recentActivities.length}
+                        <Users2 className="size-4 text-[#032a0d]" />
+                        {followerCount}
                       </p>
                     </div>
                     <div className="border border-neutral-200 bg-neutral-50 px-4 py-3">
@@ -825,6 +850,11 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
             fullName={fullName}
           />
         </div>
+        <AppointmentSheet
+          chaplain={canBookService ? bookingChaplain : null}
+          open={isBookingSheetOpen}
+          onOpenChange={setIsBookingSheetOpen}
+        />
       </Tabs>
     </div>
   );

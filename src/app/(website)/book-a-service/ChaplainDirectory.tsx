@@ -282,7 +282,7 @@ const LicensePreview = ({ chaplain }: { chaplain: Chaplain }) => (
   </div>
 )
 
-const AppointmentSheet = ({
+export const AppointmentSheet = ({
   chaplain,
   open,
   onOpenChange,
