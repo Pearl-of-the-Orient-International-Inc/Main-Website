@@ -29,7 +29,10 @@ type Props = {
     preOrientationReadingConfirmed?: boolean;
     preOrientationAssessmentAnswers?: Record<string, string>;
   }) => void;
-  onContinueAction: (lessonIds: number[]) => Promise<void> | void;
+  onContinueAction: (
+    lessonIds: number[],
+    isCompleted: boolean,
+  ) => Promise<void> | void;
 };
 
 type AssessmentQuestion = {
@@ -321,7 +324,7 @@ export function OnboardingStepPreOrientation({
     setError(null);
     setLoading(true);
     try {
-      await Promise.resolve(onContinueAction(completedLessonIds));
+      await Promise.resolve(onContinueAction(completedLessonIds, canContinue));
     } catch (e) {
       setError(e instanceof Error ? e.message : "Failed to continue");
     } finally {

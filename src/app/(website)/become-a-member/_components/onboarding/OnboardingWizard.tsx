@@ -238,15 +238,18 @@ export function OnboardingWizard({ application, onMetaChangeAction }: Props) {
     });
   };
 
-  const handlePreOrientationContinue = async (lessonIds: number[]) => {
+  const handlePreOrientationContinue = async (
+    lessonIds: number[],
+    isCompleted: boolean,
+  ) => {
     try {
       await updatePreOrientationProgressMutation.mutateAsync({
         completedLessonIds: lessonIds,
-        isCompleted: true,
+        isCompleted,
       });
       await handlePersistOnboardingStep("payment_checkout");
       toast({
-        title: "Pre-orientation completed",
+        title: isCompleted ? "Pre-orientation completed" : "Pre-orientation saved",
         description: "Your progress is saved.",
         variant: "success",
       });
