@@ -70,7 +70,7 @@ const Page = () => {
               <div className="border-b border-[#e7ece4] bg-[#fbfcf8] lg:border-b-0 lg:border-r">
                 <div className="relative mx-auto h-full w-full max-w-184 overflow-hidden bg-[#edf3e8]">
                   <Image
-                    src="/chief.jpg"
+                    src="/doc.jpg"
                     alt="Bishop Dr. Rodel Manzo"
                     fill
                     className="object-object-cover object-center"
