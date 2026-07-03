@@ -21,6 +21,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   useOptionalCurrentUserQuery,
   useUploadAvatarMutation,
@@ -52,9 +53,25 @@ import {
   getPrimaryOfficeAssignment,
 } from "./public-member-profile.shared";
 
+const parseBranchServiceText = (value: string | null | undefined) =>
+  (value ?? "")
+    .split(/[,|]/)
+    .map((item) => item.trim())
+    .filter(Boolean);
+
 export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
   const publicRecords = member.publicRecords ?? [];
   const preferredBranches = member.preferredBranches ?? [];
+  const branchServiceEntries = parseBranchServiceText(
+    member.preferredBranchOther,
+  );
+  const visibleServiceBranches = [
+    ...preferredBranches.map((branch) => branch.title),
+    ...branchServiceEntries,
+  ].filter(
+    (branch, index, list) =>
+      branch && list.findIndex((item) => item === branch) === index,
+  );
   const officerAssignments = member.officerAssignments ?? [];
   const certificates = member.certificates ?? [];
   const applicantRequirements = member.applicantRequirements ?? [];
@@ -144,7 +161,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
       name: "Records",
       value: publicRecords.length,
     },
-    { name: "Branches", value: preferredBranches.length },
+    { name: "Branches", value: visibleServiceBranches.length },
     { name: "Offices", value: officerAssignments.length },
     { name: "Milestones", value: recentActivities.length },
   ];
@@ -616,8 +633,8 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                         <p className="mt-2 text-sm leading-6 text-neutral-700 sm:text-base">
                           {formatEnumLabel(member.memberType)}
                           {location ? ` • ${location}` : ""}
-                          {member.preferredBranches[0]
-                            ? ` • ${member.preferredBranches[0].title}`
+                          {visibleServiceBranches[0]
+                            ? ` • ${visibleServiceBranches[0]}`
                             : ""}
                         </p>
                         <div className="mt-4 flex min-w-0 flex-wrap gap-2">
@@ -662,17 +679,13 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                       {!isOwnProfile ? (
                         currentUser ? (
                           signedInMemberProfile ? (
-                            <button
+                            <Button
                               type="button"
+                              variant={isFollowing ? "secondary" : "outline"}
+                              size="sm"
                               onClick={handleToggleFollow}
                               disabled={isFollowBusy}
-                              className={[
-                                "inline-flex h-12 w-full items-center justify-center gap-2 border px-5 text-sm font-semibold transition sm:w-fit",
-                                isFollowing
-                                  ? "border-[#032a0d] bg-white text-[#032a0d] hover:bg-[#032a0d]/5"
-                                  : "border-[#032a0d] bg-[#032a0d] text-white hover:bg-[#064016]",
-                                isFollowBusy ? "cursor-wait opacity-70" : "",
-                              ].join(" ")}
+                              className="w-full border-[#032a0d]/40 text-[#032a0d] sm:w-fit"
                             >
                               {isFollowBusy ? (
                                 <LoaderCircle className="size-4 animate-spin" />
@@ -682,36 +695,45 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                                 <UserPlus className="size-4" />
                               )}
                               {isFollowing ? "Following" : "Follow"}
-                            </button>
+                            </Button>
                           ) : (
-                            <button
+                            <Button
                               type="button"
+                              variant="secondary"
+                              size="sm"
                               disabled
-                              className="inline-flex h-12 w-full items-center justify-center gap-2 border border-neutral-300 bg-neutral-100 px-5 text-sm font-semibold text-neutral-500 sm:w-fit"
+                              className="w-full sm:w-fit"
                             >
                               <UserPlus className="size-4" />
                               Member account required
-                            </button>
+                            </Button>
                           )
                         ) : (
-                          <Link
-                            href={signInToFollowHref}
-                            className="inline-flex h-12 w-full items-center justify-center gap-2 border border-[#032a0d] bg-white px-5 text-sm font-semibold text-[#032a0d] transition hover:bg-[#032a0d]/5 sm:w-fit"
+                          <Button
+                            asChild
+                            variant="outline"
+                            size="sm"
+                            className="w-full border-[#032a0d]/40 text-[#032a0d] sm:w-fit"
                           >
-                            <UserPlus className="size-4" />
-                            Sign in to Follow
-                          </Link>
+                            <Link href={signInToFollowHref}>
+                              <UserPlus className="size-4" />
+                              Sign in to Follow
+                            </Link>
+                          </Button>
                         )
                       ) : null}
 
                       {canBookService ? (
-                        <Link
-                          href={bookServiceHref}
-                          className="inline-flex h-12 w-full items-center justify-center gap-2 bg-[#032a0d] px-5 text-sm font-semibold text-white transition hover:bg-[#064016] sm:w-fit"
+                        <Button
+                          asChild
+                          size="sm"
+                          className="w-full bg-[#032a0d] text-white hover:bg-[#064016] sm:w-fit"
                         >
-                          <CalendarCheck className="size-4" />
-                          Book a Service
-                        </Link>
+                          <Link href={bookServiceHref}>
+                            <CalendarCheck className="size-4" />
+                            Book a Service
+                          </Link>
+                        </Button>
                       ) : null}
                     </div>
                   </div>
@@ -732,7 +754,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                       </p>
                       <p className="mt-2 flex items-center gap-2 text-lg font-semibold text-neutral-950">
                         <Users2 className="size-4 text-[#032a0d]" />
-                        {preferredBranches.length}
+                        {visibleServiceBranches.length}
                       </p>
                     </div>
                     <div className="border border-neutral-200 bg-neutral-50 px-4 py-3">
