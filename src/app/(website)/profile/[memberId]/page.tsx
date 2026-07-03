@@ -7,6 +7,21 @@ const apiBaseUrl =
   process.env.NODE_ENV === "development"
     ? process.env.NEXT_PUBLIC_API_BASE_URL_DEV
     : process.env.NEXT_PUBLIC_API_BASE_URL_PROD;
+const siteUrl =
+  process.env.NEXT_PUBLIC_WEBSITE_URL ?? "https://pearlchaplaincy.org";
+
+const getProfileImageUrl = (
+  member: PublicMemberProfileResponse["data"],
+): string => {
+  const imageUrl =
+    member.profileBannerUrl ||
+    member.user.avatar ||
+    member.applicantRequirements.find((item) => item.type === "PHOTO_2X2")
+      ?.fileUrl ||
+    "/og-image.jpg";
+
+  return new URL(imageUrl, siteUrl).toString();
+};
 
 async function getPublicMemberProfile(
   memberId: string,
@@ -58,9 +73,41 @@ export async function generateMetadata({
     };
   }
 
+  const profilePath = `/profile/${encodeURIComponent(
+    member.uniqueId ?? memberId,
+  )}`;
+  const profileUrl = new URL(profilePath, siteUrl).toString();
+  const profileImageUrl = getProfileImageUrl(member);
+  const title = `${member.user.name} | Public Member Profile`;
+  const description = `Official public verification profile for ${member.user.name}, member ID ${member.uniqueId ?? memberId}.`;
+
   return {
-    title: `${member.user.name} | Member Verification`,
-    description: `Public verification page for member ID ${member.uniqueId ?? memberId}.`,
+    title,
+    description,
+    alternates: {
+      canonical: profilePath,
+    },
+    openGraph: {
+      title,
+      description,
+      url: profileUrl,
+      siteName: "Pearl Chaplaincy",
+      type: "profile",
+      images: [
+        {
+          url: profileImageUrl,
+          width: 1200,
+          height: 630,
+          alt: `${member.user.name} public member profile`,
+        },
+      ],
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+      images: [profileImageUrl],
+    },
   };
 }
 

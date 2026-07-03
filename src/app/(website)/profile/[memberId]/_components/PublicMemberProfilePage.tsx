@@ -144,14 +144,14 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
   const signedInMemberProfile = currentUser?.memberProfile;
   const isOwnProfile = Boolean(
     signedInMemberProfile &&
-      (signedInMemberProfile.id === member.id ||
-        (signedInMemberProfile.uniqueId &&
-          signedInMemberProfile.uniqueId === member.uniqueId)),
+    (signedInMemberProfile.id === member.id ||
+      (signedInMemberProfile.uniqueId &&
+        signedInMemberProfile.uniqueId === member.uniqueId)),
   );
-  const canManageBanner = Boolean(
-    signedInMemberProfile && isOwnProfile,
+  const canManageBanner = Boolean(signedInMemberProfile && isOwnProfile);
+  const canUseFollow = Boolean(
+    currentUser && signedInMemberProfile && !isOwnProfile,
   );
-  const canUseFollow = Boolean(currentUser && signedInMemberProfile && !isOwnProfile);
   const signInToFollowHref = `/sign-in?redirect=${encodeURIComponent(
     `/profile/${member.uniqueId ?? member.id}`,
   )}`;
@@ -442,10 +442,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
           <div className="lg:col-span-7">
             <section className="border bg-white">
               <div className="border-b">
-                <div
-                  ref={bannerFrameRef}
-                  className="relative h-50"
-                >
+                <div ref={bannerFrameRef} className="relative h-50">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -566,7 +563,9 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                         }
                         className="rounded-full bg-black/70 px-3 py-1.5 text-xs font-semibold text-white shadow-md backdrop-blur-sm transition hover:bg-black/80"
                       >
-                        {isRepositionMode ? "Done repositioning" : "Reposition cover"}
+                        {isRepositionMode
+                          ? "Done repositioning"
+                          : "Reposition cover"}
                       </button>
                       {isRepositionMode ? (
                         <>
@@ -659,9 +658,6 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                         <p className="mt-2 text-sm leading-6 text-neutral-700 sm:text-base">
                           {formatEnumLabel(member.memberType)}
                           {location ? ` • ${location}` : ""}
-                          {visibleServiceBranches[0]
-                            ? ` • ${visibleServiceBranches[0]}`
-                            : ""}
                         </p>
                         <div className="mt-4 flex min-w-0 flex-wrap gap-2">
                           <Badge
@@ -812,15 +808,15 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                   <TabsTrigger value="about" className="px-4 text-base">
                     About
                   </TabsTrigger>
-                <TabsTrigger value="records" className="px-4 text-base">
-                  Records
-                </TabsTrigger>
-                <TabsTrigger value="certificates" className="px-4 text-base">
-                  Certificates
-                </TabsTrigger>
-                <TabsTrigger value="service" className="px-4 text-base">
-                  Service
-                </TabsTrigger>
+                  <TabsTrigger value="records" className="px-4 text-base">
+                    Records
+                  </TabsTrigger>
+                  <TabsTrigger value="certificates" className="px-4 text-base">
+                    Certificates
+                  </TabsTrigger>
+                  <TabsTrigger value="service" className="px-4 text-base">
+                    Service
+                  </TabsTrigger>
                   <TabsTrigger value="analytics" className="px-4 text-base">
                     Analytics
                   </TabsTrigger>
@@ -845,10 +841,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
             </div>
           </div>
 
-          <PublicMemberProfileSidebar
-            member={member}
-            fullName={fullName}
-          />
+          <PublicMemberProfileSidebar member={member} fullName={fullName} />
         </div>
         <AppointmentSheet
           chaplain={canBookService ? bookingChaplain : null}

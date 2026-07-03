@@ -61,6 +61,7 @@ type Props = {
 
 const ROLE_OPTIONS = ["Church Worker", "Pastor", "Rev.", "Bishop", "Others"];
 const EDUCATION_ENTRY_SEPARATOR = " | ";
+const siteUrl = process.env.NEXT_PUBLIC_WEBSITE_URL?.replace(/\/$/, "");
 
 const parseEducationEntries = (value: string | null | undefined) => {
   const cleaned = (value ?? "").trim();
@@ -86,7 +87,6 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
     useUpdateCurrentChurchAffiliationMutation();
   const updateEducationMutation = useUpdateCurrentEducationMutation();
 
-  const [publicProfileUrl, setPublicProfileUrl] = useState("");
   const [isCopied, setIsCopied] = useState(false);
   const [isDownloadingPdf, setIsDownloadingPdf] = useState(false);
   const [isChurchDialogOpen, setIsChurchDialogOpen] = useState(false);
@@ -154,16 +154,10 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
     displayEducationEntries(member.postGraduateStudies).length > 0,
   );
 
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    setPublicProfileUrl(window.location.href);
-  }, []);
-
-  const resolvedPublicProfileUrl =
-    publicProfileUrl ||
-    (typeof window === "undefined"
-      ? memberProfilePath
-      : `${window.location.origin}${memberProfilePath}`);
+  const resolvedPublicProfileUrl = `${
+    siteUrl ||
+    (typeof window === "undefined" ? "" : window.location.origin.replace(/\/$/, ""))
+  }${memberProfilePath}`;
 
   const encodedShareUrl = encodeURIComponent(resolvedPublicProfileUrl);
   const encodedShareText = encodeURIComponent(
