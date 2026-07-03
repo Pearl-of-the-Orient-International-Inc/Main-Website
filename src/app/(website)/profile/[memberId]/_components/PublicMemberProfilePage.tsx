@@ -13,6 +13,7 @@ import {
   IdCard,
   LayersPlus,
   LoaderCircle,
+  RefreshCw,
   UserCheck,
   UserPlus,
   Users2,
@@ -59,6 +60,13 @@ const parseBranchServiceText = (value: string | null | undefined) =>
     .split(/[,|]/)
     .map((item) => item.trim())
     .filter(Boolean);
+
+const isMembershipExpired = (applicationDate: string) => {
+  const expirationDate = new Date(applicationDate);
+  expirationDate.setFullYear(expirationDate.getFullYear() + 1);
+
+  return expirationDate <= new Date();
+};
 
 export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
   const publicRecords = member.publicRecords ?? [];
@@ -114,6 +122,12 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
   const officeScope = primaryOfficeAssignment
     ? buildOfficeAssignmentScope(primaryOfficeAssignment)
     : "";
+  const membershipExpired = isMembershipExpired(member.createdAt);
+  const renewalMailHref = `mailto:poile2005official@gmail.com?subject=${encodeURIComponent(
+    `Membership Renewal Request - ${fullName}`,
+  )}&body=${encodeURIComponent(
+    `Hello Pearl of the Orient,\n\nI would like to renew my membership.\n\nName: ${fullName}\nMember ID: ${member.uniqueId ?? member.id}\nApplication Date: ${formatDate(member.createdAt)}\n\nThank you.`,
+  )}`;
   const canBookService = canBookMemberService(member);
   const bookingChaplain: PublicServiceChaplain = {
     id: member.id,
@@ -662,7 +676,11 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                         <div className="mt-4 flex min-w-0 flex-wrap gap-2">
                           <Badge
                             variant="outline"
-                            className="border-green-200 bg-green-50 text-green-800"
+                            className={
+                              member.isActive
+                                ? "border-green-200 bg-green-50 text-green-800"
+                                : "border-red-200 bg-red-50 text-red-700"
+                            }
                           >
                             <BadgeCheck className="mr-1 size-3.5" />
                             {member.isActive
@@ -754,6 +772,20 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                         >
                           <CalendarCheck className="size-4" />
                           Book a Service
+                        </Button>
+                      ) : null}
+
+                      {membershipExpired ? (
+                        <Button
+                          asChild
+                          size="sm"
+                          variant="outline"
+                          className="w-full border-red-300 bg-red-50 text-red-700 hover:bg-red-100 hover:text-red-800 sm:w-fit"
+                        >
+                          <a href={renewalMailHref}>
+                            <RefreshCw className="size-4" />
+                            Renew Membership
+                          </a>
                         </Button>
                       ) : null}
                     </div>

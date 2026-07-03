@@ -423,7 +423,13 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
               </p>
 
               <div className="mt-4 flex flex-wrap gap-2">
-                <Badge className="bg-green-500/15 text-green-100 hover:bg-green-500/15">
+                <Badge
+                  className={
+                    member.isActive
+                      ? "bg-green-500/15 text-green-100 hover:bg-green-500/15"
+                      : "bg-red-500/20 text-red-100 hover:bg-red-500/20"
+                  }
+                >
                   <BadgeCheck className="mr-1 size-3.5" />
                   {member.isActive ? "Active" : "Inactive"}
                 </Badge>
