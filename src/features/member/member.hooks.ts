@@ -28,6 +28,17 @@ export const useCurrentMemberProfileBannerQuery = () =>
     staleTime: 60_000,
   });
 
+export const useMemberFollowStateQuery = (
+  memberId: string,
+  enabled: boolean,
+) =>
+  useQuery({
+    queryKey: ["member", "public", memberId, "follow"],
+    queryFn: () => memberApi.getMemberFollowState(memberId),
+    enabled,
+    staleTime: 30_000,
+  });
+
 export const useCurrentMemberOnboardingProgressQuery = () =>
   useQuery({
     queryKey: ["member", "current", "onboarding-progress"],
@@ -196,5 +207,43 @@ export const useUpdateCurrentBranchServicesMutation = () =>
     throwOnError: false,
     meta: { feature: "member.branchServices.update" },
   });
+
+export const useFollowMemberMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: memberApi.followMember,
+    throwOnError: false,
+    onSuccess: async (state, memberId) => {
+      queryClient.setQueryData(
+        ["member", "public", memberId, "follow"],
+        state,
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ["member", "public", memberId, "follow"],
+      });
+    },
+    meta: { feature: "member.follow" },
+  });
+};
+
+export const useUnfollowMemberMutation = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: memberApi.unfollowMember,
+    throwOnError: false,
+    onSuccess: async (state, memberId) => {
+      queryClient.setQueryData(
+        ["member", "public", memberId, "follow"],
+        state,
+      );
+      await queryClient.invalidateQueries({
+        queryKey: ["member", "public", memberId, "follow"],
+      });
+    },
+    meta: { feature: "member.unfollow" },
+  });
+};
 
 export { toApiError };

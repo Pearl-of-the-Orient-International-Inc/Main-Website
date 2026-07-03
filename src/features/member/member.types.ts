@@ -48,6 +48,17 @@ export interface ApplyMemberRequest {
   };
 }
 
+export interface MemberFollowState {
+  isFollowing: boolean;
+  followerCount: number;
+}
+
+export interface MemberFollowStateResponse {
+  code: string;
+  message: string;
+  data: MemberFollowState;
+}
+
 export type ApplicantRequirementType =
   | "PHOTO_2X2"
   | "HS_BACCALAUREATE_DIPLOMA"

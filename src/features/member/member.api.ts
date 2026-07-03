@@ -11,6 +11,7 @@ import type {
   CurrentChurchAffiliationResponse,
   MemberChaplaincyTrainingProgressResponse,
   CurrentMemberProfileBannerResponse,
+  MemberFollowStateResponse,
   MemberIdGenerationAssetResponse,
   MemberOnboardingProgressResponse,
   MemberOnlineInterviewAppointmentResponse,
@@ -32,6 +33,27 @@ import type {
 export async function applyMember(payload: ApplyMemberRequest) {
   const { data } = await api.post<ApplyMemberResponse>("/members/apply", payload);
   return data;
+}
+
+export async function getMemberFollowState(memberId: string) {
+  const { data } = await api.get<MemberFollowStateResponse>(
+    `/members/public/${encodeURIComponent(memberId)}/follow`,
+  );
+  return data.data;
+}
+
+export async function followMember(memberId: string) {
+  const { data } = await api.post<MemberFollowStateResponse>(
+    `/members/public/${encodeURIComponent(memberId)}/follow`,
+  );
+  return data.data;
+}
+
+export async function unfollowMember(memberId: string) {
+  const { data } = await api.delete<MemberFollowStateResponse>(
+    `/members/public/${encodeURIComponent(memberId)}/follow`,
+  );
+  return data.data;
 }
 
 export async function getCurrentMemberRequirements() {

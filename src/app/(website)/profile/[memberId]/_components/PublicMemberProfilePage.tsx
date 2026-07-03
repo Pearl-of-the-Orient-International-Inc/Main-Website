@@ -14,6 +14,8 @@ import {
   IdCard,
   LayersPlus,
   LoaderCircle,
+  UserCheck,
+  UserPlus,
   Users2,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,6 +27,9 @@ import {
 } from "@/features/auth/auth.hooks";
 import {
   toApiError,
+  useFollowMemberMutation,
+  useMemberFollowStateQuery,
+  useUnfollowMemberMutation,
   useUploadMemberProfileBannerMutation,
   useUpdateCurrentMemberProfileBannerMutation,
 } from "@/features/member/member.hooks";
@@ -95,12 +100,31 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
     member.uniqueId ?? member.id,
   )}`;
   const signedInMemberProfile = currentUser?.memberProfile;
-  const canManageBanner = Boolean(
+  const isOwnProfile = Boolean(
     signedInMemberProfile &&
-    (signedInMemberProfile.id === member.id ||
-      (signedInMemberProfile.uniqueId &&
-        signedInMemberProfile.uniqueId === member.uniqueId)),
+      (signedInMemberProfile.id === member.id ||
+        (signedInMemberProfile.uniqueId &&
+          signedInMemberProfile.uniqueId === member.uniqueId)),
   );
+  const canManageBanner = Boolean(
+    signedInMemberProfile && isOwnProfile,
+  );
+  const canUseFollow = Boolean(currentUser && signedInMemberProfile && !isOwnProfile);
+  const signInToFollowHref = `/sign-in?redirect=${encodeURIComponent(
+    `/profile/${member.uniqueId ?? member.id}`,
+  )}`;
+  const followStateQuery = useMemberFollowStateQuery(member.id, canUseFollow);
+  const followMemberMutation = useFollowMemberMutation();
+  const unfollowMemberMutation = useUnfollowMemberMutation();
+  const followState =
+    followMemberMutation.data ??
+    unfollowMemberMutation.data ??
+    followStateQuery.data;
+  const isFollowing = followState?.isFollowing ?? false;
+  const isFollowBusy =
+    followStateQuery.isLoading ||
+    followMemberMutation.isPending ||
+    unfollowMemberMutation.isPending;
   const isUploadingBanner =
     uploadBannerMutation.isPending || updateBannerMutation.isPending;
   const isUploadingAvatar = uploadAvatarMutation.isPending;
@@ -220,6 +244,38 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
   const openBannerFilePicker = () => {
     if (!canManageBanner || isUploadingBanner) return;
     fileInputRef.current?.click();
+  };
+
+  const handleToggleFollow = async () => {
+    if (!canUseFollow || isFollowBusy) return;
+
+    try {
+      if (isFollowing) {
+        await unfollowMemberMutation.mutateAsync(member.id);
+        toast({
+          title: "Profile unfollowed",
+          description: `You are no longer following ${fullName}.`,
+          variant: "success",
+        });
+        return;
+      }
+
+      await followMemberMutation.mutateAsync(member.id);
+      toast({
+        title: "Profile followed",
+        description: `You are now following ${fullName}.`,
+        variant: "success",
+      });
+    } catch (error) {
+      const apiError = toApiError(error);
+
+      toast({
+        title: "Follow action failed",
+        description:
+          apiError.message ?? "Unable to update follow status right now.",
+        variant: "error",
+      });
+    }
   };
 
   const handleAvatarFile = async (file: File | null | undefined) => {
@@ -602,15 +658,62 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                         </div>
                       </div>
                     </div>
-                    {canBookService ? (
-                      <Link
-                        href={bookServiceHref}
-                        className="inline-flex h-12 w-full items-center justify-center gap-2 bg-[#032a0d] px-5 text-sm font-semibold text-white transition hover:bg-[#064016] sm:w-fit"
-                      >
-                        <CalendarCheck className="size-4" />
-                        Book a Service
-                      </Link>
-                    ) : null}
+                    <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                      {!isOwnProfile ? (
+                        currentUser ? (
+                          signedInMemberProfile ? (
+                            <button
+                              type="button"
+                              onClick={handleToggleFollow}
+                              disabled={isFollowBusy}
+                              className={[
+                                "inline-flex h-12 w-full items-center justify-center gap-2 border px-5 text-sm font-semibold transition sm:w-fit",
+                                isFollowing
+                                  ? "border-[#032a0d] bg-white text-[#032a0d] hover:bg-[#032a0d]/5"
+                                  : "border-[#032a0d] bg-[#032a0d] text-white hover:bg-[#064016]",
+                                isFollowBusy ? "cursor-wait opacity-70" : "",
+                              ].join(" ")}
+                            >
+                              {isFollowBusy ? (
+                                <LoaderCircle className="size-4 animate-spin" />
+                              ) : isFollowing ? (
+                                <UserCheck className="size-4" />
+                              ) : (
+                                <UserPlus className="size-4" />
+                              )}
+                              {isFollowing ? "Following" : "Follow"}
+                            </button>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled
+                              className="inline-flex h-12 w-full items-center justify-center gap-2 border border-neutral-300 bg-neutral-100 px-5 text-sm font-semibold text-neutral-500 sm:w-fit"
+                            >
+                              <UserPlus className="size-4" />
+                              Member account required
+                            </button>
+                          )
+                        ) : (
+                          <Link
+                            href={signInToFollowHref}
+                            className="inline-flex h-12 w-full items-center justify-center gap-2 border border-[#032a0d] bg-white px-5 text-sm font-semibold text-[#032a0d] transition hover:bg-[#032a0d]/5 sm:w-fit"
+                          >
+                            <UserPlus className="size-4" />
+                            Sign in to Follow
+                          </Link>
+                        )
+                      ) : null}
+
+                      {canBookService ? (
+                        <Link
+                          href={bookServiceHref}
+                          className="inline-flex h-12 w-full items-center justify-center gap-2 bg-[#032a0d] px-5 text-sm font-semibold text-white transition hover:bg-[#064016] sm:w-fit"
+                        >
+                          <CalendarCheck className="size-4" />
+                          Book a Service
+                        </Link>
+                      ) : null}
+                    </div>
                   </div>
 
                   <div className="mt-5 grid gap-3 text-sm text-neutral-600 sm:grid-cols-2 lg:grid-cols-4">

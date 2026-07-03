@@ -16,6 +16,8 @@ import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type {
+  PublicMemberSearchItem,
+  PublicMemberSearchResponse,
   PublicNewsBlogsResponse,
   PublicServiceChaplainsResponse,
 } from "@/lib/api-types";
@@ -31,7 +33,7 @@ type SearchResult = {
   title: string;
   description: string;
   href: string;
-  type: "Page" | "News" | "Event" | "Chaplain";
+  type: "Page" | "News" | "Event" | "Member" | "Chaplain";
   icon: LucideIcon;
 };
 
@@ -144,6 +146,20 @@ const buildChaplainName = (
     .filter(Boolean)
     .join(" ");
 
+const buildMemberName = (member: PublicMemberSearchItem) =>
+  [
+    member.firstName,
+    member.middleInitial
+      ? member.middleInitial.endsWith(".")
+        ? member.middleInitial
+        : `${member.middleInitial}.`
+      : null,
+    member.lastName,
+    member.extensionName,
+  ]
+    .filter(Boolean)
+    .join(" ");
+
 export const SearchContainer = ({ isOpen, onClose }: SearchContainerProps) => {
   const [query, setQuery] = useState("");
   const [dynamicResults, setDynamicResults] = useState<SearchResult[]>([]);
@@ -196,12 +212,15 @@ export const SearchContainer = ({ isOpen, onClose }: SearchContainerProps) => {
 
       try {
         const encodedQuery = encodeURIComponent(normalizedQuery);
-        const [newsResponse, eventsResponse, chaplainsResponse] =
+        const [newsResponse, eventsResponse, membersResponse, chaplainsResponse] =
           await Promise.all([
             fetch(`${apiBaseUrl}/news-blogs/public?limit=5&search=${encodedQuery}`, {
               signal: controller.signal,
             }),
             fetch(`${apiBaseUrl}/events/public?limit=5&search=${encodedQuery}`, {
+              signal: controller.signal,
+            }),
+            fetch(`${apiBaseUrl}/members/public/search?limit=6&search=${encodedQuery}`, {
               signal: controller.signal,
             }),
             fetch(`${apiBaseUrl}/members/public/service-chaplains`, {
@@ -238,6 +257,41 @@ export const SearchContainer = ({ isOpen, onClose }: SearchContainerProps) => {
               type: "Event" as const,
               icon: CalendarDays,
             })),
+          );
+        }
+
+        if (membersResponse.ok) {
+          const payload =
+            (await membersResponse.json()) as PublicMemberSearchResponse;
+          nextResults.push(
+            ...payload.data.map((member) => {
+              const name = buildMemberName(member);
+              const location = [
+                member.municipalityCity,
+                member.province,
+                member.region,
+              ]
+                .filter(Boolean)
+                .join(", ");
+              const officeTitle = member.officerAssignments[0]?.officeTitle.name;
+              const memberLabel = member.memberType
+                .toLowerCase()
+                .split("_")
+                .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+                .join(" ");
+
+              return {
+                id: `member-${member.id}`,
+                title: name || member.user.name,
+                description:
+                  [member.uniqueId, officeTitle, location || memberLabel]
+                    .filter(Boolean)
+                    .join(" • ") || "Approved public member profile.",
+                href: `/profile/${encodeURIComponent(member.uniqueId)}`,
+                type: "Member" as const,
+                icon: UserRound,
+              };
+            }),
           );
         }
 

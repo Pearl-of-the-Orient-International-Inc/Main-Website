@@ -166,6 +166,47 @@ export interface PublicServiceChaplainsResponse {
   data: PublicServiceChaplain[];
 }
 
+export interface PublicMemberSearchItem {
+  id: string;
+  uniqueId: string;
+  badgeNumber: string | null;
+  memberType:
+    | "ASSOCIATE_CHAPLAIN"
+    | "PROFESSIONAL_CHAPLAIN"
+    | "ORDAINED_AND_COMMISSIONED_PRACTITIONER"
+    | "CERTIFIED_SPECIALIST_TRAINING_OFFICER_INSTRUCTOR";
+  firstName: string;
+  middleInitial: string | null;
+  lastName: string;
+  extensionName: string | null;
+  region: string | null;
+  province: string | null;
+  municipalityCity: string | null;
+  user: {
+    name: string;
+    avatar: string | null;
+    isEmailVerified: boolean;
+  };
+  preferredBranches: Array<{
+    id: string;
+    title: string;
+  }>;
+  officerAssignments: Array<{
+    id: string;
+    officeTitle: {
+      id: string;
+      name: string;
+      level: string;
+    };
+  }>;
+}
+
+export interface PublicMemberSearchResponse {
+  code: string;
+  message: string;
+  data: PublicMemberSearchItem[];
+}
+
 export interface PublicNewsBlogMedia {
   id: string;
   kind: "IMAGE" | "VIDEO";
