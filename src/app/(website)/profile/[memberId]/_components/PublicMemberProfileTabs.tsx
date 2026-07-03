@@ -98,6 +98,13 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Carousel,
+  CarouselContent,
+  CarouselItem,
+  CarouselNext,
+  CarouselPrevious,
+} from "@/components/ui/carousel";
 
 type PublicDocument = PublicMember["applicantRequirements"][number];
 type PublicRecord = PublicMember["publicRecords"][number];
@@ -125,6 +132,11 @@ type RecentActivity = {
 
 type PublicRecordView = "table" | "grid";
 type CertificatePreviewMode = "image" | "pdf";
+
+const chunkItems = <T,>(items: T[], size: number) =>
+  Array.from({ length: Math.ceil(items.length / size) }, (_, index) =>
+    items.slice(index * size, index * size + size),
+  );
 
 const PUBLIC_RECORD_TYPE_OPTIONS: Array<{
   value: MemberPublicRecordType;
@@ -902,97 +914,124 @@ export function PublicMemberProfileTabs({
     </div>
   );
 
-  const renderPublicRecordGrid = () => (
-    <div className="grid gap-4 xl:grid-cols-2">
-      {publicRecords.map((record) => (
-        <article
-          key={record.id}
-          id={`record-${record.id}`}
-          role="button"
-          tabIndex={0}
-          onClick={() => setSelectedPublicRecord(record)}
-          onKeyDown={(event) => {
-            if (event.key === "Enter" || event.key === " ") {
-              event.preventDefault();
-              setSelectedPublicRecord(record);
-            }
+  const renderPublicRecordCard = (record: PublicRecord) => (
+    <article
+      key={record.id}
+      id={`record-${record.id}`}
+      role="button"
+      tabIndex={0}
+      onClick={() => setSelectedPublicRecord(record)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          setSelectedPublicRecord(record);
+        }
+      }}
+      className="flex h-full cursor-pointer flex-col overflow-hidden border bg-white transition hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#032a0d]"
+    >
+      {record.attachments[0] ? (
+        <div className="h-50 overflow-hidden bg-neutral-100">
+          <img
+            src={record.attachments[0].fileUrl}
+            alt={record.title}
+            className="h-full w-full object-cover"
+          />
+        </div>
+      ) : null}
+      <div className="bg-[linear-gradient(135deg,#083914_0%,#0f5b23_100%)] px-5 py-4 text-white">
+        <div className="flex items-start justify-between gap-3">
+          <Badge className="border-white/15 bg-white/12 text-white hover:bg-white/12">
+            {getPublicRecordTypeLabel(record.type)}
+          </Badge>
+          <Badge
+            variant="secondary"
+            className="bg-white/90 text-[#032a0d] hover:bg-white/90"
+          >
+            {formatEnumLabel(record.status)}
+          </Badge>
+        </div>
+        <h3 className="mt-4 line-clamp-1 text-lg font-semibold">
+          {record.title}
+        </h3>
+        <div
+          className="mt-2 line-clamp-2 text-xs text-white/85 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
+          dangerouslySetInnerHTML={{
+            __html: sanitizeRichTextHtml(record.shortDescription),
           }}
-          className="cursor-pointer overflow-hidden border bg-white transition hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-[#032a0d]"
-        >
-          {record.attachments[0] ? (
-            <div className="h-50 overflow-hidden bg-neutral-100">
-              <img
-                src={record.attachments[0].fileUrl}
-                alt={record.title}
-                className="h-full w-full object-cover"
-              />
+        />
+      </div>
+      <div className="flex flex-1 flex-col space-y-4 px-5 py-5">
+        <div className="grid gap-3 text-xs text-neutral-600">
+          <div className="flex items-center gap-2">
+            <CalendarClock className="size-3.5 text-[#032a0d]" />
+            <span>
+              {formatDate(record.eventAt)},{" "}
+              {new Date(record.eventAt).toLocaleTimeString("en-PH", {
+                hour: "numeric",
+                minute: "2-digit",
+              })}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <MapPin className="size-3.5 text-[#032a0d]" />
+            <span>{record.location}</span>
+          </div>
+          {record.attachments.length > 0 ? (
+            <div className="flex items-center gap-2">
+              <Upload className="size-3.5 text-[#032a0d]" />
+              <span>
+                {record.attachments.length} attachment
+                {record.attachments.length > 1 ? "s" : ""}
+              </span>
             </div>
           ) : null}
-          <div className="bg-[linear-gradient(135deg,#083914_0%,#0f5b23_100%)] px-5 py-4 text-white">
-            <div className="flex items-start justify-between gap-3">
-              <Badge className="border-white/15 bg-white/12 text-white hover:bg-white/12">
-                {getPublicRecordTypeLabel(record.type)}
-              </Badge>
-              <Badge
-                variant="secondary"
-                className="bg-white/90 text-[#032a0d] hover:bg-white/90"
-              >
-                {formatEnumLabel(record.status)}
-              </Badge>
-            </div>
-            <h3 className="mt-4 text-lg font-semibold">{record.title}</h3>
-            <div
-              className="mt-2 line-clamp-2 text-xs text-white/85 [&_a]:underline [&_ol]:list-decimal [&_ol]:pl-5 [&_ul]:list-disc [&_ul]:pl-5"
-              dangerouslySetInnerHTML={{
-                __html: sanitizeRichTextHtml(record.shortDescription),
-              }}
-            />
-          </div>
-          <div className="space-y-4 px-5 py-5">
-            <div className="grid gap-3 text-xs text-neutral-600">
-              <div className="flex items-center gap-2">
-                <CalendarClock className="size-3.5 text-[#032a0d]" />
-                <span>
-                  {formatDate(record.eventAt)},{" "}
-                  {new Date(record.eventAt).toLocaleTimeString("en-PH", {
-                    hour: "numeric",
-                    minute: "2-digit",
-                  })}
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <MapPin className="size-3.5 text-[#032a0d]" />
-                <span>{record.location}</span>
-              </div>
-              {record.attachments.length > 0 ? (
-                <div className="flex items-center gap-2">
-                  <Upload className="size-3.5 text-[#032a0d]" />
-                  <span>
-                    {record.attachments.length} attachment
-                    {record.attachments.length > 1 ? "s" : ""}
-                  </span>
-                </div>
-              ) : null}
-            </div>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="rounded-none"
-              onClick={(event) => {
-                event.stopPropagation();
-                setSelectedPublicRecord(record);
-              }}
-            >
-              View full details
-              <ChevronRight className="size-4" />
-            </Button>
-            {renderPublicRecordSocialShare(record)}
-          </div>
-        </article>
-      ))}
-    </div>
+        </div>
+        <div className="mt-auto space-y-4">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="rounded-none"
+            onClick={(event) => {
+              event.stopPropagation();
+              setSelectedPublicRecord(record);
+            }}
+          >
+            View full details
+            <ChevronRight className="size-4" />
+          </Button>
+          {renderPublicRecordSocialShare(record)}
+        </div>
+      </div>
+    </article>
   );
+
+  const renderPublicRecordGrid = () => {
+    const publicRecordPages = chunkItems(publicRecords, 2);
+
+    return (
+      <Carousel
+        opts={{ align: "start" }}
+        className="px-0 sm:px-10"
+      >
+        <CarouselContent>
+          {publicRecordPages.map((records, index) => (
+            <CarouselItem key={`public-record-page-${index}`}>
+              <div className="grid h-full gap-4 xl:grid-cols-2">
+                {records.map((record) => renderPublicRecordCard(record))}
+              </div>
+            </CarouselItem>
+          ))}
+        </CarouselContent>
+        {publicRecordPages.length > 1 ? (
+          <>
+            <CarouselPrevious className="-left-2 top-[45%] border-[#032a0d]/20 bg-white text-[#032a0d] hover:bg-[#032a0d] hover:text-white sm:left-0" />
+            <CarouselNext className="-right-2 top-[45%] border-[#032a0d]/20 bg-white text-[#032a0d] hover:bg-[#032a0d] hover:text-white sm:right-0" />
+          </>
+        ) : null}
+      </Carousel>
+    );
+  };
 
   const renderPublicRecordTable = () => (
     <div className="w-full max-w-full overflow-hidden border border-neutral-200">
