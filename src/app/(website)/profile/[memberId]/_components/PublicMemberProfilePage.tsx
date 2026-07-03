@@ -775,7 +775,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                         </Button>
                       ) : null}
 
-                      {membershipExpired ? (
+                      {membershipExpired && isOwnProfile ? (
                         <Button
                           asChild
                           size="sm"
