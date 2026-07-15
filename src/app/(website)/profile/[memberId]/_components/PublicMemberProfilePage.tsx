@@ -18,6 +18,19 @@ import {
   UserPlus,
   Users2,
 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  CreditCard,
+  CreditCardBack,
+  CreditCardFlipper,
+  CreditCardFront,
+} from "@/components/kibo-ui/credit-card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -97,6 +110,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
   const [isDraggingCover, setIsDraggingCover] = useState(false);
   const [activeTab, setActiveTab] = useState("home");
   const [isBookingSheetOpen, setIsBookingSheetOpen] = useState(false);
+  const [isCallingCardOpen, setIsCallingCardOpen] = useState(false);
   const [bannerImageSrc, setBannerImageSrc] = useState<string | null>(
     member.profileBannerUrl?.trim() || null,
   );
@@ -167,6 +181,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
     currentUser && signedInMemberProfile && !isOwnProfile,
   );
   const canShowBookService = canBookService && !isOwnProfile;
+  const canShowCallingCard = !isOwnProfile;
   const signInToFollowHref = `/sign-in?redirect=${encodeURIComponent(
     `/profile/${member.uniqueId ?? member.id}`,
   )}`;
@@ -774,6 +789,58 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                           <CalendarCheck className="size-4" />
                           Book a Service
                         </Button>
+                      ) : null}
+
+                      {canShowCallingCard ? (
+                        <Dialog
+                          open={isCallingCardOpen}
+                          onOpenChange={setIsCallingCardOpen}
+                        >
+                          <DialogTrigger asChild>
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              className="w-full border-[#032a0d]/40 text-[#032a0d] sm:w-fit"
+                            >
+                              <IdCard className="size-4" />
+                              View Calling Card
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent className="max-w-4xl!">
+                            <DialogHeader>
+                              <DialogTitle className="font-serif text-2xl text-[#032a0d]">
+                                Calling Card
+                              </DialogTitle>
+                            </DialogHeader>
+                            <div className="flex justify-center py-2">
+                              <CreditCard className="max-w-3xl aspect-[1050/600] cursor-pointer">
+                                <CreditCardFlipper>
+                                  <CreditCardFront
+                                    safeArea={0}
+                                    className="bg-transparent"
+                                  >
+                                    <img
+                                      src="/calling-card-front.jpg"
+                                      alt={`${fullName} calling card front`}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  </CreditCardFront>
+                                  <CreditCardBack
+                                    safeArea={0}
+                                    className="bg-transparent"
+                                  >
+                                    <img
+                                      src="/calling-card-back.jpg"
+                                      alt={`${fullName} calling card back`}
+                                      className="h-full w-full object-cover"
+                                    />
+                                  </CreditCardBack>
+                                </CreditCardFlipper>
+                              </CreditCard>
+                            </div>
+                          </DialogContent>
+                        </Dialog>
                       ) : null}
 
                       {membershipExpired && isOwnProfile ? (

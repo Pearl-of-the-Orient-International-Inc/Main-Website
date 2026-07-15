@@ -29,6 +29,29 @@ import { useToast } from "@/hooks/use-toast";
 import { authStore } from "@/lib/auth-store";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+const officeMenuLinks = [
+  {
+    label: "Office of the Ministry/Services",
+    href: "/office-ministry-services",
+  },
+  {
+    label: "Office of the Administration",
+    href: "/office-administration",
+  },
+  {
+    label: "Office of the National Director & Deputy Director",
+    href: "/office-national-director",
+  },
+  {
+    label: "Office of the Churches/Ministerial",
+    href: "/office-churches-ministerial",
+  },
+  {
+    label: "Office of the Partners-NGO",
+    href: "/office-partners-ngo",
+  },
+];
+
 export const NavMenu = () => {
   const isMobile = useIsMobile();
   const router = useRouter();
@@ -37,6 +60,7 @@ export const NavMenu = () => {
     useCurrentUserQuery();
   const logoutMutation = useLogoutMutation();
   const [isOpen, setIsOpen] = useState(false);
+  const [isOfficesOpen, setIsOfficesOpen] = useState(false);
 
   useEffect(() => {
     return authStore.subscribe((token) => {
@@ -52,6 +76,7 @@ export const NavMenu = () => {
 
   const closeMenu = () => {
     setIsOpen(false);
+    setIsOfficesOpen(false);
   };
 
   const isSignedIn = Boolean(currentUser);
@@ -317,9 +342,41 @@ export const NavMenu = () => {
               >
                 Organizational Structure
               </Link>
-              <a href="#" onClick={closeMenu} className="block transition-colors hover:underline">
-                What We Believe
-              </a>
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setIsOfficesOpen((open) => !open)}
+                  className="flex w-full items-center justify-between text-left transition-colors hover:underline"
+                  aria-expanded={isOfficesOpen}
+                >
+                  <span>Offices</span>
+                  <ChevronRightIcon
+                    className={`size-4 transition-transform ${
+                      isOfficesOpen ? "rotate-90" : ""
+                    }`}
+                  />
+                </button>
+                <div
+                  className={`overflow-hidden transition-all duration-300 ${
+                    isOfficesOpen
+                      ? "mt-3 max-h-96 opacity-100"
+                      : "max-h-0 opacity-0"
+                  }`}
+                >
+                  <div className="space-y-2 border-l border-white/15 pl-4">
+                    {officeMenuLinks.map((link) => (
+                      <Link
+                        key={link.label}
+                        href={link.href}
+                        onClick={closeMenu}
+                        className="block rounded-md px-3 py-2 text-sm text-white/85 transition-colors hover:bg-white/10 hover:text-white"
+                      >
+                        {link.label}
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              </div>
               <a href="#" onClick={closeMenu} className="block transition-colors hover:underline">
                 Contact & Inquiries
               </a>

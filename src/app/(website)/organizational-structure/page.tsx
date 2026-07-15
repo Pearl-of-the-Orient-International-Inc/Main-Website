@@ -16,9 +16,8 @@ import {
 } from "@/components/ui/dialog";
 import { useState } from "react";
 import Image from "next/image";
-import { InfoIcon } from 'lucide-react';
+import { InfoIcon, UserRound } from "lucide-react";
 
-// Office data structure
 interface OfficeData {
   title: string;
   head: string;
@@ -26,9 +25,44 @@ interface OfficeData {
   description: string;
   duties: string[];
   responsibilities: string[];
+  members?: {
+    area: string;
+    name: string;
+  }[];
 }
 
-// Mock data for offices (you can replace this with real data)
+const placeholderImage = "/profile-empty.png";
+
+const officeCopy = {
+  duties: [
+    "Coordinate assigned chaplaincy programs and field activities",
+    "Provide reports and updates to the Chief Chaplain",
+    "Support member guidance, training, and public service activities",
+    "Maintain orderly communication with assigned leaders and partners",
+  ],
+  responsibilities: [
+    "Office planning and day-to-day coordination",
+    "Leadership support and member accountability",
+    "Program documentation and implementation",
+    "Upholding organizational standards, values, and mission",
+  ],
+};
+
+const createOffice = (
+  title: string,
+  head: string,
+  description: string,
+  members?: OfficeData["members"],
+): OfficeData => ({
+  title,
+  head,
+  image: placeholderImage,
+  description,
+  duties: officeCopy.duties,
+  responsibilities: officeCopy.responsibilities,
+  members,
+});
+
 const officesData: Record<string, OfficeData> = {
   "chief-chaplain": {
     title: "Chief Chaplain",
@@ -49,133 +83,344 @@ const officesData: Record<string, OfficeData> = {
       "Policy formulation and implementation",
     ],
   },
-  "general-secretary": {
-    title: "General Secretary",
-    head: "[Name]",
-    description:
-      "The General Secretary manages administrative operations and coordinates between departments.",
-    duties: [
-      "Coordinate departmental activities",
-      "Manage organizational communications",
-      "Maintain official records and documents",
-      "Support the Chief Chaplain in operations",
+  "general-secretary": createOffice(
+    "General Secretary",
+    "To be announced",
+    "The General Secretary manages administrative operations and coordinates official communication between offices.",
+  ),
+  "legal-adviser": createOffice(
+    "Legal Adviser",
+    "To be announced",
+    "The Legal Adviser provides legal guidance and helps the organization maintain compliance with applicable requirements.",
+  ),
+  "school-chaplaincy": createOffice(
+    "School Chaplaincy",
+    "Dr. Lelanie D. Perido",
+    "School Chaplaincy provides values formation, counseling support, and spiritual programs for educational communities.",
+  ),
+  "training-seminars": createOffice(
+    "Training and Seminars",
+    "Rev. Romel L. Abaca",
+    "Training and Seminars prepares learning activities, seminars, and continuing formation programs for chaplains and members.",
+  ),
+  "follow-up-visitation": createOffice(
+    "Follow Up Visitation",
+    "To be announced",
+    "Follow Up Visitation maintains pastoral contact with members, applicants, and communities after programs or services.",
+  ),
+  community: createOffice(
+    "Community",
+    "Dr. Emer Jason R. Grepo",
+    "The Community office coordinates community development and outreach work for local service areas.",
+  ),
+  ordination: createOffice(
+    "Ordination",
+    "To be announced",
+    "The Ordination office assists with preparation, documentation, and coordination for ordination-related activities.",
+  ),
+  "devotion-bible-study": createOffice(
+    "Devotion & Bible Study",
+    "To be announced",
+    "This office supports devotional gatherings, Bible studies, and spiritual formation activities.",
+  ),
+  "pastoral-care": createOffice(
+    "Pastoral Care",
+    "To be announced",
+    "Pastoral Care provides spiritual assistance, encouragement, and guidance to members and partner communities.",
+  ),
+  "solemnize-marriage": createOffice(
+    "Solemnize Marriage",
+    "To be announced",
+    "This office coordinates marriage solemnization support, preparation, and related pastoral documentation.",
+  ),
+  "pastoral-counseling": createOffice(
+    "Pastoral Counseling",
+    "To be announced",
+    "Pastoral Counseling provides faith-based counseling support and referral coordination when needed.",
+  ),
+  "spiritual-enhancement": createOffice(
+    "Spiritual Enhancement",
+    "To be announced",
+    "Spiritual Enhancement strengthens spiritual growth through organized formation and renewal activities.",
+  ),
+  "moral-values": createOffice(
+    "Moral Values & Spiritual Upliftment",
+    "To be announced",
+    "This office promotes moral values, spiritual upliftment, and character formation in service programs.",
+  ),
+  "house-blessing": createOffice(
+    "House/Company Blessing",
+    "To be announced",
+    "This office coordinates requested blessings for homes, companies, and partner organizations.",
+  ),
+  "human-resource": createOffice(
+    "Human Resource",
+    "To be announced",
+    "Human Resource manages personnel coordination, member support, and organizational workforce records.",
+  ),
+  "information-technology": createOffice(
+    "Information Technology",
+    "To be announced",
+    "Information Technology maintains digital systems, technical support, and data-related coordination.",
+  ),
+  accounting: createOffice(
+    "Accounting",
+    "To be announced",
+    "Accounting handles financial records, reporting, budgeting support, and fiscal documentation.",
+  ),
+  logistic: createOffice(
+    "Logistic",
+    "To be announced",
+    "Logistic coordinates supplies, movement, event materials, and operational support needs.",
+  ),
+  maintenance: createOffice(
+    "Maintenance",
+    "To be announced",
+    "Maintenance supports facilities, equipment readiness, and upkeep for organizational activities.",
+  ),
+  "national-chaplain-directors": createOffice(
+    "National Chaplain Directors",
+    "Multiple national directors",
+    "National Chaplain Directors lead assigned national program areas and coordinate implementation across the organization.",
+    [
+      { area: "Education", name: "Dr. Lelanie D. Perido" },
+      { area: "Humanitarian", name: "Dr. Bobby M. Brimon" },
+      { area: "Political Affairs", name: "Dr. Analyn M. Tibio" },
+      { area: "Training & Development", name: "Dr. Romel L. Abaca" },
+      { area: "Membership & Recruitment", name: "Dr. Lelanie C. Junio" },
+      { area: "Operation", name: "Bsp. Dr. Ronaldo P. Manalo" },
+      { area: "Security Group/NCR", name: "Rev. Henry S. Bertumen" },
+      { area: "Community Development", name: "Dr. Emer Jason R. Grepo" },
+      { area: "Senate", name: "Rev. Lauro S. Lamento Jr." },
+      { area: "NAPOLCOM", name: "Rev. Abner P. Tuballes" },
+      { area: "Sports", name: "Rev. Rhenald L. Lagrimas" },
+      { area: "Hospital", name: "Rev. Jun Rosello D. Pongco" },
     ],
-    responsibilities: [
-      "Administrative oversight",
-      "Meeting coordination and minutes",
-      "Documentation and record keeping",
-      "Inter-departmental communication",
+  ),
+  "regional-director": createOffice(
+    "Regional Chaplain Directors",
+    "Multiple regional directors",
+    "Regional Chaplain Directors supervise regional chaplaincy coordination and local implementation.",
+    [
+      { area: "Region 1", name: "Rev. Jonathan I. Balintay" },
+      { area: "Region II", name: "Rev. Nestor R. Tangunan" },
+      { area: "Region III", name: "Rev. Dr. Miller B. Tadeo" },
+      { area: "Region IV A", name: "Rev. Conrado C. Perez" },
+      { area: "Region IV B", name: "Bsp. Fortunato N. Almasco Jr." },
+      { area: "Region 6", name: "Rev. John Rey T. Vallejera" },
+      { area: "Negros Oriental", name: "Bsp. BethelJames C. Mascardo" },
+      { area: "Negros Occidental", name: "Chap. Faulkner Faith C. Mascardo" },
     ],
-  },
-  "legal-adviser": {
-    title: "Legal Adviser",
-    head: "Atty. [Name]",
-    description:
-      "The Legal Adviser provides legal counsel and ensures compliance with all regulations.",
-    duties: [
-      "Provide legal advice and counsel",
-      "Review contracts and agreements",
-      "Ensure regulatory compliance",
-      "Handle legal matters and disputes",
+  ),
+  "regional-deputy-director": createOffice(
+    "Regional Deputy Chaplain Directors",
+    "Multiple regional deputy directors",
+    "Regional Deputy Chaplain Directors assist regional directors with coordination, reports, and field support.",
+    [
+      { area: "NCR", name: "Rev. Emilio R. Biag" },
+      { area: "Region 1", name: "Chap Virlyn C. Balintay" },
+      { area: "Region 3", name: "Rev. Rubenson C. Tandoy" },
     ],
-    responsibilities: [
-      "Legal risk assessment",
-      "Contract negotiation and review",
-      "Compliance monitoring",
-      "Legal documentation",
+  ),
+  "provincial-director": createOffice(
+    "Provincial Chaplain Directors",
+    "Multiple provincial directors",
+    "Provincial Chaplain Directors coordinate chaplaincy work across assigned provinces.",
+    [
+      { area: "Isabela", name: "Rev. Armando E. Junio" },
+      { area: "Nueva Ecija", name: "Rev. Rommey Rodriguez" },
+      { area: "Tarlac", name: "Rev. Egmedio B. Equila Jr." },
+      { area: "Rizal", name: "Rev. Abner P. Tuballes" },
+      { area: "Cavite", name: "Rev. Edsel R. Alcantara" },
+      { area: "Batangas", name: "Rev. Christopher M. Llegó" },
+      { area: "Laguna", name: "Bsp. Eleanor L. Bendaña" },
+      { area: "Palawan North", name: "Rev. Teddy S. Martinez" },
+      { area: "Palawan South", name: "Rev. Danilo T. Sabico" },
+      { area: "Romblon", name: "Chap Andrew Ramon Tiaga" },
+      { area: "Cebu", name: "Chap John Manlanat" },
+      { area: "Camiguin", name: "Rev. Samuel D. Ebuetada" },
+      { area: "Davao Oriental", name: "Rev. Juvanny A. Yap" },
+      { area: "Agusan Del Sur", name: "Chap Jerom D. Amoguis" },
+      { area: "Agusan Del Norte", name: "Chap Enecito M. Galendez" },
+      { area: "Mindoro", name: "Rev. Romel G. Manes" },
+      { area: "Bulacan", name: "Rev. Dr. Sonny T. San Pedro" },
+      { area: "Aurora", name: "Rev. Dr. Hilario C. Gonzales Jr." },
+      { area: "Ilocos Norte", name: "Rev. Roger D. Salvador" },
+      { area: "Pampanga", name: "Rev. Willie O. Tolentino" },
     ],
-  },
-  "school-chaplaincy": {
-    title: "School Chaplaincy",
-    head: "[Name]",
-    description:
-      "Provides spiritual support and guidance within educational institutions.",
-    duties: [
-      "Conduct spiritual programs in schools",
-      "Provide counseling to students and staff",
-      "Organize religious activities",
-      "Support school community spiritual needs",
+  ),
+  "provincial-deputy-director": createOffice(
+    "Provincial Deputy Chaplain Directors",
+    "Multiple provincial deputy directors",
+    "Provincial Deputy Chaplain Directors support provincial directors in assigned provinces.",
+    [
+      { area: "Tarlac", name: "Rev. Francis A. Dela paz" },
+      { area: "Cabanatuan", name: "Rev. Romel Arnel V. Roque" },
+      { area: "Bulacan", name: "Rev. Rodrigo C. Torres III" },
     ],
-    responsibilities: [
-      "Student spiritual development",
-      "Faculty and staff support",
-      "Program development and implementation",
-      "Partnership with school administration",
+  ),
+  "city-chaplain": createOffice(
+    "City Chaplains",
+    "Multiple city chaplains",
+    "City Chaplains coordinate chaplaincy activities and public service support in assigned cities.",
+    [
+      { area: "Trece Martirez Cavite", name: "Chap Alejandro A. Salamanca" },
+      { area: "General Trias Cavite", name: "Chap Norman S. Endozo" },
+      { area: "Dasmarinas Cavite", name: "Chap George L. Junio" },
+      { area: "Las Piñas", name: "Chap Ronald C. Castillo" },
+      { area: "Santa Rosa Laguna", name: "Rev. Ellery S. Garvida" },
+      { area: "Cabuyao City, Laguna", name: "Rev. Edgar I. Amarante" },
+      { area: "San Pedro City, Laguna", name: "Chap Noel M. Roldan" },
+      { area: "Paranaque", name: "Rev. Nodel M. Manzo" },
+      { area: "Quezon City", name: "Chap Enrique G. Ancheta" },
+      { area: "Angeles Pampanga", name: "Chap Leslie D. Cunanan" },
+      { area: "San Fernando Pampanga", name: "Rev. Dr. Eller G. Valencia" },
+      { area: "Tarlac", name: "Chap Nemesio Q. Bajana" },
     ],
-  },
-  "training-seminars": {
-    title: "Training and Seminars",
-    head: "[Name]",
-    description:
-      "Organizes and conducts training programs and seminars for chaplains and members.",
-    duties: [
-      "Develop training curricula",
-      "Organize seminars and workshops",
-      "Coordinate with trainers and speakers",
-      "Evaluate training effectiveness",
+  ),
+  "municipal-chaplain": createOffice(
+    "Municipal Chaplains",
+    "Multiple municipal chaplains",
+    "Municipal Chaplains provide local chaplaincy coordination and community service support.",
+    [
+      { area: "Silang Cavite", name: "Rev. Roberto D. Malana" },
+      { area: "Kawit Cavite", name: "Rev. James Wayne P. Tuballes" },
+      { area: "Naic Cavite", name: "Rev. Godolfredo G. Javier Jr." },
+      { area: "Alfonso Cavite", name: "Rev. Chelito O. Consegra" },
+      { area: "Gerona Tarlac", name: "Rev. Rodrigo S. Fontanilla Jr." },
+      { area: "Conception Tarlac", name: "Chap Jessie D. Buniag" },
+      { area: "Santiago Isabela", name: "Chap Alfredo G. Casco" },
+      { area: "Labrador Pangasinan", name: "Chap Menard Aries Q. Narvas" },
+      { area: "Capas", name: "Rev. Elmer C. Victoria" },
+      { area: "Concepcion", name: "Rev. Jessie D. Buniag" },
+      { area: "Gerona", name: "Rev. Rodrigo S. Fontanilla Jr." },
+      { area: "La Paz", name: "Rev. Dr June T. Viuya" },
+      { area: "Victoria", name: "Rev. Zosimo Valdez Jr." },
+      { area: "Sta Ignacia", name: "Rev. Rodel E. Banaga" },
+      { area: "Camiling", name: "Rev. Rionel Eugenio" },
+      { area: "San Jose", name: "Rev. Analiza T. Concepcion" },
+      { area: "Moncada", name: "Rev. Joel Gamasa" },
+      { area: "Camiguin", name: "Chap Erviejon A. Labador" },
+      { area: "Narra Palawan", name: "Chap Francisco P. Pedregoza" },
+      { area: "Quezon Palawan", name: "Chap Rodrigo A. Laviano" },
+      { area: "Roxas Palawan", name: "Chap Ramon S. Bañes" },
+      { area: "Dumaran Palawan", name: "Chap Eliezer M. Gomez" },
+      { area: "Angono, Rizal", name: "Chap Jemelet M. Reyes" },
     ],
-    responsibilities: [
-      "Capacity building programs",
-      "Resource material development",
-      "Training schedule management",
-      "Participant assessment and feedback",
+  ),
+  "city-municipal-deputy-chaplain": createOffice(
+    "City / Municipal Deputy Chaplains",
+    "Multiple city and municipal deputy chaplains",
+    "City and Municipal Deputy Chaplains assist local chaplains with coordination, member guidance, and service implementation.",
+    [
+      { area: "NCR", name: "Chap John R. Santos" },
+      { area: "Makati", name: "Chap Lorna E. Senting" },
+      { area: "Muntinlupa City", name: "Rev. Jondie M. Buhat" },
+      { area: "San Jose", name: "Rev. Myrie E. Ramila" },
+      { area: "La Paz", name: "Rev. Rico L. Razon" },
+      { area: "Victoria", name: "Rev. Marlo V. Dela Cruz" },
+      { area: "Capas", name: "Rev. Romuel D. Pimentel" },
+      { area: "Sta Ignacia", name: "Rev. Rowena I. Gabriel" },
+      { area: "Taguig", name: "Chap Ramil R. Libarra" },
+      { area: "Angono, Rizal", name: "Chap Rose Marie R. Reyes" },
+      { area: "Northern District Chaplain Director", name: "Rev. Roberto G. Parcasio" },
     ],
-  },
-  "human-resource": {
-    title: "Human Resource",
-    head: "[Name]",
-    description:
-      "Manages personnel matters, recruitment, and staff development.",
-    duties: [
-      "Handle recruitment and onboarding",
-      "Manage employee records",
-      "Oversee performance evaluations",
-      "Address personnel concerns",
-    ],
-    responsibilities: [
-      "Staff hiring and retention",
-      "Benefits and compensation management",
-      "Employee development programs",
-      "HR policy implementation",
-    ],
-  },
-  "information-technology": {
-    title: "Information Technology",
-    head: "[Name]",
-    description:
-      "Maintains and develops the organization's technology infrastructure and systems.",
-    duties: [
-      "Manage IT infrastructure",
-      "Provide technical support",
-      "Develop and maintain systems",
-      "Ensure data security",
-    ],
-    responsibilities: [
-      "Technology strategy and planning",
-      "System maintenance and upgrades",
-      "Cybersecurity management",
-      "Digital transformation initiatives",
-    ],
-  },
-  accounting: {
-    title: "Accounting",
-    head: "[Name]",
-    description:
-      "Manages financial records, reporting, and ensures fiscal responsibility.",
-    duties: [
-      "Process financial transactions",
-      "Prepare financial reports",
-      "Manage accounts payable/receivable",
-      "Conduct budget monitoring",
-    ],
-    responsibilities: [
-      "Financial record keeping",
-      "Budget preparation and monitoring",
-      "Financial compliance",
-      "Audit coordination",
-    ],
-  },
-  // Add more offices as needed...
+  ),
+  "barangay-chaplain": createOffice(
+    "Barangay Chaplain & Deputy Chaplain",
+    "To be announced",
+    "Barangay Chaplains and Deputy Chaplains support community-level chaplaincy coordination and outreach.",
+  ),
+  member: createOffice(
+    "Member",
+    "Members of the organization",
+    "Members participate in chaplaincy service, values education, community work, and organizational programs.",
+  ),
+  humanitarian: createOffice(
+    "Humanitarian",
+    "Dr. Bobby M. Brimon",
+    "Humanitarian work coordinates relief, care, and service activities for communities in need.",
+  ),
+  education: createOffice(
+    "Education",
+    "Dr. Lelanie D. Perido",
+    "Education coordinates values formation, school-based programs, and educational partnerships.",
+  ),
+  "political-affairs": createOffice(
+    "Political Affairs & Communication",
+    "Dr. Analyn M. Tibio",
+    "Political Affairs and Communication manages public communication, civic coordination, and external relations support.",
+  ),
+  "training-development": createOffice(
+    "Training & Development",
+    "Dr. Romel L. Abaca",
+    "Training and Development strengthens leadership capacity and practical ministry skills.",
+  ),
+  "social-welfare": createOffice(
+    "Social Welfare & Development",
+    "To be announced",
+    "Social Welfare and Development organizes social service support and community development coordination.",
+  ),
+  "human-resources-min": createOffice(
+    "Human Resources",
+    "To be announced",
+    "Human Resources for ministerial work supports member coordination, leadership assignments, and service readiness.",
+  ),
+  "membership-recruitment": createOffice(
+    "Membership & Recruitment",
+    "Dr. Lelanie C. Junio",
+    "Membership and Recruitment manages member growth, applicant coordination, and onboarding support.",
+  ),
+  "prison-ministry": createOffice(
+    "Prison Ministry",
+    "To be announced",
+    "Prison Ministry provides spiritual support and values formation coordination for correctional settings.",
+  ),
+  "school-colleges": createOffice(
+    "School/Colleges",
+    "To be announced",
+    "School and Colleges work supports education-based ministry, values formation, and institutional coordination.",
+  ),
+  "security-group": createOffice(
+    "Security Group",
+    "Rev. Henry S. Bertumen",
+    "Security Group supports safety coordination, order, and operational readiness during activities.",
+  ),
+  pnp: createOffice(
+    "PNP",
+    "To be announced",
+    "PNP coordination supports chaplaincy partnerships and service activities connected with police communities.",
+  ),
+  sport: createOffice(
+    "Sport",
+    "Rev. Rhenald L. Lagrimas",
+    "Sport ministry coordinates values-based sports activities and fellowship programs.",
+  ),
+  "jsl-group": createOffice(
+    "JSL Group of Company",
+    "Partner organization",
+    "JSL Group of Company is listed as a partner organization supporting shared programs and activities.",
+  ),
+  wcea: createOffice(
+    "WCEA",
+    "Partner organization",
+    "WCEA is listed as a partner organization supporting the chaplaincy mission and shared service programs.",
+  ),
+  "ayaan-enterprises": createOffice(
+    "AYAAN Enterprises Corporation",
+    "Partner organization",
+    "AYAAN Enterprises Corporation is listed as a partner organization supporting organizational initiatives.",
+  ),
+  "laa-health": createOffice(
+    "L.A.A Health Talk with Dr. Larry",
+    "Dr. Larry",
+    "L.A.A Health Talk with Dr. Larry supports health-focused partner activities and education.",
+  ),
+  "natural-bone": createOffice(
+    "Natural Bone Restoration",
+    "Partner organization",
+    "Natural Bone Restoration is listed as a partner organization for wellness-related coordination.",
+  ),
 };
 
 const Page = () => {
@@ -277,27 +522,27 @@ const Page = () => {
 
                 {/* Third Level - Main Departments */}
                 <div className="grid grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
-                  <div>
+                  <div id="office-ministry-services" className="scroll-mt-28">
                     <div className="bg-white border border-neutral-300 rounded-lg px-3 py-2 text-xs font-semibold text-center shadow-sm">
                       MINISTRY/SERVICES
                     </div>
                   </div>
-                  <div>
+                  <div id="office-administration" className="scroll-mt-28">
                     <div className="bg-white border border-neutral-300 rounded-lg px-3 py-2 text-xs font-semibold text-center shadow-sm">
                       ADMINISTRATION
                     </div>
                   </div>
-                  <div>
+                  <div id="office-national-director" className="scroll-mt-28">
                     <div className="bg-white border border-neutral-300 rounded-lg px-3 py-2 text-xs font-semibold text-center shadow-sm whitespace-nowrap">
                       National Director & Deputy Director
                     </div>
                   </div>
-                  <div>
+                  <div id="office-churches-ministerial" className="scroll-mt-28">
                     <div className="bg-white border border-neutral-300 rounded-lg px-3 py-2 text-xs font-semibold text-center shadow-sm">
                       CHURCHES/MINISTERIAL
                     </div>
                   </div>
-                  <div>
+                  <div id="office-partners-ngo" className="scroll-mt-28">
                     <div className="bg-white border border-neutral-300 rounded-lg px-3 py-2 text-xs font-semibold text-center shadow-sm">
                       PARTNERS-NGO
                     </div>
@@ -382,16 +627,36 @@ const Page = () => {
                   <div className="space-y-2">
                     {[
                       {
-                        label: "Regional Director & Director",
+                        label: "National Chaplain Directors",
+                        key: "national-chaplain-directors",
+                      },
+                      {
+                        label: "Regional Chaplain Directors",
                         key: "regional-director",
                       },
                       {
-                        label: "Provincial Director & Director",
+                        label: "Regional Deputy Chaplain Directors",
+                        key: "regional-deputy-director",
+                      },
+                      {
+                        label: "Provincial Chaplain Directors",
                         key: "provincial-director",
                       },
                       {
-                        label: "City & Municipality Chaplain & Deputy Chaplain",
+                        label: "Provincial Deputy Chaplain Directors",
+                        key: "provincial-deputy-director",
+                      },
+                      {
+                        label: "City Chaplains",
                         key: "city-chaplain",
+                      },
+                      {
+                        label: "Municipal Chaplains",
+                        key: "municipal-chaplain",
+                      },
+                      {
+                        label: "City / Municipal Deputy Chaplains",
+                        key: "city-municipal-deputy-chaplain",
                       },
                       {
                         label: "Barangay Chaplain & Deputy Chaplain",
@@ -411,9 +676,12 @@ const Page = () => {
 
                   {/* Churches/Ministerial Column */}
                   <div className="space-y-2">
-                    <div className="bg-white border border-neutral-200 rounded px-2 py-1.5 text-[10px] font-semibold text-center">
+                    <button
+                      onClick={() => handleOfficeClick("education")}
+                      className="w-full bg-white border border-neutral-200 rounded px-2 py-1.5 text-[10px] font-semibold text-center hover:bg-[#032a0d] hover:text-white hover:border-[#032a0d] transition-colors cursor-pointer"
+                    >
                       Education
-                    </div>
+                    </button>
                     {[
                       { label: "Humanitarian", key: "humanitarian" },
                       {
@@ -459,9 +727,12 @@ const Page = () => {
 
                   {/* Partners-NGO Column */}
                   <div className="space-y-2">
-                    <div className="bg-white border border-neutral-200 rounded px-2 py-1.5 text-[10px] font-semibold text-center">
+                    <button
+                      onClick={() => handleOfficeClick("wcea")}
+                      className="w-full bg-white border border-neutral-200 rounded px-2 py-1.5 text-[10px] font-semibold text-center hover:bg-[#032a0d] hover:text-white hover:border-[#032a0d] transition-colors cursor-pointer"
+                    >
                       WCEA
-                    </div>
+                    </button>
                     {[
                       { label: "JSL Group of company", key: "jsl-group" },
                       {
@@ -521,6 +792,14 @@ const Page = () => {
                       </div>
                     )}
 
+                    {!currentOfficeData.image && (
+                      <div className="flex justify-center">
+                        <div className="w-32 h-32 bg-neutral-100 rounded-full border border-neutral-200 flex items-center justify-center text-neutral-400">
+                          <UserRound className="size-14" />
+                        </div>
+                      </div>
+                    )}
+
                     {/* Description */}
                     <div>
                       <h3 className="font-semibold text-[#032a0d] mb-2">
@@ -530,6 +809,27 @@ const Page = () => {
                         {currentOfficeData.description}
                       </p>
                     </div>
+
+                    {currentOfficeData.members && (
+                      <div>
+                        <h3 className="font-semibold text-[#032a0d] mb-2">
+                          Assigned Heads
+                        </h3>
+                        <div className="grid gap-2 sm:grid-cols-2">
+                          {currentOfficeData.members.map((member) => (
+                            <div
+                              key={`${member.area}-${member.name}`}
+                              className="rounded-md border border-neutral-200 bg-neutral-50 px-3 py-2 text-sm"
+                            >
+                              <p className="font-medium text-[#032a0d]">
+                                {member.area}
+                              </p>
+                              <p className="text-neutral-700">{member.name}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
 
                     {/* Duties */}
                     <div>
