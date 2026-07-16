@@ -779,18 +779,6 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                         )
                       ) : null}
 
-                      {canShowBookService ? (
-                        <Button
-                          type="button"
-                          size="sm"
-                          onClick={() => setIsBookingSheetOpen(true)}
-                          className="w-full bg-[#032a0d] text-white hover:bg-[#064016] sm:w-fit"
-                        >
-                          <CalendarCheck className="size-4" />
-                          Book a Service
-                        </Button>
-                      ) : null}
-
                       {canShowCallingCard ? (
                         <Dialog
                           open={isCallingCardOpen}
@@ -841,6 +829,18 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                             </div>
                           </DialogContent>
                         </Dialog>
+                      ) : null}
+
+                      {canShowBookService ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => setIsBookingSheetOpen(true)}
+                          className="w-full bg-[#032a0d] text-white hover:bg-[#064016] sm:w-fit"
+                        >
+                          <CalendarCheck className="size-4" />
+                          Book a Service
+                        </Button>
                       ) : null}
 
                       {membershipExpired && isOwnProfile ? (
