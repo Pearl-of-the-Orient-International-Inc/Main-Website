@@ -32,7 +32,7 @@ export interface EventResource {
   meetingId: string | null;
   meetingPassword: string | null;
   description: string;
-  thumbnailUrl: string;
+  thumbnailUrl: string | null;
   organizer: string;
   startsAt: string;
   endsAt: string;

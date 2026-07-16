@@ -166,6 +166,8 @@ type HomepageEventItem = {
   image: string;
 };
 
+const eventFallbackImage = "/main/news.jpg";
+
 const apiBaseUrl =
   process.env.NODE_ENV === "development"
     ? process.env.NEXT_PUBLIC_API_BASE_URL_DEV
@@ -191,7 +193,7 @@ async function getHomepageEvents(): Promise<HomepageEventItem[]> {
     const payload = (await response.json()) as PublicEventsResponse;
 
     return payload.data
-      .filter((event) => Boolean(event.thumbnailUrl))
+      .filter((event) => event.status !== "CANCELLED")
       .map(mapEventToHomepageItem);
   } catch {
     return [];
@@ -1270,7 +1272,7 @@ function mapEventToHomepageItem(event: EventResource): HomepageEventItem {
     id: event.id,
     title: event.name,
     date: formatEventDate(event.startsAt),
-    image: event.thumbnailUrl,
+    image: event.thumbnailUrl?.trim() || eventFallbackImage,
   };
 }
 
