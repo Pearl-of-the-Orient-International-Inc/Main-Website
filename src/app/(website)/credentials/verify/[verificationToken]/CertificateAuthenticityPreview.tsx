@@ -21,10 +21,12 @@ import {
 type CertificateAuthenticityPreviewProps = {
   credential: {
     documentNumber: string;
+    holderLabel: string;
+    holderName: string;
+    kind: "seminary" | "member";
     status: string;
     title: string;
     issuedAt: string;
-    studentName: string;
   };
 };
 
@@ -34,19 +36,19 @@ const FIELD_ROW_X = {
   document: 290,
   issued: 237,
   status: 293,
-  student: 253,
+  holder: 253,
   title: 269,
 };
 const FIELD_ROW_MAX_WIDTH = {
   document: 245,
   issued: FIELD_MAX_WIDTH,
   status: 245,
-  student: FIELD_MAX_WIDTH,
+  holder: FIELD_MAX_WIDTH,
   title: FIELD_MAX_WIDTH,
 };
 const FIELD_Y = {
   title: 302,
-  student: 279,
+  holder: 279,
   issued: 256,
   status: 234,
   document: 212,
@@ -63,7 +65,9 @@ export function CertificateAuthenticityPreview({
       document: credential.documentNumber,
       issued: formatDate(credential.issuedAt),
       status: credential.status === "ACTIVE" ? "Verified Authentic" : credential.status,
-      student: credential.studentName || "No student name on record",
+      holder:
+        credential.holderName ||
+        `No ${credential.holderLabel.toLowerCase()} name on record`,
       title: credential.title,
     }),
     [credential],
@@ -77,7 +81,9 @@ export function CertificateAuthenticityPreview({
       setIsGenerating(true);
 
       try {
-        const templateBytes = await fetch("/COA_SEMINARY.pdf").then(
+        const templateUrl =
+          credential.kind === "member" ? "/COA_CHAPLAIN.pdf" : "/COA_SEMINARY.pdf";
+        const templateBytes = await fetch(templateUrl).then(
           async (response) => {
             if (!response.ok) {
               throw new Error("Unable to load certificate template.");
@@ -106,12 +112,12 @@ export function CertificateAuthenticityPreview({
         drawFitText({
           color,
           font: serifBoldItalic,
-          maxWidth: FIELD_ROW_MAX_WIDTH.student,
+          maxWidth: FIELD_ROW_MAX_WIDTH.holder,
           page,
           size: FIELD_FONT_SIZE,
-          text: fields.student.toUpperCase(),
-          x: FIELD_ROW_X.student,
-          y: FIELD_Y.student,
+          text: fields.holder.toUpperCase(),
+          x: FIELD_ROW_X.holder,
+          y: FIELD_Y.holder,
         });
         drawFitText({
           color,
@@ -166,7 +172,7 @@ export function CertificateAuthenticityPreview({
       active = false;
       if (objectUrl) URL.revokeObjectURL(objectUrl);
     };
-  }, [fields]);
+  }, [credential.kind, fields]);
 
   return (
     <Card className="rounded-lg border-[#032a0d]/10 bg-white shadow-sm">

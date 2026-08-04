@@ -134,11 +134,86 @@ const churchesMinisterial: OfficePerson[] = [
 ];
 
 const partnersNgo: OfficePerson[] = [
-  { name: "WCEA", role: "Partner Organization" },
-  { name: "JSL Group of Company", role: "Partner Organization" },
-  { name: "AYAAN Enterprises Corporation", role: "Partner Organization" },
-  { name: "L.A.A Health Talk with Dr. Larry", role: "Partner Organization" },
-  { name: "Natural Bone Restoration", role: "Partner Organization" },
+  {
+    name: "Association of Christian Schools International (ACSI)",
+    role: "Accreditation of POILE/POTSCI",
+    group: "Accreditation of POILE/POTSCI",
+    image:
+      "/partners/Accreditation of POILE-POTSCI/Association of Christian Schools International (ACSI).png",
+    imageType: "logo",
+  },
+  {
+    name: "Ecumenical Councils of the Churches of Jesus Christ",
+    role: "Accreditation of POILE/POTSCI",
+    group: "Accreditation of POILE/POTSCI",
+    image:
+      "/partners/Accreditation of POILE-POTSCI/Ecumenical Councils of the Churches of Jesus Christ.png",
+    imageType: "logo",
+  },
+  {
+    name: "International Association for Theological Accreditation (IATA)",
+    role: "Accreditation of POILE/POTSCI",
+    group: "Accreditation of POILE/POTSCI",
+    image:
+      "/partners/Accreditation of POILE-POTSCI/International Association for Theological Accreditation (IATA).png",
+    imageType: "logo",
+  },
+  {
+    name: "Saigon Business School",
+    role: "International School Partner",
+    group: "International School Partner",
+    image: "/partners/International School Partner/Saigon Business School.jpg",
+    imageType: "logo",
+  },
+  {
+    name: "All Nations College (ANC)",
+    role: "Local School Partner",
+    group: "Local School Partners",
+    image: "/partners/Local School Partners/All Nations College (ANC).jpg",
+    imageType: "logo",
+  },
+  {
+    name: "Cavite West Point College (CWPC)",
+    role: "Local School Partner",
+    group: "Local School Partners",
+    image: "/partners/Local School Partners/Cavite West Point College (CWPC).jpg",
+    imageType: "logo",
+  },
+  {
+    name: "NPB Training Center",
+    role: "Local School Partner",
+    group: "Local School Partners",
+    image: "/partners/Local School Partners/NPB Training Center.jpg",
+    imageType: "logo",
+  },
+  {
+    name: "Oxfordian Colleges",
+    role: "Local School Partner",
+    group: "Local School Partners",
+    image: "/partners/Local School Partners/Oxfordian Colleges.jpg",
+    imageType: "logo",
+  },
+  {
+    name: "Regis Marie College",
+    role: "Local School Partner",
+    group: "Local School Partners",
+    image: "/partners/Local School Partners/Regis Marie College.jpg",
+    imageType: "logo",
+  },
+  {
+    name: "World Council Excellence Awards (WCEA)",
+    role: "Local School Partner",
+    group: "Local School Partners",
+    image: "/partners/Local School Partners/World Council Excellence Awards (WCEA).jpg",
+    imageType: "logo",
+  },
+  {
+    name: "GEO-Global Educators",
+    role: "Research Partner",
+    group: "Research Partners",
+    image: "/partners/Research Partner/GEO-Global Educators.jpg",
+    imageType: "logo",
+  },
 ];
 
 export const officeDirectoryPages: Record<string, OfficeDirectoryPageData> = {

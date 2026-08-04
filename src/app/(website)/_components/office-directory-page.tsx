@@ -4,7 +4,9 @@ import Link from "next/link";
 export interface OfficePerson {
   name: string;
   role: string;
+  group?: string;
   image?: string;
+  imageType?: "person" | "logo";
 }
 
 export interface OfficeDirectoryPageData {
@@ -20,6 +22,21 @@ export const OfficeDirectoryPage = ({
 }: {
   data: OfficeDirectoryPageData;
 }) => {
+  const groups = data.people.reduce<Array<{ title: string | null; people: OfficePerson[] }>>(
+    (currentGroups, person) => {
+      const groupTitle = person.group ?? null;
+      const existingGroup = currentGroups.find((group) => group.title === groupTitle);
+
+      if (existingGroup) {
+        existingGroup.people.push(person);
+        return currentGroups;
+      }
+
+      return [...currentGroups, { title: groupTitle, people: [person] }];
+    },
+    [],
+  );
+
   return (
     <div>
       <section className="relative bg-[#032a0d] text-white">
@@ -63,32 +80,20 @@ export const OfficeDirectoryPage = ({
             </Link>
           </div>
 
-          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-            {data.people.map((person) => (
-              <article
-                key={`${person.name}-${person.role}`}
-                className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-colors hover:border-emerald-300"
-              >
-                <div className="border-b border-neutral-200 bg-neutral-50 p-5">
-                  <div className="relative aspect-4/5 overflow-hidden rounded-xl bg-white">
-                    <Image
-                      src={person.image ?? placeholderImage}
-                      alt={person.name}
-                      fill
-                      sizes="(min-width: 1280px) 30vw, (min-width: 768px) 45vw, 90vw"
-                      className="object-cover"
+          <div className="space-y-10">
+            {groups.map((group) => (
+              <section key={group.title ?? "directory"} className="space-y-4">
+
+
+                <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+                  {group.people.map((person) => (
+                    <OfficeDirectoryCard
+                      key={`${person.name}-${person.role}`}
+                      person={person}
                     />
-                  </div>
+                  ))}
                 </div>
-                <div className="p-5">
-                  <h3 className="text-xl font-bold leading-snug text-slate-950">
-                    {person.name}
-                  </h3>
-                  <p className="mt-2 text-base leading-relaxed text-slate-500">
-                    {person.role}
-                  </p>
-                </div>
-              </article>
+              </section>
             ))}
           </div>
         </div>
@@ -96,3 +101,72 @@ export const OfficeDirectoryPage = ({
     </div>
   );
 };
+
+function OfficeDirectoryCard({ person }: { person: OfficePerson }) {
+  const isLogoCard = person.imageType === "logo";
+
+  return (
+    <article className="overflow-hidden rounded-2xl border border-neutral-200 bg-white shadow-sm transition-colors hover:border-emerald-300">
+      <div className="border-b border-neutral-200 bg-neutral-50 p-5">
+        {isLogoCard ? (
+          <div className="flex aspect-4/3 items-center justify-center rounded-xl border border-dashed border-emerald-800/25 bg-white p-6">
+            {person.image ? (
+              <div className="relative h-full w-full">
+                <Image
+                  src={person.image}
+                  alt={`${person.name} logo`}
+                  fill
+                  sizes="(min-width: 1280px) 30vw, (min-width: 768px) 45vw, 90vw"
+                  className="object-contain"
+                />
+              </div>
+            ) : (
+              <div className="flex size-28 flex-col items-center justify-center rounded-full border border-emerald-800/20 bg-emerald-50 text-center text-2xl font-bold text-emerald-900">
+                {getInitials(person.name)}
+                <span className="mt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-emerald-800/70">
+                  Logo
+                </span>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="relative aspect-4/5 overflow-hidden rounded-xl bg-white">
+            <Image
+              src={person.image ?? placeholderImage}
+              alt={person.name}
+              fill
+              sizes="(min-width: 1280px) 30vw, (min-width: 768px) 45vw, 90vw"
+              className="object-cover"
+            />
+          </div>
+        )}
+      </div>
+      <div className="p-5">
+        <h3 className="text-xl font-bold leading-snug text-slate-950">
+          {person.name}
+        </h3>
+        <p className="mt-2 text-base leading-relaxed text-slate-500">
+          {person.role}
+        </p>
+      </div>
+    </article>
+  );
+}
+
+function getInitials(value: string) {
+  const uppercaseWords = value.match(/\b[A-Z]{2,}\b/g);
+
+  if (uppercaseWords?.length) {
+    return uppercaseWords
+      .slice(0, 2)
+      .map((word) => word[0])
+      .join("");
+  }
+
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((word) => word[0]?.toUpperCase())
+    .join("");
+}

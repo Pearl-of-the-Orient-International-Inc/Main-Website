@@ -7,6 +7,7 @@ import {
   FileCheck2,
   GraduationCap,
   Hash,
+  IdCard,
   UserRound,
 } from "lucide-react";
 
@@ -26,6 +27,8 @@ type PageProps = {
 
 type CredentialDocumentType = "DIPLOMA" | "CERTIFICATE" | "TRANSCRIPT";
 type CredentialDocumentStatus = "ACTIVE" | "REVOKED" | "VOID";
+type MemberCredentialDocumentType = "CERTIFICATE" | "RECOGNITION";
+type MemberCredentialDocumentStatus = "ACTIVE" | "REVOKED";
 
 type CredentialDocument = {
   id: string;
@@ -48,11 +51,47 @@ type CredentialDocument = {
   };
 };
 
+type MemberCredentialDocument = {
+  id: string;
+  documentNumber: string;
+  barcodeNumber: string | null;
+  verificationToken: string;
+  type: MemberCredentialDocumentType;
+  status: MemberCredentialDocumentStatus;
+  title: string | null;
+  issuedAt: string;
+  member?: {
+    id: string;
+    uniqueId: string | null;
+    firstName: string;
+    lastName: string;
+    user?: {
+      email: string;
+    };
+  };
+};
+
 type CredentialVerificationResponse = {
   code: string;
   message: string;
   data: CredentialDocument;
 };
+
+type MemberCredentialVerificationResponse = {
+  code: string;
+  message: string;
+  data: MemberCredentialDocument;
+};
+
+type VerifiedCredential =
+  | {
+      kind: "seminary";
+      credential: CredentialDocument;
+    }
+  | {
+      kind: "member";
+      credential: MemberCredentialDocument;
+    };
 
 const apiBaseUrl =
   process.env.NODE_ENV === "development"
@@ -65,6 +104,11 @@ const documentTypeLabelMap: Record<CredentialDocumentType, string> = {
   TRANSCRIPT: "Transcript",
 };
 
+const memberDocumentTypeLabelMap: Record<MemberCredentialDocumentType, string> = {
+  CERTIFICATE: "Certificate",
+  RECOGNITION: "Recognition",
+};
+
 const programLevelLabelMap: Record<string, string> = {
   BACHELOR: "Bachelor Program",
   CERTIFICATE: "Certificate Program",
@@ -74,26 +118,43 @@ const programLevelLabelMap: Record<string, string> = {
 
 async function verifyCredential(
   verificationToken: string,
-): Promise<CredentialDocument | null> {
+): Promise<VerifiedCredential | null> {
   if (!apiBaseUrl) {
     throw new Error("API base URL is not configured.");
   }
 
-  const response = await fetch(
+  const seminaryResponse = await fetch(
     `${apiBaseUrl}/seminary/credential-documents/verify/${encodeURIComponent(
       verificationToken,
     )}`,
     { cache: "no-store" },
   );
 
-  if (response.status === 404) return null;
+  if (seminaryResponse.ok) {
+    const payload =
+      (await seminaryResponse.json()) as CredentialVerificationResponse;
+    return { kind: "seminary", credential: payload.data };
+  }
 
-  if (!response.ok) {
+  if (seminaryResponse.status !== 404) {
     throw new Error("Failed to verify credential.");
   }
 
-  const payload = (await response.json()) as CredentialVerificationResponse;
-  return payload.data;
+  const memberResponse = await fetch(
+    `${apiBaseUrl}/members/credential-documents/verify/${encodeURIComponent(
+      verificationToken,
+    )}`,
+    { cache: "no-store" },
+  );
+
+  if (memberResponse.status === 404) return null;
+
+  if (!memberResponse.ok) {
+    throw new Error("Failed to verify credential.");
+  }
+
+  const payload = (await memberResponse.json()) as MemberCredentialVerificationResponse;
+  return { kind: "member", credential: payload.data };
 }
 
 export async function generateMetadata({
@@ -101,32 +162,55 @@ export async function generateMetadata({
 }: PageProps): Promise<Metadata> {
   const { verificationToken } = await params;
   const credential = await verifyCredential(verificationToken);
+  const documentNumber = credential?.credential.documentNumber;
 
   return {
-    title: credential
-      ? `${credential.documentNumber} | Credential Verified`
+    title: documentNumber
+      ? `${documentNumber} | Credential Verified`
       : "Credential Not Verified",
     description: credential
-      ? "Verified Pearl of the Orient Theological Seminary credential."
+      ? "Verified Pearl of the Orient credential."
       : "Credential authenticity could not be verified.",
   };
 }
 
 export default async function Page({ params }: PageProps) {
   const { verificationToken } = await params;
-  const credential = await verifyCredential(verificationToken);
+  const verifiedCredential = await verifyCredential(verificationToken);
 
-  if (!credential) {
+  if (!verifiedCredential) {
     return <VerificationFailed />;
   }
 
+  const isMemberCredential = verifiedCredential.kind === "member";
+  const credential = verifiedCredential.credential;
+  const seminaryCredential = verifiedCredential.kind === "seminary"
+    ? verifiedCredential.credential
+    : undefined;
+  const memberCredential = verifiedCredential.kind === "member"
+    ? verifiedCredential.credential
+    : undefined;
   const studentName = [
-    credential.application?.givenName,
-    credential.application?.middleName,
-    credential.application?.surname,
+    seminaryCredential?.application?.givenName,
+    seminaryCredential?.application?.middleName,
+    seminaryCredential?.application?.surname,
   ]
     .filter(Boolean)
     .join(" ");
+  const memberName = [
+    memberCredential?.member?.firstName,
+    memberCredential?.member?.lastName,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const holderName = isMemberCredential ? memberName : studentName;
+  const holderLabel = isMemberCredential ? "Member" : "Student";
+  const credentialTitle = memberCredential
+    ? getMemberCredentialTitle(memberCredential)
+    : getCredentialTitle(seminaryCredential!);
+  const documentTypeLabel = memberCredential
+    ? memberDocumentTypeLabelMap[memberCredential.type]
+    : documentTypeLabelMap[seminaryCredential!.type];
 
   return (
     <main className="min-h-screen bg-[#f7f5ef] text-[#032a0d]">
@@ -140,8 +224,7 @@ export default async function Page({ params }: PageProps) {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <CardTitle className="font-serif tracking-tight text-3xl text-[#032a0d]">
-                  {credential.title ??
-                    documentTypeLabelMap[credential.type]}
+                  {credentialTitle}
                 </CardTitle>
                 <p className="mt-2 text-sm text-neutral-600">
                   Official verification summary
@@ -159,23 +242,36 @@ export default async function Page({ params }: PageProps) {
               <VerificationField
                 icon={<FileCheck2 className="size-4" />}
                 label="Document Type"
-                value={documentTypeLabelMap[credential.type]}
+                value={documentTypeLabel}
               />
               <VerificationField
                 icon={<UserRound className="size-4" />}
-                label="Student"
-                value={studentName || "No student name on record"}
+                label={holderLabel}
+                value={
+                  holderName ||
+                  `No ${holderLabel.toLowerCase()} name on record`
+                }
               />
-              <VerificationField
-                icon={<Hash className="size-4" />}
-                label="Student Number"
-                value={credential.application?.studentId ?? "N/A"}
-              />
-              <VerificationField
-                icon={<GraduationCap className="size-4" />}
-                label="Program"
-                value={credential.application?.programCourse ?? "N/A"}
-              />
+              {memberCredential ? (
+                <VerificationField
+                  icon={<IdCard className="size-4" />}
+                  label="Member ID"
+                  value={memberCredential.member?.uniqueId ?? "N/A"}
+                />
+              ) : (
+                <>
+                  <VerificationField
+                    icon={<Hash className="size-4" />}
+                    label="Student Number"
+                    value={seminaryCredential!.application?.studentId ?? "N/A"}
+                  />
+                  <VerificationField
+                    icon={<GraduationCap className="size-4" />}
+                    label="Program"
+                    value={seminaryCredential!.application?.programCourse ?? "N/A"}
+                  />
+                </>
+              )}
               <VerificationField
                 icon={<CalendarDays className="size-4" />}
                 label="Issued Date"
@@ -200,10 +296,14 @@ export default async function Page({ params }: PageProps) {
         <CertificateAuthenticityPreview
           credential={{
             documentNumber: credential.documentNumber,
+            holderLabel,
+            holderName:
+              holderName ||
+              `No ${holderLabel.toLowerCase()} name on record`,
+            kind: verifiedCredential.kind,
             issuedAt: credential.issuedAt,
             status: credential.status,
-            studentName: studentName || "No student name on record",
-            title: getCredentialTitle(credential),
+            title: credentialTitle,
           }}
         />
       </section>
@@ -227,7 +327,7 @@ function VerificationFailed() {
                 Credential Not Verified
               </h1>
               <p className="mt-3 max-w-xl text-neutral-600">
-                No active seminary credential matched this verification token.
+                No active credential matched this verification token.
                 Contact the records office if this document should be valid.
               </p>
             </div>
@@ -257,8 +357,8 @@ function CredentialHero() {
           Certificate of Authenticity
         </h1>
         <p className="mt-4 max-w-2xl text-sm leading-relaxed text-white/80 sm:text-base">
-          Verify diplomas, certificates, and seminary documents issued by Pearl
-          of the Orient Theological Seminary and Colleges through the official
+          Verify diplomas, certificates, chaplaincy credentials, and seminary
+          documents issued by Pearl of the Orient through the official
           credential registry.
         </p>
       </div>
@@ -304,4 +404,8 @@ function getCredentialTitle(credential: CredentialDocument) {
   }
 
   return credential.title ?? documentTypeLabelMap[credential.type];
+}
+
+function getMemberCredentialTitle(credential: MemberCredentialDocument) {
+  return credential.title ?? memberDocumentTypeLabelMap[credential.type];
 }

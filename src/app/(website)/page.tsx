@@ -229,7 +229,7 @@ const chaplaincyRoadmap = [
     title: "Phase 1",
     content: (
       <div>
-        <div className="relative mb-6 flex aspect-[4/3] w-full items-center justify-center lg:aspect-auto lg:h-105">
+        <div className="relative mb-6 flex aspect-4/3 w-full items-center justify-center lg:aspect-auto lg:h-105">
           <Image src="/roadmap/phase1.png" alt="Phase 1" fill className="object-contain" />
         </div>
         <div className="mb-4">
