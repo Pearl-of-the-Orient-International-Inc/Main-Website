@@ -6,7 +6,12 @@ import type {
   UserPublic,
   VerifyEmailResponse,
 } from "@/lib/api-types";
-import type { LoginRequest, RegisterRequest, VerifyEmailRequest } from "./auth.types";
+import type {
+  LoginRequest,
+  RegisterRequest,
+  ResendVerificationRequest,
+  VerifyEmailRequest,
+} from "./auth.types";
 import axios from "axios";
 
 export async function login(payload: LoginRequest) {
@@ -31,6 +36,19 @@ export async function register(payload: RegisterRequest) {
 
 export async function verifyEmail(payload: VerifyEmailRequest) {
   const { data } = await api.post<VerifyEmailResponse>("/auth/verify-email", payload);
+  return data;
+}
+
+export async function resendEmailVerification(payload: ResendVerificationRequest) {
+  const { data } = await api.post<AuthSuccessResponse>(
+    "/auth/resend-email-verification",
+    payload,
+  );
+
+  if (data.accessToken) {
+    authStore.setAccessToken(data.accessToken);
+  }
+
   return data;
 }
 

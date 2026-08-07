@@ -40,6 +40,13 @@ export const useVerifyEmailMutation = () =>
     meta: { feature: "auth.verifyEmail" },
   });
 
+export const useResendEmailVerificationMutation = () =>
+  useMutation({
+    mutationFn: authApi.resendEmailVerification,
+    throwOnError: false,
+    meta: { feature: "auth.resendEmailVerification" },
+  });
+
 export const useCurrentUserQuery = () =>
   useQuery({
     queryKey: ["auth", "current-user"],

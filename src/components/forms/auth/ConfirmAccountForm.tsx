@@ -4,7 +4,12 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { toApiError, useVerifyEmailMutation } from "@/features/auth/auth.hooks";
+import { Input } from "@/components/ui/input";
+import {
+  toApiError,
+  useResendEmailVerificationMutation,
+  useVerifyEmailMutation,
+} from "@/features/auth/auth.hooks";
 import { useToast } from "@/hooks/use-toast";
 
 type VerifyStatus = "idle" | "verifying" | "success" | "error";
@@ -13,12 +18,14 @@ export const ConfirmAccountForm = () => {
   const searchParams = useSearchParams();
   const { toast } = useToast();
   const verifyMutation = useVerifyEmailMutation();
+  const resendVerificationMutation = useResendEmailVerificationMutation();
 
   const token = searchParams.get("token")?.trim() ?? "";
   const hasToken = token.length > 0;
 
   const [status, setStatus] = useState<VerifyStatus>("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [resendEmail, setResendEmail] = useState("");
 
   const statusText = useMemo(() => {
     if (status === "verifying") return "Verifying your account...";
@@ -50,15 +57,46 @@ export const ConfirmAccountForm = () => {
       setErrorMessage(apiError.message ?? "Verification failed.");
       toast({
         title: "Verification failed",
-        description: apiError.message ?? "Invalid or expired verification link.",
+        description:
+          apiError.message ?? "Invalid verification link. Request a new email.",
         variant: "error",
       });
     }
   }, [hasToken, token, toast, verifyMutation]);
 
+  const resendVerification = async () => {
+    const email = resendEmail.trim().toLowerCase();
+    if (!email) {
+      setStatus("error");
+      setErrorMessage("Enter your email to resend verification.");
+      return;
+    }
+
+    try {
+      await resendVerificationMutation.mutateAsync({ email });
+      setErrorMessage(null);
+      toast({
+        title: "Verification email sent",
+        description: `A new verification link was sent to ${email}.`,
+        variant: "success",
+      });
+    } catch (error: unknown) {
+      const apiError = toApiError(error);
+      setStatus("error");
+      setErrorMessage(apiError.message ?? "Unable to resend verification email.");
+      toast({
+        title: "Resend failed",
+        description: apiError.message ?? "Unable to resend verification email.",
+        variant: "error",
+      });
+    }
+  };
+
   useEffect(() => {
     if (!hasToken || status !== "idle") return;
-    void verifyAccount();
+    queueMicrotask(() => {
+      void verifyAccount();
+    });
   }, [hasToken, status, verifyAccount]);
 
   return (
@@ -86,13 +124,33 @@ export const ConfirmAccountForm = () => {
           </Button>
         </div>
 
-        {!hasToken && (
-          <p className="mt-4 text-center text-sm text-red-600">
-            This link is missing a token. Please request a new verification email.
-          </p>
+        {(status === "error" || !hasToken) && (
+          <div className="mt-6 space-y-3 rounded-lg border p-4">
+            <p className="text-center text-sm text-muted-foreground">
+              Need a new verification email? Enter your registered email address.
+            </p>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Input
+                type="email"
+                value={resendEmail}
+                onChange={(event) => setResendEmail(event.target.value)}
+                placeholder="name@example.com"
+                disabled={resendVerificationMutation.isPending}
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={resendVerification}
+                disabled={resendVerificationMutation.isPending}
+              >
+                {resendVerificationMutation.isPending
+                  ? "Sending..."
+                  : "Resend email"}
+              </Button>
+            </div>
+          </div>
         )}
       </div>
     </section>
   );
 };
-
