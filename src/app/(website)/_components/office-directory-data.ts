@@ -133,87 +133,105 @@ const churchesMinisterial: OfficePerson[] = [
   { name: "Rev. Rhenald L. Lagrimas", role: "Sport" },
 ];
 
+const createPartnerEntry = (
+  name: string,
+  category: string,
+  image?: string,
+): OfficePerson => ({
+  name,
+  role: category,
+  group: category,
+  image,
+  imageType: "logo",
+});
+
 const partnersNgo: OfficePerson[] = [
-  {
-    name: "Association of Christian Schools International (ACSI)",
-    role: "Accreditation of POILE/POTSCI",
-    group: "Accreditation of POILE/POTSCI",
-    image:
-      "/partners/Accreditation of POILE-POTSCI/Association of Christian Schools International (ACSI).png",
-    imageType: "logo",
-  },
-  {
-    name: "Ecumenical Councils of the Churches of Jesus Christ",
-    role: "Accreditation of POILE/POTSCI",
-    group: "Accreditation of POILE/POTSCI",
-    image:
-      "/partners/Accreditation of POILE-POTSCI/Ecumenical Councils of the Churches of Jesus Christ.png",
-    imageType: "logo",
-  },
-  {
-    name: "International Association for Theological Accreditation (IATA)",
-    role: "Accreditation of POILE/POTSCI",
-    group: "Accreditation of POILE/POTSCI",
-    image:
-      "/partners/Accreditation of POILE-POTSCI/International Association for Theological Accreditation (IATA).png",
-    imageType: "logo",
-  },
-  {
-    name: "Saigon Business School",
-    role: "International School Partner",
-    group: "International School Partner",
-    image: "/partners/International School Partner/Saigon Business School.jpg",
-    imageType: "logo",
-  },
-  {
-    name: "All Nations College (ANC)",
-    role: "Local School Partner",
-    group: "Local School Partners",
-    image: "/partners/Local School Partners/All Nations College (ANC).jpg",
-    imageType: "logo",
-  },
-  {
-    name: "Cavite West Point College (CWPC)",
-    role: "Local School Partner",
-    group: "Local School Partners",
-    image: "/partners/Local School Partners/Cavite West Point College (CWPC).jpg",
-    imageType: "logo",
-  },
-  {
-    name: "NPB Training Center",
-    role: "Local School Partner",
-    group: "Local School Partners",
-    image: "/partners/Local School Partners/NPB Training Center.jpg",
-    imageType: "logo",
-  },
-  {
-    name: "Oxfordian Colleges",
-    role: "Local School Partner",
-    group: "Local School Partners",
-    image: "/partners/Local School Partners/Oxfordian Colleges.jpg",
-    imageType: "logo",
-  },
-  {
-    name: "Regis Marie College",
-    role: "Local School Partner",
-    group: "Local School Partners",
-    image: "/partners/Local School Partners/Regis Marie College.jpg",
-    imageType: "logo",
-  },
-  {
-    name: "World Council Excellence Awards (WCEA)",
-    role: "Local School Partner",
-    group: "Local School Partners",
-    image: "/partners/Local School Partners/World Council Excellence Awards (WCEA).jpg",
-    imageType: "logo",
-  },
-  {
-    name: "GEO-Global Educators",
-    role: "Research Partner",
-    group: "Research Partners",
-    image: "/partners/Research Partner/GEO-Global Educators.jpg",
-    imageType: "logo",
-  },
+   createPartnerEntry(
+    "JSL Security Group",
+    "Chaplain Partner (NGO)",
+    "/partners/Chaplain Partner (NGO)/JSL Security Group.jpg",
+  ),
+  createPartnerEntry(
+    "Securities & Exchange Commission",
+    "National Accreditations",
+    "/partners/National Accreditations/Securities and Exchange Commission.png",
+  ),
+  createPartnerEntry(
+    "Philippine National Police Chaplain Services",
+    "National Accreditations",
+    "/partners/National Accreditations/Philippine National Police-Chaplain Service.png",
+  ),
+  createPartnerEntry(
+    "Department of the Interior and Local Government",
+    "National Accreditations",
+    "/partners/National Accreditations/Department of the Interior and Local Government (DILG).png",
+  ),
+  createPartnerEntry(
+    "Recognized by PSA-CRASM",
+    "National Accreditations",
+    "/partners/National Accreditations/Recognized by PSA-CRASM.jpg",
+  ),
+  createPartnerEntry(
+    "Bureau of Jail Management and Penology",
+    "Regional Accreditations",
+    "/partners/Regional Accreditations/Bureau of Jail Management and Penology (BJMP).png",
+  ),
+  createPartnerEntry(
+    "DSWD Calabarzon",
+    "Regional Accreditations",
+    "/partners/Regional Accreditations/Department of Social Welfare and Development(Calabarzon).jpg",
+  ),
+  createPartnerEntry(
+    "DSWD Region 3",
+    "Regional Accreditations",
+    "/partners/Regional Accreditations/Department of Social Welfare and Development(Region 3).png",
+  ),
+  createPartnerEntry(
+    "DILG-MMAC Region 4-A",
+    "Regional Accreditations",
+    "/partners/Regional Accreditations/DILG-Multi-Sectoral Advisory Committee (MSAC)  (Region 4-A).jpg",
+  ),
+  createPartnerEntry(
+    "DSWD-4Ps Region 4-A",
+    "Regional Accreditations",
+    "/partners/Regional Accreditations/DSWD-4Ps-Region 4-A.jpg",
+  ),
+  createPartnerEntry(
+    "Schools Division of Ilocos Norte",
+    "Provincial Accreditations",
+    "/partners/Provincial Accreditation/DepEd-Ilocos Norte Region 1.jpg",
+  ),
+  createPartnerEntry(
+    "DSWD Cavite PAC Provincial Advisory Council",
+    "Provincial Accreditations",
+    "https://i-grs.dswd.gov.ph/assets/public_grievance_css/bp_logo.png"
+  ),
+  createPartnerEntry("Province of Pangasinan", "LGU Accreditation", "/partners/Provincial Accreditation/Pangasinan.png",),
+  createPartnerEntry("Municipality of Piddig", "LGU Accreditation", "https://ilocosnorte.gov.ph/images/municipalities/logos/piddig.webp"),
+  createPartnerEntry("Municipality of San Nicolas", "LGU Accreditation", "https://ilocosnorte.gov.ph/images/municipalities/logos/san-nicolas.webp"),
+  createPartnerEntry("Municipality of Pasuquin", "LGU Accreditation", "https://ilocosnorte.gov.ph/images/municipalities/logos/pasuquin.webp"),
+  createPartnerEntry("Municipality of Banna", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTdkJeWXRkblZ0dbxSgFGUm5O8vLtA3-GQsQm-Rp4g65EJk7OoG3rti85jz&s=10"),
+  createPartnerEntry("Province of Cagayan", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSv2topR1fJRiQ-G2QqLlXex4_xYW5-BSnPloCTuvJn1Q&s=10"),
+  createPartnerEntry("Province of Hagonoy Bulacan", "LGU Accreditation", "https://elgu-news-cdn.e.gov.ph/hagonoy-bulacan/uploads/logo.jpg"),
+  createPartnerEntry("City of Santa Rosa Laguna", "LGU Accreditation", "https://upload.wikimedia.org/wikipedia/commons/1/12/Seal_of_Santa_Rosa%2C_Laguna.png"),
+  createPartnerEntry("City of Imus Cavite", "LGU Accreditation", "https://upload.wikimedia.org/wikipedia/en/thumb/7/74/Ph_seal_Imus.png/250px-Ph_seal_Imus.png?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail"),
+  createPartnerEntry("City of Dasmarinas Cavite", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRIm8fhkyWRtusI5u5r9v_uUDQGxHPKnkQ0117eVLbfwQ&s=10"),
+  createPartnerEntry("City of General Trias Cavite", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQDrnTF5eq8K54EHP3J1R2QqOglLRE7bxqV1S7MnnhEgQ&s=10"),
+  createPartnerEntry("City of Trece Martires Cavite", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSETxL5QBguAjvrT6nhLGfPrAMK4cOogq3q-f-CgeCBFQ&s"),
+  createPartnerEntry("Cavite City", "LGU Accreditation", "https://upload.wikimedia.org/wikipedia/commons/3/36/Cavite_City_Seal.png?utm_source=commons.wikimedia.org&utm_campaign=index&utm_content=original"),
+  createPartnerEntry("Municipality of Noveleta Cavite", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcQIw867wEW2TB12GnY8eQofgXhzzUpDlykdHrFP-Fq3ee1UX_kj6wrOiv-4&s=10"),
+  createPartnerEntry("Municipality of Tanza Cavite", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYHMHB6pEkjS5Vtuq18Ig1xXrvFANsLpndFUDw1oUk7A&s"),
+  createPartnerEntry("Municipality of Rosario Cavite", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSZ4jEz9umO129hM7YZIvnIryw0PdQNxR_5BRiXp4nHpOjjHpbvUZFKJIE&s=10"),
+  createPartnerEntry("Municipality of GMA Cavite", "LGU Accreditation", "https://lh3.googleusercontent.com/-HcO0AveIi1pTfdpR2qqag0u-c_4215V_GBoRoUzYWfr88Qq1DpH3ey9zhEFlOD6H8mr_k67STSHUXqrHVGnfKhI5A8G1fcbgA"),
+  createPartnerEntry("Municipality of Silang Cavite", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSlaZDwHmti0IeRsxL35fJwrkRuUSIQt4hKG3-4YHW9YQQEoJxrLZxjIDw&s=10"),
+  createPartnerEntry("Municipality of Tuy Batangas", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTIMDzykgZBYEIYWqIE4fgckU6uVOnvzWLDOIpA1GKaCA&s=10"),
+  createPartnerEntry("Municipality of Angono Rizal", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRabGj3IQbq_gKcBSZPHnEX09W6w8cIYVnkGkxNaLy7PA&s"),
+  createPartnerEntry("Municipality of Narra Palawan", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSVTqxnTT-lHJ8dBdI8YSkZhif3FQVcHkZRxvxSUR_57uR9GKfBb0fYjxg&s=10"),
+  createPartnerEntry("Municipality of Dumaran Palawan", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTGMuLyjYrBJ5_Pf0hpUcIEAxQTotvoJO5Wuzm5_U9gtU5-cN300rkcNGc7&s=10"),
+  createPartnerEntry("Municipality of Roxas Palawan", "LGU Accreditation", "https://upload.wikimedia.org/wikipedia/commons/4/4f/Flag_of_Roxas%2C_Palawan.png"),
+  createPartnerEntry("Municipality of San Isidro", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRW2vyOX5CGUcALImCjPAtjIqAAi4RQWfa5rvS5NOpIgw&s=10"),
+  createPartnerEntry("Province of Camiguin", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSEqSFbQv8gHZe6h3YzeacsuiSkmePHUHQxuVesdQBv5Q&s=10"),
+  createPartnerEntry("City of Butuan", "LGU Accreditation", "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS6PY5TFQyLa0FgFMIG3Uo-JYLC_L15U16pGykerU5Pjw&s=10"),
 ];
 
 export const officeDirectoryPages: Record<string, OfficeDirectoryPageData> = {

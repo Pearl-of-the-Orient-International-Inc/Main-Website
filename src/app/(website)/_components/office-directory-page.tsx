@@ -116,6 +116,7 @@ function OfficeDirectoryCard({ person }: { person: OfficePerson }) {
                   src={person.image}
                   alt={`${person.name} logo`}
                   fill
+                  unoptimized
                   sizes="(min-width: 1280px) 30vw, (min-width: 768px) 45vw, 90vw"
                   className="object-contain"
                 />
