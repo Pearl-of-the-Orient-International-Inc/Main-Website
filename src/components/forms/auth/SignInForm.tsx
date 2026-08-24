@@ -12,11 +12,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-export const SignInForm = ({
-  redirectTo = "/",
-}: {
-  redirectTo?: string;
-}) => {
+export const SignInForm = ({ redirectTo = "/" }: { redirectTo?: string }) => {
   const router = useRouter();
   const loginMutation = useLoginMutation();
   const { toast } = useToast();
@@ -52,7 +48,8 @@ export const SignInForm = ({
       if (response.mfaRequired) {
         toast({
           title: "Two-factor required",
-          description: "Two-factor authentication is required. Complete MFA flow next.",
+          description:
+            "Two-factor authentication is required. Complete MFA flow next.",
           variant: "info",
         });
         return;
@@ -68,18 +65,32 @@ export const SignInForm = ({
       const apiError = toApiError(error);
 
       if (apiError.requiresVerification) {
+        const description =
+          apiError.message ?? "Please verify your email before logging in.";
         toast({
           title: "Email verification required",
-          description:
-            apiError.message ?? "Please verify your email before logging in.",
+          description,
           variant: "warning",
         });
         return;
       }
 
+      const validationDetails =
+        apiError.errors
+          ?.map((item) => item.message)
+          .filter(Boolean)
+          .join(" ") ?? "";
+      const description = validationDetails
+        ? `${apiError.message ?? "Validation failed"}: ${validationDetails}`
+        : (apiError.message ?? "Sign in failed.");
+      const title =
+        apiError.code === "FORBIDDEN"
+          ? "Account access unavailable"
+          : "Sign in failed";
+
       toast({
-        title: "Sign in failed",
-        description: apiError.message ?? "Sign in failed.",
+        title,
+        description,
         variant: "error",
       });
     }
