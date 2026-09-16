@@ -301,6 +301,15 @@ export const NavMenu = () => {
               </li>
               <li>
                 <Link
+                  href="/bulletin-board"
+                  onClick={closeMenu}
+                  className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
+                >
+                  Kapelyan
+                </Link>
+              </li>
+              <li>
+                <Link
                   href="/shop"
                   onClick={closeMenu}
                   className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
@@ -377,13 +386,25 @@ export const NavMenu = () => {
                   </div>
                 </div>
               </div>
-              <a href="#" onClick={closeMenu} className="block transition-colors hover:underline">
+              <a
+                href="#"
+                onClick={closeMenu}
+                className="block transition-colors hover:underline"
+              >
                 Contact & Inquiries
               </a>
-              <a href="#" onClick={closeMenu} className="block transition-colors hover:underline">
+              <a
+                href="#"
+                onClick={closeMenu}
+                className="block transition-colors hover:underline"
+              >
                 Certifications
               </a>
-              <a href="#" onClick={closeMenu} className="block transition-colors hover:underline">
+              <a
+                href="#"
+                onClick={closeMenu}
+                className="block transition-colors hover:underline"
+              >
                 Frequently Asked Questions
               </a>
               <Link

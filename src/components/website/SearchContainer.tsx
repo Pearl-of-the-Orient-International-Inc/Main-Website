@@ -46,7 +46,8 @@ const staticPages: SearchResult[] = [
   {
     id: "home",
     title: "Home",
-    description: "Main website page, mission, branches of service, recognition, and FAQs.",
+    description:
+      "Main website page, mission, branches of service, recognition, and FAQs.",
     href: "/",
     type: "Page",
     icon: FileText,
@@ -54,7 +55,8 @@ const staticPages: SearchResult[] = [
   {
     id: "about",
     title: "About Pearl of the Orient",
-    description: "History, mission, core functions, principles, and accreditation.",
+    description:
+      "History, mission, core functions, principles, and accreditation.",
     href: "/about-pearl-of-the-orient",
     type: "Page",
     icon: FileText,
@@ -70,7 +72,8 @@ const staticPages: SearchResult[] = [
   {
     id: "book-a-service",
     title: "Book a Service",
-    description: "Find certified specialist training officer instructors for service requests.",
+    description:
+      "Find certified specialist training officer instructors for service requests.",
     href: "/book-a-service",
     type: "Page",
     icon: FileText,
@@ -80,6 +83,14 @@ const staticPages: SearchResult[] = [
     title: "News Announcement",
     description: "Official news, public updates, and announcements.",
     href: "/news-announcement",
+    type: "Page",
+    icon: Newspaper,
+  },
+  {
+    id: "bulletin-board",
+    title: "Kapelyan: The Voice of Chaplaincy",
+    description: "Official notices, memoranda, advisories, and announcements.",
+    href: "/bulletin-board",
     type: "Page",
     icon: Newspaper,
   },
@@ -212,26 +223,37 @@ export const SearchContainer = ({ isOpen, onClose }: SearchContainerProps) => {
 
       try {
         const encodedQuery = encodeURIComponent(normalizedQuery);
-        const [newsResponse, eventsResponse, membersResponse, chaplainsResponse] =
-          await Promise.all([
-            fetch(`${apiBaseUrl}/news-blogs/public?limit=5&search=${encodedQuery}`, {
+        const [
+          newsResponse,
+          eventsResponse,
+          membersResponse,
+          chaplainsResponse,
+        ] = await Promise.all([
+          fetch(
+            `${apiBaseUrl}/news-blogs/public?limit=5&search=${encodedQuery}`,
+            {
               signal: controller.signal,
-            }),
-            fetch(`${apiBaseUrl}/events/public?limit=5&search=${encodedQuery}`, {
+            },
+          ),
+          fetch(`${apiBaseUrl}/events/public?limit=5&search=${encodedQuery}`, {
+            signal: controller.signal,
+          }),
+          fetch(
+            `${apiBaseUrl}/members/public/search?limit=6&search=${encodedQuery}`,
+            {
               signal: controller.signal,
-            }),
-            fetch(`${apiBaseUrl}/members/public/search?limit=6&search=${encodedQuery}`, {
-              signal: controller.signal,
-            }),
-            fetch(`${apiBaseUrl}/members/public/service-chaplains`, {
-              signal: controller.signal,
-            }),
-          ]);
+            },
+          ),
+          fetch(`${apiBaseUrl}/members/public/service-chaplains`, {
+            signal: controller.signal,
+          }),
+        ]);
 
         const nextResults: SearchResult[] = [];
 
         if (newsResponse.ok) {
-          const payload = (await newsResponse.json()) as PublicNewsBlogsResponse;
+          const payload =
+            (await newsResponse.json()) as PublicNewsBlogsResponse;
           nextResults.push(
             ...payload.data.map((item) => ({
               id: `news-${item.id}`,
@@ -273,7 +295,8 @@ export const SearchContainer = ({ isOpen, onClose }: SearchContainerProps) => {
               ]
                 .filter(Boolean)
                 .join(", ");
-              const officeTitle = member.officerAssignments[0]?.officeTitle.name;
+              const officeTitle =
+                member.officerAssignments[0]?.officeTitle.name;
               const memberLabel = member.memberType
                 .toLowerCase()
                 .split("_")
@@ -343,7 +366,10 @@ export const SearchContainer = ({ isOpen, onClose }: SearchContainerProps) => {
 
         setDynamicResults(nextResults);
       } catch (searchError) {
-        if (searchError instanceof DOMException && searchError.name === "AbortError") {
+        if (
+          searchError instanceof DOMException &&
+          searchError.name === "AbortError"
+        ) {
           return;
         }
 
@@ -446,7 +472,8 @@ export const SearchContainer = ({ isOpen, onClose }: SearchContainerProps) => {
             <div className="mt-8 border border-white/15 bg-white/6 px-5 py-8 text-center">
               <p className="font-serif text-2xl">No results found</p>
               <p className="mt-2 text-sm text-white/70">
-                Try shorter keyword or search by page, news title, location, or member name.
+                Try shorter keyword or search by page, news title, location, or
+                member name.
               </p>
             </div>
           ) : (

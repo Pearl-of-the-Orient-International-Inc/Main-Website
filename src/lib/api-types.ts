@@ -270,3 +270,47 @@ export interface PublicNewsBlogResponse {
   message: string;
   data: PublicNewsBlog;
 }
+
+export type PublicBulletinType =
+  | "NOTICE"
+  | "ANNOUNCEMENT"
+  | "MEMO"
+  | "EVENT"
+  | "OTHER";
+
+export interface PublicBulletinEntry {
+  id: string;
+  title: string;
+  content: string;
+  type: PublicBulletinType;
+  status: "PUBLISHED";
+  publicationDate: string | null;
+  scheduledAt: string | null;
+  authorName: string | null;
+  issuingOffice: string | null;
+  featuredImageUrl: string | null;
+  featuredImageFileName: string | null;
+  attachmentUrl: string | null;
+  attachmentFileName: string | null;
+  attachmentMimeType: string | null;
+  createdAt: string;
+  updatedAt: string;
+  authorUser: {
+    id: string;
+    name: string;
+    email: string;
+    avatar: string | null;
+  } | null;
+}
+
+export interface PublicBulletinEntriesResponse {
+  code: string;
+  message: string;
+  data: PublicBulletinEntry[];
+}
+
+export interface PublicBulletinEntryResponse {
+  code: string;
+  message: string;
+  data: PublicBulletinEntry;
+}
