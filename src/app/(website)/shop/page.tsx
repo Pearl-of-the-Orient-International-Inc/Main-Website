@@ -1,9 +1,56 @@
-import Link from 'next/link'
-import React from 'react'
+import Link from "next/link";
 
-import ShopProducts from './ShopProducts'
+import ShopProducts from "./ShopProducts";
+import type {
+  PaymentFeePolicies,
+  PaymentFeePoliciesResponse,
+  PublicShopProductsResponse,
+  ShopProduct,
+} from "./products";
 
-const Page = () => {
+const apiBaseUrl =
+  process.env.NODE_ENV === "development"
+    ? process.env.NEXT_PUBLIC_API_BASE_URL_DEV
+    : process.env.NEXT_PUBLIC_API_BASE_URL_PROD;
+
+async function getPublicProducts(): Promise<ShopProduct[]> {
+  if (!apiBaseUrl) return [];
+
+  try {
+    const response = await fetch(`${apiBaseUrl}/chaplain-products/public`, {
+      next: { revalidate: 60 },
+    });
+    if (!response.ok) return [];
+    const payload = (await response.json()) as PublicShopProductsResponse;
+    return payload.data;
+  } catch {
+    return [];
+  }
+}
+
+async function getPaymentFeePolicies(): Promise<PaymentFeePolicies> {
+  const fallback = {
+    XENDIT: { percent: 3.5, fixed: 11 },
+    PAYPAL: { percent: 4.4, fixed: 15 },
+  };
+  if (!apiBaseUrl) return fallback;
+  try {
+    const response = await fetch(`${apiBaseUrl}/payments/public/fees`, {
+      next: { revalidate: 300 },
+    });
+    if (!response.ok) return fallback;
+    const payload = (await response.json()) as PaymentFeePoliciesResponse;
+    return payload.data;
+  } catch {
+    return fallback;
+  }
+}
+
+const Page = async () => {
+  const [products, paymentFeePolicies] = await Promise.all([
+    getPublicProducts(),
+    getPaymentFeePolicies(),
+  ]);
   return (
     <div>
       {/* Hero / Banner */}
@@ -16,9 +63,7 @@ const Page = () => {
           <p className="text-xs sm:text-sm text-white/70 mb-2">
             <Link href="/">Home</Link>{" "}
             <span className="mx-1 sm:mx-2 text-white/50">/</span>{" "}
-            <span className="font-medium text-white">
-              Chaplain Products
-            </span>
+            <span className="font-medium text-white">Chaplain Products</span>
           </p>
           <h1 className="font-serif text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-semibold tracking-wide">
             Chaplain Products
@@ -32,9 +77,12 @@ const Page = () => {
         </div>
       </section>
 
-      <ShopProducts />
+      <ShopProducts
+        products={products}
+        paymentFeePolicies={paymentFeePolicies}
+      />
     </div>
-  )
-}
+  );
+};
 
-export default Page
+export default Page;

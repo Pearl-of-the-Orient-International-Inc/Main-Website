@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import React from "react";
 import {
   Banknote,
@@ -27,14 +26,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
+import { useOptionalCurrentUserQuery } from "@/features/auth/auth.hooks";
+import { api, toApiError } from "@/lib/http-client";
 import { cn } from "@/lib/utils";
-import { products, type ShopProduct } from "./products";
+import type {
+  CreateShopOrderPayload,
+  CreateShopOrderResponse,
+  PaymentFeePolicies,
+  ShopProduct,
+} from "./products";
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat("en-PH", {
@@ -72,78 +80,149 @@ const OptionCard = ({
   </button>
 );
 
-const ShopProducts = () => {
+const stockLabels: Record<ShopProduct["stockStatus"], string> = {
+  IN_STOCK: "In stock",
+  LOW_STOCK: "Low stock",
+  OUT_OF_STOCK: "Out of stock",
+};
+
+const ShopProducts = ({
+  products,
+  paymentFeePolicies,
+}: {
+  products: ShopProduct[];
+  paymentFeePolicies: PaymentFeePolicies;
+}) => {
   const { toast } = useToast();
+  const { data: currentUser } = useOptionalCurrentUserQuery();
   const [selectedProduct, setSelectedProduct] =
     React.useState<ShopProduct | null>(null);
   const [quantity, setQuantity] = React.useState(1);
   const [paymentMethod, setPaymentMethod] = React.useState<"cash" | "online">(
     "cash",
   );
+  const [paymentGateway, setPaymentGateway] = React.useState<
+    "XENDIT" | "PAYPAL"
+  >("XENDIT");
   const [fulfillment, setFulfillment] = React.useState<"deliver" | "pickup">(
     "deliver",
   );
   const [isSubmitting, setIsSubmitting] = React.useState(false);
+  const [customerName, setCustomerName] = React.useState("");
+  const [customerEmail, setCustomerEmail] = React.useState("");
+  const [customerPhone, setCustomerPhone] = React.useState("");
+  const [deliveryAddress, setDeliveryAddress] = React.useState("");
+  const [customerNotes, setCustomerNotes] = React.useState("");
 
   const subtotal = selectedProduct ? selectedProduct.price * quantity : 0;
   const tax = subtotal * 0.12;
-  const total = subtotal + tax;
+  const feePolicy = paymentFeePolicies[paymentGateway];
+  const platformFee =
+    paymentMethod === "online"
+      ? Number(
+          (
+            (subtotal + tax) * (feePolicy.percent / 100) +
+            feePolicy.fixed
+          ).toFixed(2),
+        )
+      : 0;
+  const total = subtotal + tax + platformFee;
 
   const handleOpenOrder = (product: ShopProduct) => {
+    if (!product.isAvailable) return;
     setSelectedProduct(product);
     setQuantity(1);
     setPaymentMethod("cash");
+    setPaymentGateway("XENDIT");
     setFulfillment("deliver");
+    setCustomerName(currentUser?.name ?? "");
+    setCustomerEmail(currentUser?.email ?? "");
+    setCustomerPhone("");
+    setDeliveryAddress("");
+    setCustomerNotes("");
   };
 
   const handleSubmitOrder = async () => {
     if (!selectedProduct || isSubmitting) return;
 
-    if (paymentMethod === "cash") {
+    if (
+      !customerName.trim() ||
+      !customerEmail.trim() ||
+      !customerPhone.trim()
+    ) {
       toast({
-        title: "Order request submitted",
-        description:
-          "Your cash order request was recorded for review. Our team will contact you once approved.",
-        variant: "success",
+        title: "Customer details required",
+        description: "Enter your name, email address, and contact number.",
+        variant: "error",
       });
-      setSelectedProduct(null);
+      return;
+    }
+
+    if (fulfillment === "deliver" && !deliveryAddress.trim()) {
+      toast({
+        title: "Delivery address required",
+        description: "Enter the address where the order should be delivered.",
+        variant: "error",
+      });
       return;
     }
 
     setIsSubmitting(true);
 
     try {
-      const response = await fetch("/api/shop/polar-checkout", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          productId: selectedProduct.id,
-          quantity,
-          fulfillment,
-        }),
-      });
-
-      const data = (await response.json()) as {
-        checkoutUrl?: string;
-        error?: string;
+      const payload: CreateShopOrderPayload = {
+        productId: selectedProduct.id,
+        quantity,
+        customerName: customerName.trim(),
+        customerEmail: customerEmail.trim(),
+        customerPhone: customerPhone.trim(),
+        fulfillmentMethod: fulfillment === "deliver" ? "DELIVERY" : "PICKUP",
+        deliveryAddress:
+          fulfillment === "deliver" ? deliveryAddress.trim() : null,
+        customerNotes: customerNotes.trim() || null,
+        paymentMethod: paymentMethod === "online" ? "ONLINE" : "CASH",
+        paymentGateway: paymentMethod === "online" ? paymentGateway : null,
       };
+      const { data: orderResponse } = await api.post<CreateShopOrderResponse>(
+        "/chaplain-product-orders/public",
+        payload,
+      );
+      const order = orderResponse.data;
 
-      if (!response.ok || !data.checkoutUrl) {
-        throw new Error(data.error ?? "Unable to start checkout.");
+      if (paymentMethod === "cash") {
+        toast({
+          title: "Order request submitted",
+          description: `${order.orderNumber} was recorded. Our team will contact you after review.`,
+          variant: "success",
+        });
+        setSelectedProduct(null);
+        return;
       }
 
-      window.location.href = data.checkoutUrl;
+      const { data: checkoutResponse } = await api.post<{
+        data: { checkoutUrl: string; reference: string };
+      }>(
+        `/payments/public/chaplain-orders/${encodeURIComponent(order.id)}/checkout`,
+        {
+          orderId: order.id,
+          checkoutToken: order.checkoutToken,
+        },
+      );
+      window.location.href = checkoutResponse.data.checkoutUrl;
     } catch (error) {
-      toast({
-        title: "Checkout unavailable",
-        description:
-          error instanceof Error
+      const apiError = toApiError(error);
+      const message =
+        apiError.code !== "UNKNOWN_ERROR"
+          ? apiError.message
+          : error instanceof Error
             ? error.message
-            : "Please try again or contact the admin team.",
+            : undefined;
+      toast({
+        title: "Order could not be submitted",
+        description: message ?? "Please try again or contact the admin team.",
         variant: "error",
       });
+    } finally {
       setIsSubmitting(false);
     }
   };
@@ -167,37 +246,63 @@ const ShopProducts = () => {
             <div className="hidden h-px flex-1 bg-zinc-200 sm:block" />
           </div>
 
-          <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
-            {products.map((product) => (
-              <article
-                key={product.name}
-                className="rounded-md border border-zinc-200 bg-white p-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
-              >
-                <div className="relative mx-auto mb-4 aspect-square w-full max-w-28">
-                  <Image
-                    src={product.image}
-                    alt={product.name}
-                    fill
-                    sizes="112px"
-                    className="object-contain"
-                  />
-                </div>
-                <h3 className="min-h-10 text-sm font-semibold leading-tight text-zinc-900">
-                  {product.name}
-                </h3>
-                <p className="mt-1 text-sm font-semibold text-zinc-700">
-                  {formatPrice(product.price)}
-                </p>
-                <button
-                  type="button"
-                  onClick={() => handleOpenOrder(product)}
-                  className="mt-3 inline-flex h-8 w-full items-center justify-center rounded bg-[#032a0d] px-3 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-[#064016]"
+          {products.length ? (
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
+              {products.map((product) => (
+                <article
+                  key={product.id}
+                  className="rounded-md border border-zinc-200 bg-white p-4 text-center shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
                 >
-                  Request Order
-                </button>
-              </article>
-            ))}
-          </div>
+                  <div className="relative mx-auto mb-4 aspect-square w-full max-w-28 overflow-hidden">
+                    {/* Administrator-provided images may use any HTTPS host. */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={product.imageUrl}
+                      alt={product.name}
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                  <h3 className="min-h-10 text-sm font-semibold leading-tight text-zinc-900">
+                    {product.name}
+                  </h3>
+                  <p className="mt-1 text-sm font-semibold text-zinc-700">
+                    {formatPrice(product.price)}
+                  </p>
+                  <p
+                    className={cn(
+                      "mt-2 text-xs font-semibold",
+                      product.stockStatus === "IN_STOCK" && "text-emerald-700",
+                      product.stockStatus === "LOW_STOCK" && "text-amber-700",
+                      product.stockStatus === "OUT_OF_STOCK" && "text-red-700",
+                    )}
+                  >
+                    {stockLabels[product.stockStatus]}
+                    {product.stockStatus !== "OUT_OF_STOCK"
+                      ? ` · ${product.stockQuantity} available`
+                      : ""}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => handleOpenOrder(product)}
+                    disabled={!product.isAvailable}
+                    className="mt-3 inline-flex h-8 w-full items-center justify-center rounded bg-[#032a0d] px-3 text-xs font-bold uppercase tracking-wide text-white transition hover:bg-[#064016] disabled:cursor-not-allowed disabled:bg-zinc-300 disabled:text-zinc-600"
+                  >
+                    {product.isAvailable ? "Request Order" : "Unavailable"}
+                  </button>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="rounded-md border border-dashed border-zinc-300 bg-zinc-50 px-6 py-16 text-center">
+              <p className="font-serif text-2xl text-[#032a0d]">
+                No products available
+              </p>
+              <p className="mt-2 text-sm text-zinc-600">
+                Active chaplain products will appear here once added by an
+                administrator.
+              </p>
+            </div>
+          )}
 
           <div className="mx-auto mt-8 flex max-w-2xl items-start gap-4 rounded-md border border-zinc-200 bg-white p-5 shadow-sm">
             <div className="flex size-11 shrink-0 items-center justify-center rounded-full bg-[#032a0d] text-white">
@@ -241,12 +346,11 @@ const ShopProducts = () => {
                   </h3>
                   <div className="flex items-center gap-4 border-b border-zinc-200 pb-5">
                     <div className="relative size-20 shrink-0">
-                      <Image
-                        src={selectedProduct.image}
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={selectedProduct.imageUrl}
                         alt={selectedProduct.name}
-                        fill
-                        sizes="80px"
-                        className="object-contain"
+                        className="h-full w-full object-contain"
                       />
                     </div>
                     <div>
@@ -278,8 +382,16 @@ const ShopProducts = () => {
                         </span>
                         <button
                           type="button"
-                          onClick={() => setQuantity((current) => current + 1)}
-                          className="flex items-center justify-center border-l border-zinc-200 hover:bg-zinc-100"
+                          onClick={() =>
+                            setQuantity((current) =>
+                              Math.min(
+                                selectedProduct.stockQuantity,
+                                current + 1,
+                              ),
+                            )
+                          }
+                          disabled={quantity >= selectedProduct.stockQuantity}
+                          className="flex items-center justify-center border-l border-zinc-200 hover:bg-zinc-100 disabled:cursor-not-allowed disabled:opacity-40"
                           aria-label="Increase quantity"
                         >
                           <Plus className="size-4" aria-hidden="true" />
@@ -297,7 +409,34 @@ const ShopProducts = () => {
 
                 <section>
                   <h3 className="mb-4 text-xs font-bold uppercase tracking-wide text-zinc-800">
-                    2. Payment Method
+                    2. Customer Details
+                  </h3>
+                  <div className="space-y-3">
+                    <Input
+                      value={customerName}
+                      onChange={(event) => setCustomerName(event.target.value)}
+                      placeholder="Full name"
+                      autoComplete="name"
+                    />
+                    <Input
+                      type="email"
+                      value={customerEmail}
+                      onChange={(event) => setCustomerEmail(event.target.value)}
+                      placeholder="Email address"
+                      autoComplete="email"
+                    />
+                    <Input
+                      value={customerPhone}
+                      onChange={(event) => setCustomerPhone(event.target.value)}
+                      placeholder="Contact number"
+                      autoComplete="tel"
+                    />
+                  </div>
+                </section>
+
+                <section>
+                  <h3 className="mb-4 text-xs font-bold uppercase tracking-wide text-zinc-800">
+                    3. Payment Method
                   </h3>
                   <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                     <OptionCard
@@ -326,11 +465,37 @@ const ShopProducts = () => {
                       </span>
                     </OptionCard>
                   </div>
+                  {paymentMethod === "online" && (
+                    <div className="mt-3">
+                      <Select
+                        value={paymentGateway}
+                        onValueChange={(value) =>
+                          setPaymentGateway(value as "XENDIT" | "PAYPAL")
+                        }
+                      >
+                        <SelectTrigger className="h-11 w-full">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="z-999">
+                          <SelectItem value="XENDIT">
+                            Xendit — Local payment methods
+                          </SelectItem>
+                          <SelectItem value="PAYPAL">
+                            PayPal — International payment
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="mt-2 text-xs text-zinc-500">
+                        Test checkout. Payment is confirmed only after a
+                        verified provider webhook.
+                      </p>
+                    </div>
+                  )}
                 </section>
 
                 <section>
                   <h3 className="mb-4 text-xs font-bold uppercase tracking-wide text-zinc-800">
-                    3. Fulfillment Option
+                    4. Fulfillment Option
                   </h3>
                   <div className="space-y-3">
                     <Select
@@ -377,12 +542,28 @@ const ShopProducts = () => {
                         </div>
                       )}
                     </div>
+                    {fulfillment === "deliver" && (
+                      <Textarea
+                        value={deliveryAddress}
+                        onChange={(event) =>
+                          setDeliveryAddress(event.target.value)
+                        }
+                        placeholder="Complete delivery address"
+                        rows={3}
+                      />
+                    )}
+                    <Textarea
+                      value={customerNotes}
+                      onChange={(event) => setCustomerNotes(event.target.value)}
+                      placeholder="Order notes (optional)"
+                      rows={3}
+                    />
                   </div>
                 </section>
 
                 <section className="border-t border-zinc-200 pt-5">
                   <h3 className="mb-4 text-xs font-bold uppercase tracking-wide text-zinc-800">
-                    4. Price Summary
+                    5. Price Summary
                   </h3>
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between gap-4">
@@ -425,6 +606,31 @@ const ShopProducts = () => {
                       <span>Tax (12%)</span>
                       <span>{formatPrice(tax)}</span>
                     </div>
+                    {paymentMethod === "online" && (
+                      <div className="flex justify-between gap-4">
+                        <span className="flex items-center gap-1.5">
+                          Platform fee (
+                          {paymentGateway === "XENDIT" ? "Xendit" : "PayPal"})
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <button
+                                type="button"
+                                aria-label="Platform fee explanation"
+                              >
+                                <Info className="size-3.5 text-zinc-500" />
+                              </button>
+                            </TooltipTrigger>
+                            <TooltipContent className="z-999 max-w-72 bg-zinc-950 text-white">
+                              {feePolicy.percent}% +{" "}
+                              {formatPrice(feePolicy.fixed)}. The configured fee
+                              can be updated to match your approved merchant
+                              pricing.
+                            </TooltipContent>
+                          </Tooltip>
+                        </span>
+                        <span>{formatPrice(platformFee)}</span>
+                      </div>
+                    )}
                     <div className="flex justify-between gap-4 border-t border-zinc-200 pt-3 font-bold text-zinc-950">
                       <span>Total</span>
                       <span>{formatPrice(total)}</span>
