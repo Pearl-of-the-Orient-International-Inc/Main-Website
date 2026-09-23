@@ -116,7 +116,7 @@ export const SignUpForm = () => {
                 className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 lg:w-24 lg:h-24 xl:w-25 xl:h-25"
               />
               <div className="mt-1 sm:mt-2 text-xs sm:text-sm md:text-base lg:text-lg xl:text-xl font-serif">
-                PEARL OF THE ORIENT INTERNATIONAL AUXILARY
+                PEARL OF THE ORIENT INTERNATIONAL AUXILIARY
               </div>
               <div className="font-serif text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-lg px-2">
                 CHAPLAIN VALUES EDUCATORS INC.

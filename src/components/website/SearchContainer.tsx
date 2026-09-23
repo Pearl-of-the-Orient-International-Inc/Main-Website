@@ -410,7 +410,7 @@ export const SearchContainer = ({ isOpen, onClose }: SearchContainerProps) => {
               className="size-16 sm:size-20 md:size-24"
             />
             <div className="mt-3 max-w-full text-sm font-serif sm:text-lg md:text-2xl">
-              PEARL OF THE ORIENT INTERNATIONAL AUXILARY
+              PEARL OF THE ORIENT INTERNATIONAL AUXILIARY
             </div>
             <div className="text-xs font-serif sm:text-base md:text-xl">
               CHAPLAIN VALUES EDUCATORS INC.

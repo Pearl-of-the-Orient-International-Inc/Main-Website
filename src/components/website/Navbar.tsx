@@ -64,7 +64,7 @@ export const Navbar = () => {
                 className="lg:size-32 size-20"
               />
               <div className="mt-3 text-xs sm:text-sm md:text-base lg:text-lg xl:text-2xl font-serif px-2">
-                PEARL OF THE ORIENT INTERNATIONAL AUXILARY
+                PEARL OF THE ORIENT INTERNATIONAL AUXILIARY
               </div>
               <div className="font-serif text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-xl px-2">
                 CHAPLAIN VALUES EDUCATORS INC.
@@ -77,7 +77,7 @@ export const Navbar = () => {
               className={`absolute left-1/2 top-1/2 -translate-x-1/2 cursor-pointer -translate-y-1/2 text-center transition-all duration-300 max-w-[90%] pointer-events-auto opacity-100`}
             >
               <div className="font-serif text-[8px] sm:text-[10px] md:text-xs lg:text-sm xl:text-base tracking-wide px-2 wrap-break-word">
-                PEARL OF THE ORIENT INTERNATIONAL AUXILARY CHAPLAIN VALUES
+                PEARL OF THE ORIENT INTERNATIONAL AUXILIARY CHAPLAIN VALUES
                 EDUCATORS INC.
               </div>
             </div>
@@ -136,7 +136,7 @@ export const Navbar = () => {
               className="lg:size-32 size-20"
             />
             <div className="mt-3 text-xs sm:text-sm md:text-base lg:text-lg xl:text-2xl font-serif px-2">
-              PEARL OF THE ORIENT INTERNATIONAL AUXILARY
+              PEARL OF THE ORIENT INTERNATIONAL AUXILIARY
             </div>
             <div className="font-serif text-[10px] sm:text-xs md:text-sm lg:text-base xl:text-xl px-2">
               CHAPLAIN VALUES EDUCATORS INC.
@@ -153,7 +153,7 @@ export const Navbar = () => {
             }`}
           >
             <div className="font-serif text-[8px] sm:text-[10px] md:text-xs lg:text-sm xl:text-base tracking-wide px-2 wrap-break-word">
-              PEARL OF THE ORIENT INTERNATIONAL AUXILARY CHAPLAIN VALUES
+              PEARL OF THE ORIENT INTERNATIONAL AUXILIARY CHAPLAIN VALUES
               EDUCATORS INC.
             </div>
           </div>

@@ -1,18 +1,11 @@
 import Link from "next/link";
 import {
   ArrowRight,
-  BriefcaseBusiness,
-  Check,
-  Search,
-  Shield,
 } from "lucide-react";
 
-import { ChaplainDirectory } from "./ChaplainDirectory";
+import { BookAServiceContent } from "./BookAServiceContent";
 import {
   bookingSteps,
-  branches,
-  serviceTypes,
-  values,
 } from "./book-a-service-data";
 import type {
   PublicServiceChaplain,
@@ -31,7 +24,7 @@ async function getServiceChaplains(): Promise<PublicServiceChaplain[]> {
 
   try {
     const response = await fetch(`${apiBaseUrl}/members/public/service-chaplains`, {
-      next: { revalidate: 300 },
+      cache: "no-store",
     });
 
     if (!response.ok) {
@@ -50,8 +43,19 @@ async function getServiceChaplains(): Promise<PublicServiceChaplain[]> {
   }
 }
 
+async function getServices(): Promise<Array<{ id: string; name: string; description: string; availability: string | null }>> {
+  if (!apiBaseUrl) return [];
+  try {
+    const response = await fetch(`${apiBaseUrl}/chaplain-services/public`, { cache: "no-store" });
+    if (!response.ok) return [];
+    const payload = await response.json() as { data?: Array<{ id: string; name: string; description: string; availability: string | null }> };
+    return payload.data ?? [];
+  } catch { return []; }
+}
+
 const Page = async () => {
   const chaplains = await getServiceChaplains();
+  const services = await getServices();
 
   return (
     <div className="">
@@ -102,7 +106,7 @@ const Page = async () => {
         </div>
       </section>
 
-      <main className="mx-auto grid max-w-7xl gap-7 px-4 py-8 sm:px-6 lg:grid-cols-[340px_1fr] lg:px-8">
+      {/* <main className="mx-auto grid max-w-7xl gap-7 px-4 py-8 sm:px-6 lg:grid-cols-[340px_1fr] lg:px-8">
         <aside className="space-y-5">
           <section className="rounded-md border border-zinc-200 bg-white p-5 shadow-sm">
             <h2 className="text-sm font-bold uppercase tracking-wide">
@@ -263,7 +267,8 @@ const Page = async () => {
             </div>
           </div>
         </section>
-      </main>
+      </main> */}
+      <BookAServiceContent services={services} chaplains={chaplains} />
     </div>
   );
 };

@@ -431,12 +431,12 @@ export async function downloadPublicProfilePdf({
         ]
       : []),
     ...member.certificates.map((certificate) => [
-      certificate.title,
-      certificate.credentialId,
+      `${formatEnumLabel(certificate.type)}: ${certificate.title}`,
+      certificate.referenceNumber,
       formatDate(certificate.dateReceived),
     ]),
   ];
-  drawTable(ctx, ["Title", "Credential ID", "Date"], certificateRows, [245, 145, 110]);
+  drawTable(ctx, ["Title", "Reference", "Date"], certificateRows, [245, 145, 110]);
 
   drawSectionTitle(ctx, "Approved Public Documents");
   drawTable(

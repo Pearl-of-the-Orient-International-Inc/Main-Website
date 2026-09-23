@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { isValidPhoneNumber } from "libphonenumber-js/max";
 import {
   ArrowLeft,
   CheckCircle2,
@@ -57,6 +58,8 @@ const getFirstNonEmpty = (...values: Array<string | undefined>): string | null =
   }
   return null;
 };
+
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const splitRegionSummary = (
   summary: string,
@@ -185,6 +188,63 @@ class MembershipFormValidationError extends Error {
   }
 }
 
+const API_FIELD_TO_FORM_FIELD: Record<string, keyof ApplicationFormState> = {
+  email: "emailAddress",
+  firstName: "firstName",
+  middleInitial: "middleInitial",
+  lastName: "lastName",
+  extensionName: "extensionName",
+  mobilePhoneNumber: "phoneNumber",
+  homeAddress: "address",
+  civilStatus: "civilStatus",
+  gender: "gender",
+  nationality: "nationality",
+  dateOfBirth: "birthday",
+  region: "regionProvince",
+  province: "regionProvince",
+  municipalityCity: "regionProvince",
+  barangay: "regionProvince",
+  emergencyContactName: "emergencyName",
+  emergencyContactMobile: "emergencyCellphone",
+  churchAffiliation: "churchOrganizationAffiliation",
+  churchAddress: "churchAddress",
+  currentPositionRole: "position",
+  currentPositionRoleOther: "positionOthers",
+  elementarySchool: "elementarySchool",
+  secondarySchool: "secondarySchool",
+  tertiaryCollege: "tertiarySchool",
+  postGraduateStudies: "postGraduateStudies",
+  ministerialExperiences: "ministerialWorkExperience",
+  characterReferences: "characterReferences",
+  signature: "signatureUrl",
+};
+
+const getApiValidationError = (
+  errors: Array<{ path: string; message: string }> | undefined,
+): MembershipFormValidationError | null => {
+  if (!errors?.length) return null;
+
+  const fieldErrors: ApplicationFieldErrors = {};
+  const descriptions: string[] = [];
+
+  for (const issue of errors) {
+    const apiField = issue.path.split(".")[0];
+    const formField = API_FIELD_TO_FORM_FIELD[apiField];
+    const label = apiField.replace(/([A-Z])/g, " $1").trim();
+
+    if (formField && !fieldErrors[formField]) {
+      fieldErrors[formField] = issue.message;
+    }
+
+    descriptions.push(`${label}: ${issue.message}`);
+  }
+
+  return new MembershipFormValidationError(
+    `Please correct the highlighted field${errors.length === 1 ? "" : "s"}: ${descriptions.join("; ")}`,
+    fieldErrors,
+  );
+};
+
 const getApplyPayloadValidationError = (
   form: ApplicationFormState,
 ): MembershipFormValidationError | null => {
@@ -202,6 +262,15 @@ const getApplyPayloadValidationError = (
     return new MembershipFormValidationError("Email address is required.", {
       emailAddress: "Email address is required.",
     });
+  }
+  if (!EMAIL_PATTERN.test(form.emailAddress.trim())) {
+    return new MembershipFormValidationError(
+      "Enter a valid email address from any email provider.",
+      {
+        emailAddress:
+          "Enter a valid email address, such as Gmail, Yahoo, Outlook, or your organization email.",
+      },
+    );
   }
   if (!form.gender) {
     return new MembershipFormValidationError("Gender is required.", {
@@ -223,6 +292,14 @@ const getApplyPayloadValidationError = (
       phoneNumber: "Mobile / phone number is required.",
     });
   }
+  if (!isValidPhoneNumber(form.phoneNumber)) {
+    return new MembershipFormValidationError(
+      "Enter a valid international mobile or phone number.",
+      {
+        phoneNumber: "Select the country code and enter a valid phone number.",
+      },
+    );
+  }
   if (!form.address.trim()) {
     return new MembershipFormValidationError("Home address is required.", {
       address: "Home address is required.",
@@ -242,6 +319,15 @@ const getApplyPayloadValidationError = (
     return new MembershipFormValidationError("Emergency contact mobile is required.", {
       emergencyCellphone: "Emergency contact mobile is required.",
     });
+  }
+  if (!isValidPhoneNumber(form.emergencyCellphone)) {
+    return new MembershipFormValidationError(
+      "Enter a valid international emergency contact number.",
+      {
+        emergencyCellphone:
+          "Select the country code and enter a valid emergency contact number.",
+      },
+    );
   }
   const endorsedBy = form.characterReferences[0];
   if (
@@ -337,7 +423,7 @@ const mapFormToApplyPayload = (
     );
 
   return {
-    email: form.emailAddress.trim(),
+    email: form.emailAddress.trim().toLowerCase(),
     firstName: form.firstName.trim(),
     middleInitial: form.middleInitial.trim() || undefined,
     lastName: form.lastName.trim(),
@@ -432,6 +518,11 @@ export function BecomeMemberWizard() {
       );
     } catch (error) {
       const apiError = toApiError(error);
+      const validationError = getApiValidationError(apiError.errors);
+      if (validationError) {
+        throw validationError;
+      }
+
       const message =
         apiError.message ??
         (error instanceof Error ? error.message : "Submission failed.");

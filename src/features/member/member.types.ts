@@ -48,6 +48,27 @@ export interface ApplyMemberRequest {
   };
 }
 
+export interface ChaplainServiceAvailabilitySlot {
+  id: string;
+  startsAt: string;
+  endsAt: string;
+  note: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ChaplainServiceAvailabilityResponse {
+  code: string;
+  message: string;
+  data: ChaplainServiceAvailabilitySlot[];
+}
+
+export interface CreateChaplainServiceAvailabilityRequest {
+  startsAt: string;
+  endsAt: string;
+  note?: string;
+}
+
 export interface MemberFollowState {
   isFollowing: boolean;
   followerCount: number;
@@ -238,6 +259,26 @@ export interface UpdateCurrentProfileBannerRequest {
   profileBannerPositionY?: number;
 }
 
+export interface MemberServiceLicenseData {
+  id: string;
+  uniqueId: string | null;
+  serviceLicenseUrl: string | null;
+  serviceLicenseFileName: string | null;
+  serviceLicenseMimeType: "image/png" | "application/pdf" | null;
+}
+
+export interface MemberServiceLicenseResponse {
+  code: string;
+  message: string;
+  data: MemberServiceLicenseData;
+}
+
+export interface UpdateMemberServiceLicenseRequest {
+  fileUrl: string;
+  fileName: string;
+  mimeType: "image/png" | "application/pdf";
+}
+
 export interface CurrentChurchAffiliationResponse {
   code: string;
   message: string;
@@ -297,10 +338,16 @@ export interface UpdateCurrentBranchServicesRequest {
 }
 
 export interface CreateCurrentMemberCertificateRequest {
+  type: MemberCertificateType;
   title: string;
+  issuer: string;
+  referenceNumber: string;
   certificateUrl: string;
   issuedAt: string;
+  expiresAt?: string | null;
 }
+
+export type MemberCertificateType = "CERTIFICATE" | "RECOGNITION";
 
 export type MemberPublicRecordType =
   | "REPORT_ACTIVITY"
@@ -356,9 +403,13 @@ export interface CreateCurrentMemberPublicRecordResponse {
 export interface MemberCertificateItem {
   id: string;
   credentialId: string;
+  type: MemberCertificateType;
   title: string;
+  issuer: string;
+  referenceNumber: string;
   certificateUrl: string;
   dateReceived: string;
+  expiresAt: string | null;
   createdAt: string;
 }
 

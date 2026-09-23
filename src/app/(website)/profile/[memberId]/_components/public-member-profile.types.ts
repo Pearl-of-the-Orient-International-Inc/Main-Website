@@ -7,6 +7,9 @@ export interface PublicMemberProfileResponse {
     badgeNumber: string | null;
     profileBannerUrl: string | null;
     profileBannerPositionY: number;
+    serviceLicenseUrl: string | null;
+    serviceLicenseFileName: string | null;
+    serviceLicenseMimeType: "image/png" | "application/pdf" | null;
     status: "PENDING" | "APPROVED" | "REJECTED";
     memberType:
       | "ASSOCIATE_CHAPLAIN"
@@ -88,9 +91,13 @@ export interface PublicMemberProfileResponse {
     } | null;
     certificates: Array<{
       credentialId: string;
+      type: "CERTIFICATE" | "RECOGNITION";
       title: string;
+      issuer: string;
+      referenceNumber: string;
       certificateUrl: string;
       dateReceived: string;
+      expiresAt: string | null;
     }>;
     publicRecords: Array<{
       id: string;

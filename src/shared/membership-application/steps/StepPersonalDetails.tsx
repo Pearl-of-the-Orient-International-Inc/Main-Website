@@ -11,12 +11,12 @@ import {
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 import { Field } from "../Field";
+import { InternationalPhoneInput } from "../InternationalPhoneInput";
 import type {
   ApplicationFieldErrors,
   ApplicationFormState,
   LocationCatalog,
 } from "../types";
-import { sanitizeMobileNumber } from "../utils";
 
 type LocationSelection = {
   regionId: number | null;
@@ -31,8 +31,6 @@ const EMPTY_LOCATION_SELECTION: LocationSelection = {
   municipalityId: null,
   barangayId: null,
 };
-
-const PHONE_PATTERN = "09[0-9]{9}";
 
 const normalize = (value: string) => value.trim().toLowerCase();
 
@@ -266,35 +264,35 @@ export function StepPersonalDetails({
               }
               placeholder="you@example.com"
               aria-invalid={Boolean(fieldErrors.emailAddress)}
-              // readOnly={emailMode === "locked"}
-              // aria-readonly={emailMode === "locked"}
-              // className={
-              //   emailMode === "locked"
-              //     ? "bg-neutral-100 text-neutral-700"
-              //     : undefined
-              // }
+              readOnly={emailMode === "locked"}
+              aria-readonly={emailMode === "locked"}
+              className={
+                emailMode === "locked"
+                  ? "bg-neutral-100 text-neutral-700"
+                  : undefined
+              }
             />
-            {/* {emailHelperText ? (
-              <p className="text-xs text-neutral-500">{emailHelperText}</p>
-            ) : null} */}
+            <p className="text-xs text-neutral-500">
+              {emailHelperText ??
+                "Gmail, Yahoo, Outlook, and other valid personal or organization email domains are accepted."}
+            </p>
           </div>
         </Field>
         <Field label="Mobile / phone number" required error={Boolean(fieldErrors.phoneNumber)}>
-          <Input
-            type="tel"
-            inputMode="numeric"
-            maxLength={11}
-            pattern={PHONE_PATTERN}
-            value={form.phoneNumber}
-            onChange={(event) =>
-              updateFieldAction(
-                "phoneNumber",
-                sanitizeMobileNumber(event.target.value),
-              )
-            }
-            placeholder="e.g. 09152479693"
-            aria-invalid={Boolean(fieldErrors.phoneNumber)}
-          />
+          <div className="space-y-1.5">
+            <InternationalPhoneInput
+              id="membership-phone-number"
+              value={form.phoneNumber}
+              onChange={(value) => updateFieldAction("phoneNumber", value)}
+              placeholder="e.g. 915 247 9693"
+              invalid={Boolean(fieldErrors.phoneNumber)}
+            />
+            <p className="text-xs text-neutral-500">
+              The length and formatting adjust to the selected country. Enter
+              the number without its domestic leading zero because the country
+              calling code replaces it.
+            </p>
+          </div>
         </Field>
       </div>
 
@@ -553,20 +551,12 @@ export function StepPersonalDetails({
           required
           error={Boolean(fieldErrors.emergencyCellphone)}
         >
-          <Input
-            type="tel"
-            inputMode="numeric"
-            maxLength={11}
-            pattern={PHONE_PATTERN}
+          <InternationalPhoneInput
+            id="emergency-phone-number"
             value={form.emergencyCellphone}
-            onChange={(event) =>
-              updateFieldAction(
-                "emergencyCellphone",
-                sanitizeMobileNumber(event.target.value),
-              )
-            }
-            placeholder="e.g. 09152479693"
-            aria-invalid={Boolean(fieldErrors.emergencyCellphone)}
+            onChange={(value) => updateFieldAction("emergencyCellphone", value)}
+            placeholder="e.g. 915 247 9693"
+            invalid={Boolean(fieldErrors.emergencyCellphone)}
           />
         </Field>
       </div>

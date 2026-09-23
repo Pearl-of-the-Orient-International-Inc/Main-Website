@@ -27,6 +27,7 @@ export interface UserPublic {
     id: string;
     uniqueId: string | null;
     status: "PENDING" | "APPROVED" | "REJECTED";
+    memberType: "ASSOCIATE_CHAPLAIN" | "PROFESSIONAL_CHAPLAIN" | "ORDAINED_AND_COMMISSIONED_PRACTITIONER" | "CERTIFIED_SPECIALIST_TRAINING_OFFICER_INSTRUCTOR";
     createdAt: string;
     onboardingProgress?: {
       currentStep:
@@ -131,6 +132,9 @@ export interface PublicServiceChaplain {
   municipalityCity: string | null;
   barangay: string | null;
   preferredBranchOther: string | null;
+  serviceLicenseUrl: string | null;
+  serviceLicenseFileName: string | null;
+  serviceLicenseMimeType: "image/png" | "application/pdf" | null;
   createdAt: string;
   user: {
     name: string;

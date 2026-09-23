@@ -43,6 +43,29 @@ import type {
   PaymentFeePolicies,
   ShopProduct,
 } from "./products";
+import { PayPalButton } from "./PayPalButton";
+
+const xenditPaymentLogos = [
+  ["Visa", "https://onemarketphilippines.com/icons/payments/visa-logo.svg"],
+  [
+    "Mastercard",
+    "https://onemarketphilippines.com/icons/payments/mastercard-logo.svg",
+  ],
+  ["GCash", "https://onemarketphilippines.com/icons/payments/gcash-logo.svg"],
+  [
+    "GrabPay",
+    "https://onemarketphilippines.com/icons/payments/grabpay-logo.svg",
+  ],
+  [
+    "QR Ph",
+    "https://onemarketphilippines.com/icons/payments/qrph-c567ff0f-ab6d-4662-86bf-24c6c731d8a8-logo.svg",
+  ],
+  [
+    "ShopeePay",
+    "https://onemarketphilippines.com/icons/payments/shopeepay-logo.svg",
+  ],
+  ["Maya", "https://onemarketphilippines.com/icons/payments/paymaya-logo.svg"],
+] as const;
 
 const formatPrice = (price: number) =>
   new Intl.NumberFormat("en-PH", {
@@ -89,9 +112,11 @@ const stockLabels: Record<ShopProduct["stockStatus"], string> = {
 const ShopProducts = ({
   products,
   paymentFeePolicies,
+  paypalClientId,
 }: {
   products: ShopProduct[];
   paymentFeePolicies: PaymentFeePolicies;
+  paypalClientId: string | null;
 }) => {
   const { toast } = useToast();
   const { data: currentUser } = useOptionalCurrentUserQuery();
@@ -113,6 +138,11 @@ const ShopProducts = ({
   const [customerPhone, setCustomerPhone] = React.useState("");
   const [deliveryAddress, setDeliveryAddress] = React.useState("");
   const [customerNotes, setCustomerNotes] = React.useState("");
+  const paypalCheckoutRef = React.useRef<{
+    reference: string;
+    checkoutToken: string;
+    gatewayReference: string;
+  } | null>(null);
 
   const subtotal = selectedProduct ? selectedProduct.price * quantity : 0;
   const tax = subtotal * 0.12;
@@ -140,7 +170,150 @@ const ShopProducts = ({
     setCustomerPhone("");
     setDeliveryAddress("");
     setCustomerNotes("");
+    paypalCheckoutRef.current = null;
   };
+
+  const validateCustomerDetails = React.useCallback(() => {
+    if (!selectedProduct) return false;
+    if (
+      !customerName.trim() ||
+      !customerEmail.trim() ||
+      !customerPhone.trim()
+    ) {
+      toast({
+        title: "Customer details required",
+        description: "Enter your name, email address, and contact number.",
+        variant: "error",
+      });
+      return false;
+    }
+    if (fulfillment === "deliver" && !deliveryAddress.trim()) {
+      toast({
+        title: "Delivery address required",
+        description: "Enter the address where the order should be delivered.",
+        variant: "error",
+      });
+      return false;
+    }
+    return true;
+  }, [
+    customerEmail,
+    customerName,
+    customerPhone,
+    deliveryAddress,
+    fulfillment,
+    selectedProduct,
+    toast,
+  ]);
+
+  const createPayPalOrder = React.useCallback(async () => {
+    if (paypalCheckoutRef.current)
+      return paypalCheckoutRef.current.gatewayReference;
+    if (!selectedProduct || !validateCustomerDetails())
+      throw new Error("Complete the required checkout details first");
+    setIsSubmitting(true);
+    try {
+      const payload: CreateShopOrderPayload = {
+        productId: selectedProduct.id,
+        quantity,
+        customerName: customerName.trim(),
+        customerEmail: customerEmail.trim(),
+        customerPhone: customerPhone.trim(),
+        fulfillmentMethod: fulfillment === "deliver" ? "DELIVERY" : "PICKUP",
+        deliveryAddress:
+          fulfillment === "deliver" ? deliveryAddress.trim() : null,
+        customerNotes: customerNotes.trim() || null,
+        paymentMethod: "ONLINE",
+        paymentGateway: "PAYPAL",
+      };
+      const { data: orderResponse } = await api.post<CreateShopOrderResponse>(
+        "/chaplain-product-orders/public",
+        payload,
+      );
+      const order = orderResponse.data;
+      const { data: checkoutResponse } = await api.post<{
+        data: { reference: string; gatewayReference: string };
+      }>(
+        `/payments/public/chaplain-orders/${encodeURIComponent(order.id)}/checkout`,
+        { orderId: order.id, checkoutToken: order.checkoutToken },
+      );
+      paypalCheckoutRef.current = {
+        reference: checkoutResponse.data.reference,
+        gatewayReference: checkoutResponse.data.gatewayReference,
+        checkoutToken: order.checkoutToken,
+      };
+      return checkoutResponse.data.gatewayReference;
+    } catch (error) {
+      const apiError = toApiError(error);
+      toast({
+        title: "PayPal checkout could not start",
+        description: apiError.message,
+        variant: "error",
+      });
+      throw error;
+    } finally {
+      setIsSubmitting(false);
+    }
+  }, [
+    customerEmail,
+    customerName,
+    customerNotes,
+    customerPhone,
+    deliveryAddress,
+    fulfillment,
+    quantity,
+    selectedProduct,
+    toast,
+    validateCustomerDetails,
+  ]);
+
+  const capturePayPalOrder = React.useCallback(async (orderId: string) => {
+    const checkout = paypalCheckoutRef.current;
+    if (!checkout) throw new Error("PayPal checkout details are missing");
+    setIsSubmitting(true);
+    try {
+      await api.post(
+        `/payments/public/paypal/${encodeURIComponent(orderId)}/capture`,
+        { checkoutToken: checkout.checkoutToken },
+      );
+      window.location.assign(
+        `/payment/success?reference=${encodeURIComponent(checkout.reference)}`,
+      );
+    } catch (error) {
+      window.location.assign(
+        `/payment/error?reason=capture_failed&reference=${encodeURIComponent(checkout.reference)}`,
+      );
+      throw error;
+    }
+  }, []);
+
+  const handlePayPalCancel = React.useCallback(() => {
+    const reference = paypalCheckoutRef.current?.reference;
+    window.location.assign(
+      `/payment/error?reason=cancelled${reference ? `&reference=${encodeURIComponent(reference)}` : ""}`,
+    );
+  }, []);
+
+  const handlePayPalError = React.useCallback(
+    (error: unknown) => {
+      const reference = paypalCheckoutRef.current?.reference;
+      if (reference) {
+        window.location.assign(
+          `/payment/error?reason=provider_error&reference=${encodeURIComponent(reference)}`,
+        );
+        return;
+      }
+      toast({
+        title: "PayPal unavailable",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Unable to load PayPal checkout.",
+        variant: "error",
+      });
+    },
+    [toast],
+  );
 
   const handleSubmitOrder = async () => {
     if (!selectedProduct || isSubmitting) return;
@@ -330,7 +503,7 @@ const ShopProducts = ({
           if (!open) setIsSubmitting(false);
         }}
       >
-        <SheetContent className="w-full overflow-y-auto z-999 p-0 sm:max-w-md">
+        <SheetContent className="w-full overflow-y-auto z-999 p-0 max-w-xl!">
           {selectedProduct && (
             <>
               <SheetHeader className="border-b px-5 py-5">
@@ -466,28 +639,79 @@ const ShopProducts = ({
                     </OptionCard>
                   </div>
                   {paymentMethod === "online" && (
-                    <div className="mt-3">
-                      <Select
-                        value={paymentGateway}
-                        onValueChange={(value) =>
-                          setPaymentGateway(value as "XENDIT" | "PAYPAL")
-                        }
+                    <div
+                      className="mt-3 space-y-3"
+                      role="radiogroup"
+                      aria-label="Payment provider"
+                    >
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={paymentGateway === "XENDIT"}
+                        onClick={() => setPaymentGateway("XENDIT")}
+                        className={cn(
+                          "relative w-full rounded-lg border p-4 text-left transition",
+                          paymentGateway === "XENDIT"
+                            ? "border-[#032a0d] bg-[#f7faf8] ring-1 ring-[#032a0d]"
+                            : "border-zinc-200 bg-white hover:border-zinc-300",
+                        )}
                       >
-                        <SelectTrigger className="h-11 w-full">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent className="z-999">
-                          <SelectItem value="XENDIT">
-                            Xendit — Local payment methods
-                          </SelectItem>
-                          <SelectItem value="PAYPAL">
-                            PayPal — International payment
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="mt-2 text-xs text-zinc-500">
+                        {paymentGateway === "XENDIT" && (
+                          <Check className="absolute right-3 top-3 size-5 rounded-full bg-[#032a0d] p-1 text-white" />
+                        )}
+                        <p className="font-semibold text-zinc-950">
+                          Xendit{" "}
+                          <span className="font-normal text-zinc-500">
+                            — Local payment methods
+                          </span>
+                        </p>
+                        <p className="mt-1 text-xs text-zinc-500">
+                          Cards, e-wallets, and QR Ph through secure hosted
+                          checkout.
+                        </p>
+                        <div className="mt-3 flex flex-wrap items-center gap-2">
+                          {xenditPaymentLogos.map(([name, src]) => (
+                            <span key={name}>
+                              {/* eslint-disable-next-line @next/next/no-img-element */}
+                              <img
+                                src={src}
+                                alt={name}
+                                className="max-h-5 max-w-12"
+                              />
+                            </span>
+                          ))}
+                        </div>
+                      </button>
+                      <button
+                        type="button"
+                        role="radio"
+                        aria-checked={paymentGateway === "PAYPAL"}
+                        onClick={() => setPaymentGateway("PAYPAL")}
+                        className={cn(
+                          "relative flex w-full items-center gap-4 rounded-lg border p-4 text-left transition",
+                          paymentGateway === "PAYPAL"
+                            ? "border-[#032a0d] bg-[#f7faf8] ring-1 ring-[#032a0d]"
+                            : "border-zinc-200 bg-white hover:border-zinc-300",
+                        )}
+                      >
+                        {paymentGateway === "PAYPAL" && (
+                          <Check className="absolute right-3 top-3 size-5 rounded-full bg-[#032a0d] p-1 text-white" />
+                        )}
+                        <span className="text-xl font-black italic tracking-tight text-[#003087]">
+                          Pay<span className="text-[#0070e0]">Pal</span>
+                        </span>
+                        <span>
+                          <span className="block font-semibold text-zinc-950">
+                            International payment
+                          </span>
+                          <span className="block text-xs text-zinc-500">
+                            Pay securely with your PayPal Sandbox account.
+                          </span>
+                        </span>
+                      </button>
+                      <p className="text-xs text-zinc-500">
                         Test checkout. Payment is confirmed only after a
-                        verified provider webhook.
+                        verified provider response or webhook.
                       </p>
                     </div>
                   )}
@@ -647,17 +871,29 @@ const ShopProducts = ({
                   </p>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleSubmitOrder}
-                  disabled={isSubmitting}
-                  className="flex h-11 w-full items-center justify-center gap-2 rounded bg-[#032a0d] px-4 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[#064016]"
-                >
-                  <Mail className="size-4" aria-hidden="true" />
-                  {isSubmitting
-                    ? "Preparing Checkout..."
-                    : "Submit Order Request"}
-                </button>
+                {paymentMethod === "online" && paymentGateway === "PAYPAL" ? (
+                  <PayPalButton
+                    clientId={paypalClientId}
+                    createOrder={createPayPalOrder}
+                    captureOrder={capturePayPalOrder}
+                    onCancel={handlePayPalCancel}
+                    onError={handlePayPalError}
+                  />
+                ) : (
+                  <button
+                    type="button"
+                    onClick={handleSubmitOrder}
+                    disabled={isSubmitting}
+                    className="flex h-11 w-full items-center justify-center gap-2 rounded bg-[#032a0d] px-4 text-sm font-bold uppercase tracking-wide text-white transition hover:bg-[#064016] disabled:opacity-60"
+                  >
+                    <Mail className="size-4" aria-hidden="true" />
+                    {isSubmitting
+                      ? "Preparing Checkout..."
+                      : paymentMethod === "online"
+                        ? "Continue to Xendit"
+                        : "Submit Order Request"}
+                  </button>
+                )}
                 <p className="text-center text-xs text-zinc-500">
                   By submitting, you agree to our terms and conditions.
                 </p>

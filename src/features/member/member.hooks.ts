@@ -6,12 +6,67 @@ import { uploadMemberRequirement } from "./member-requirement-upload.api";
 import { uploadMemberPaymentDocument } from "./member-payment-upload.api";
 import { uploadMemberProfileBanner } from "./member-profile-banner-upload.api";
 import { uploadMemberPublicRecordAttachments } from "./member-public-record-upload.api";
+import { uploadMemberServiceLicense } from "./member-service-license-upload.api";
 
 export const useApplyMemberMutation = () =>
   useMutation({
     mutationFn: memberApi.applyMember,
     throwOnError: false,
     meta: { feature: "member.apply" },
+  });
+
+export const usePublicChaplainServiceAvailabilityQuery = (
+  memberId: string,
+  enabled = true,
+) =>
+  useQuery({
+    queryKey: ["member", "service-availability", memberId],
+    queryFn: () => memberApi.getPublicChaplainServiceAvailability(memberId),
+    enabled,
+    staleTime: 30_000,
+  });
+
+export const useCreateChaplainServiceAvailabilityMutation = (memberId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: memberApi.createCurrentChaplainServiceAvailability,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["member", "service-availability", memberId] });
+    },
+    meta: { feature: "member.serviceAvailability.create" },
+  });
+};
+
+export const useDeleteChaplainServiceAvailabilityMutation = (memberId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: memberApi.deleteCurrentChaplainServiceAvailability,
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["member", "service-availability", memberId] });
+    },
+    meta: { feature: "member.serviceAvailability.delete" },
+  });
+};
+
+export const useUploadMemberServiceLicenseMutation = () =>
+  useMutation({
+    mutationFn: uploadMemberServiceLicense,
+    throwOnError: false,
+    meta: { feature: "member.serviceLicense.upload" },
+  });
+
+export const useUpdateCurrentMemberServiceLicenseMutation = () =>
+  useMutation({
+    mutationFn: memberApi.updateCurrentMemberServiceLicense,
+    throwOnError: false,
+    meta: { feature: "member.serviceLicense.update" },
+  });
+
+export const useDeleteCurrentMemberServiceLicenseMutation = () =>
+  useMutation({
+    mutationFn: memberApi.deleteCurrentMemberServiceLicense,
+    throwOnError: false,
+    meta: { feature: "member.serviceLicense.delete" },
   });
 
 export const useCurrentMemberRequirementsQuery = () =>

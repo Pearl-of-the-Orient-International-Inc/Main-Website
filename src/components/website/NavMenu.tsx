@@ -2,6 +2,7 @@
 
 import {
   ArrowRightIcon,
+  CalendarCheckIcon,
   ChevronRightIcon,
   LockKeyholeIcon,
   LogOutIcon,
@@ -494,6 +495,20 @@ export const NavMenu = () => {
                     <DropdownMenuItem disabled>
                       <SettingsIcon className="size-4" />
                       <span>No member profile linked</span>
+                    </DropdownMenuItem>
+                  )}
+                  <DropdownMenuItem asChild>
+                    <Link href="/my-bookings" onClick={closeMenu} className="flex w-full items-center gap-2">
+                      <CalendarCheckIcon className="size-4" />
+                      <span>My Bookings</span>
+                    </Link>
+                  </DropdownMenuItem>
+                  {currentUser?.memberProfile?.memberType === "PROFESSIONAL_CHAPLAIN" && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/ordination-application" onClick={closeMenu} className="flex w-full items-center gap-2">
+                        <BadgeCheckIcon className="size-4" />
+                        <span>Ordination Application</span>
+                      </Link>
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem asChild>

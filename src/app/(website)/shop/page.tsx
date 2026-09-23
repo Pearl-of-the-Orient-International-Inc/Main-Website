@@ -5,6 +5,7 @@ import type {
   PaymentFeePolicies,
   PaymentFeePoliciesResponse,
   PublicShopProductsResponse,
+  PublicPaymentConfigurationResponse,
   ShopProduct,
 } from "./products";
 
@@ -28,6 +29,18 @@ async function getPublicProducts(): Promise<ShopProduct[]> {
   }
 }
 
+async function getPaymentConfiguration() {
+  if (!apiBaseUrl) return { paypalClientId: null };
+  try {
+    const response = await fetch(`${apiBaseUrl}/payments/public/config`, { next: { revalidate: 300 } });
+    if (!response.ok) return { paypalClientId: null };
+    const payload = (await response.json()) as PublicPaymentConfigurationResponse;
+    return payload.data;
+  } catch {
+    return { paypalClientId: null };
+  }
+}
+
 async function getPaymentFeePolicies(): Promise<PaymentFeePolicies> {
   const fallback = {
     XENDIT: { percent: 3.5, fixed: 11 },
@@ -47,9 +60,10 @@ async function getPaymentFeePolicies(): Promise<PaymentFeePolicies> {
 }
 
 const Page = async () => {
-  const [products, paymentFeePolicies] = await Promise.all([
+  const [products, paymentFeePolicies, paymentConfiguration] = await Promise.all([
     getPublicProducts(),
     getPaymentFeePolicies(),
+    getPaymentConfiguration(),
   ]);
   return (
     <div>
@@ -80,6 +94,7 @@ const Page = async () => {
       <ShopProducts
         products={products}
         paymentFeePolicies={paymentFeePolicies}
+        paypalClientId={paymentConfiguration.paypalClientId}
       />
     </div>
   );

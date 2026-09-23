@@ -1,9 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useRef, useState } from "react";
+import { useRef, useState, type ReactNode } from "react";
 import {
   ArrowRight,
+  AlertTriangle,
   BriefcaseBusiness,
   CalendarClock,
   ChevronRight,
@@ -79,6 +80,7 @@ import {
   useUploadMemberPublicRecordAttachmentsMutation,
 } from "@/features/member/member.hooks";
 import type {
+  MemberCertificateType,
   MemberPublicRecordStatus,
   MemberPublicRecordType,
 } from "@/features/member/member.types";
@@ -250,6 +252,7 @@ type Props = {
   analyticsBarData: AnalyticsDatum[];
   analyticsPieData: AnalyticsPieDatum[];
   onViewAllCertificates: () => void;
+  serviceManagementContent?: ReactNode;
 };
 
 export function PublicMemberProfileTabs({
@@ -264,6 +267,7 @@ export function PublicMemberProfileTabs({
   analyticsBarData,
   analyticsPieData,
   onViewAllCertificates,
+  serviceManagementContent,
 }: Props) {
   const { toast } = useToast();
   const { data: currentUser } = useOptionalCurrentUserQuery();
@@ -271,8 +275,14 @@ export function PublicMemberProfileTabs({
   const createCertificateMutation = useCreateCurrentMemberCertificateMutation();
   const certificateFileInputRef = useRef<HTMLInputElement | null>(null);
   const [isCertificateDialogOpen, setIsCertificateDialogOpen] = useState(false);
+  const [certificateType, setCertificateType] =
+    useState<MemberCertificateType>("CERTIFICATE");
   const [certificateTitle, setCertificateTitle] = useState("");
+  const [certificateIssuer, setCertificateIssuer] = useState("");
+  const [certificateReferenceNumber, setCertificateReferenceNumber] =
+    useState("");
   const [certificateIssuedAt, setCertificateIssuedAt] = useState("");
+  const [certificateExpiresAt, setCertificateExpiresAt] = useState("");
   const [certificateFile, setCertificateFile] = useState<File | null>(null);
   const [recordView, setRecordView] = useState<PublicRecordView>("table");
   const [selectedPublicRecord, setSelectedPublicRecord] =
@@ -488,8 +498,12 @@ export function PublicMemberProfileTabs({
   );
 
   const resetCertificateDialog = () => {
+    setCertificateType("CERTIFICATE");
     setCertificateTitle("");
+    setCertificateIssuer("");
+    setCertificateReferenceNumber("");
     setCertificateIssuedAt("");
+    setCertificateExpiresAt("");
     setCertificateFile(null);
   };
 
@@ -522,6 +536,16 @@ export function PublicMemberProfileTabs({
 
   const handleCertificateFileChange = (file: File | null | undefined) => {
     if (!file) return;
+
+    if (!file.type.startsWith("image/") && file.type !== "application/pdf") {
+      toast({
+        title: "Unsupported file",
+        description: "Please upload an image or PDF document.",
+        variant: "error",
+      });
+      return;
+    }
+
     setCertificateFile(file);
   };
 
@@ -576,7 +600,15 @@ export function PublicMemberProfileTabs({
   const handleCreateCertificate = async () => {
     try {
       if (!certificateTitle.trim()) {
-        throw new Error("Certificate title is required.");
+        throw new Error("A title is required.");
+      }
+
+      if (!certificateIssuer.trim()) {
+        throw new Error("The issuing organization is required.");
+      }
+
+      if (!certificateReferenceNumber.trim()) {
+        throw new Error("The reference number is required.");
       }
 
       if (!certificateIssuedAt) {
@@ -584,7 +616,14 @@ export function PublicMemberProfileTabs({
       }
 
       if (!certificateFile) {
-        throw new Error("Please upload a certificate file.");
+        throw new Error("Please upload the supporting document.");
+      }
+
+      if (
+        certificateExpiresAt &&
+        new Date(certificateExpiresAt) < new Date(certificateIssuedAt)
+      ) {
+        throw new Error("Expiration date cannot be before the issue date.");
       }
 
       const uploaded =
@@ -600,14 +639,20 @@ export function PublicMemberProfileTabs({
       }
 
       const response = await createCertificateMutation.mutateAsync({
+        type: certificateType,
         title: certificateTitle.trim(),
+        issuer: certificateIssuer.trim(),
+        referenceNumber: certificateReferenceNumber.trim(),
         certificateUrl: certificateStoredUrl,
         issuedAt: new Date(`${certificateIssuedAt}T00:00:00`).toISOString(),
+        expiresAt: certificateExpiresAt
+          ? new Date(`${certificateExpiresAt}T00:00:00`).toISOString()
+          : null,
       });
 
       toast({
-        title: "Certificate added",
-        description: `Credential ID ${response.data.credentialId} is now part of the public profile.`,
+        title: `${formatEnumLabel(response.data.type)} added`,
+        description: `Reference ${response.data.referenceNumber} is now part of the public profile.`,
         variant: "success",
       });
 
@@ -763,10 +808,10 @@ export function PublicMemberProfileTabs({
               <ShieldCheck className="size-7" />
             </div>
             <p className="mt-2 text-base font-semibold text-neutral-900">
-              No public certifications available yet.
+              No certificates or recognitions available yet.
             </p>
             <p className="mb-3 text-sm text-neutral-500">
-              Certifications will appear here once verified and published.
+              Uploaded credentials and recognitions will appear here.
             </p>
             {canManageCertificates ? (
               <Button
@@ -775,7 +820,7 @@ export function PublicMemberProfileTabs({
                 variant="outline"
                 size="sm"
               >
-                <Upload className="size-4" /> Upload new certificate
+                <Upload className="size-4" /> Add credential
               </Button>
             ) : null}
           </div>
@@ -790,13 +835,25 @@ export function PublicMemberProfileTabs({
             key={certificate.credentialId}
             className="border bg-neutral-50 p-3"
           >
-            <p className="text-sm font-semibold">{certificate.title}</p>
+            <div className="flex flex-wrap items-start justify-between gap-2">
+              <p className="text-sm font-semibold">{certificate.title}</p>
+              <Badge variant="outline">
+                {formatEnumLabel(certificate.type)}
+              </Badge>
+            </div>
             <p className="mt-1 text-sm text-muted-foreground">
-              Issued {formatDate(certificate.dateReceived)}
+              Issued by {certificate.issuer} on {formatDate(certificate.dateReceived)}
             </p>
             <p className="mt-1 text-xs text-neutral-500">
-              Credential ID: {certificate.credentialId}
+              Reference: {certificate.referenceNumber}
             </p>
+            {certificate.expiresAt ? (
+              <p className="mt-1 text-xs text-neutral-500">
+                Expires: {formatDate(certificate.expiresAt)}
+              </p>
+            ) : (
+              <p className="mt-1 text-xs text-neutral-500">No expiration date</p>
+            )}
             <div className="mt-4 h-80 overflow-hidden border bg-white">
               <CertificatePreview
                 title={certificate.title}
@@ -1316,12 +1373,11 @@ export function PublicMemberProfileTabs({
             <div className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <h2 className="text-2xl font-semibold text-neutral-950">
-                  All Certificates
+                  Certificates & Recognitions
                 </h2>
                 <p className="mt-1 text-sm text-neutral-500">
-                  {allCertificatesCount} published credential
-                  {allCertificatesCount === 1 ? "" : "s"} available on this
-                  profile.
+                  {allCertificatesCount} credential
+                  {allCertificatesCount === 1 ? "" : "s"} available on this profile.
                 </p>
               </div>
               {canManageCertificates ? (
@@ -1330,7 +1386,7 @@ export function PublicMemberProfileTabs({
                   onClick={() => setIsCertificateDialogOpen(true)}
                   className="w-full bg-[#032a0d] hover:bg-[#043512] sm:w-auto"
                 >
-                  <Upload className="size-4" /> Add certificate
+                  <Upload className="size-4" /> Add credential
                 </Button>
               ) : null}
             </div>
@@ -1575,7 +1631,9 @@ export function PublicMemberProfileTabs({
         </TabsContent>
 
         <TabsContent value="service">
-          <section className="overflow-hidden border bg-white shadow">
+          <div className="grid gap-6">
+            {serviceManagementContent}
+            <section className="overflow-hidden border bg-white shadow">
             <div className="flex flex-col gap-3 border-b px-5 py-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
                 <div className="flex items-center gap-2">
@@ -1638,7 +1696,8 @@ export function PublicMemberProfileTabs({
                 </div>
               )}
             </div>
-          </section>
+            </section>
+          </div>
         </TabsContent>
 
         <TabsContent value="analytics">
@@ -2280,18 +2339,36 @@ export function PublicMemberProfileTabs({
           if (!open) resetCertificateDialog();
         }}
       >
-        <DialogContent className="max-w-2xl border-[#032a0d]/15">
+        <DialogContent className="max-h-[90vh] max-w-2xl overflow-y-auto border-[#032a0d]/15">
           <DialogHeader>
             <DialogTitle className="text-[#032a0d]">
-              Upload new certificate
+              Add certificate or recognition
             </DialogTitle>
             <DialogDescription>
-              Add a certificate to the public profile. The credential ID will be
-              generated automatically in the format `CERT-ABC-00001`.
+              Add a professional credential or recognition and its supporting
+              document to your profile.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-5">
+            <div className="space-y-2">
+              <Label htmlFor="certificate-type">Document type</Label>
+              <Select
+                value={certificateType}
+                onValueChange={(value) =>
+                  setCertificateType(value as MemberCertificateType)
+                }
+              >
+                <SelectTrigger id="certificate-type">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="CERTIFICATE">Certificate</SelectItem>
+                  <SelectItem value="RECOGNITION">Recognition</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             <div className="space-y-2">
               <Label htmlFor="certificate-title">Title</Label>
               <Input
@@ -2302,18 +2379,71 @@ export function PublicMemberProfileTabs({
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="certificate-issued-at">Issued at</Label>
-              <Input
-                id="certificate-issued-at"
-                type="date"
-                value={certificateIssuedAt}
-                onChange={(event) => setCertificateIssuedAt(event.target.value)}
-              />
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="certificate-issuer">Issuer</Label>
+                <Input
+                  id="certificate-issuer"
+                  value={certificateIssuer}
+                  onChange={(event) => setCertificateIssuer(event.target.value)}
+                  placeholder="Issuing organization"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="certificate-reference-number">
+                  Reference number
+                </Label>
+                <Input
+                  id="certificate-reference-number"
+                  value={certificateReferenceNumber}
+                  onChange={(event) =>
+                    setCertificateReferenceNumber(event.target.value)
+                  }
+                  placeholder="Number printed on the document"
+                />
+              </div>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="certificate-issued-at">Issue date</Label>
+                <Input
+                  id="certificate-issued-at"
+                  type="date"
+                  value={certificateIssuedAt}
+                  onChange={(event) => setCertificateIssuedAt(event.target.value)}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="certificate-expires-at">
+                  Expiration date <span className="text-neutral-500">(optional)</span>
+                </Label>
+                <Input
+                  id="certificate-expires-at"
+                  type="date"
+                  min={certificateIssuedAt || undefined}
+                  value={certificateExpiresAt}
+                  onChange={(event) => setCertificateExpiresAt(event.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-3 rounded-lg border border-amber-200 bg-amber-50 p-4 text-amber-950">
+              <AlertTriangle className="mt-0.5 size-5 shrink-0" />
+              <div>
+                <p className="text-sm font-semibold">Protect private information</p>
+                <p className="mt-1 text-sm leading-5">
+                  Upload only the credential page. Do not include a handwritten
+                  signature, government ID, home address, account numbers, or any
+                  unrelated private information.
+                </p>
+              </div>
             </div>
 
             <div className="space-y-2">
-              <Label>Certificate file</Label>
+              <Label>Supporting document</Label>
               <input
                 ref={certificateFileInputRef}
                 type="file"
@@ -2339,7 +2469,7 @@ export function PublicMemberProfileTabs({
                 <p className="text-sm font-semibold text-neutral-900">
                   {certificateFile
                     ? certificateFile.name
-                    : "Upload certificate file"}
+                    : `Upload ${certificateType === "RECOGNITION" ? "recognition" : "certificate"} file`}
                 </p>
                 <p className="mt-2 text-xs text-neutral-500">
                   Drag and drop an image or PDF here, or click to browse.
@@ -2367,7 +2497,9 @@ export function PublicMemberProfileTabs({
               disabled={isSavingCertificate}
               className="bg-[#032a0d] hover:bg-[#043512]"
             >
-              {isSavingCertificate ? "Saving..." : "Save certificate"}
+              {isSavingCertificate
+                ? "Saving..."
+                : `Save ${certificateType === "RECOGNITION" ? "recognition" : "certificate"}`}
             </Button>
           </DialogFooter>
         </DialogContent>

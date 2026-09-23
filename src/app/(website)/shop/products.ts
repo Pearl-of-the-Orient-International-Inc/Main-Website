@@ -64,6 +64,12 @@ export type PaymentFeePoliciesResponse = {
   data: PaymentFeePolicies;
 };
 
+export type PublicPaymentConfigurationResponse = {
+  code: string;
+  message: string;
+  data: { paypalClientId: string | null };
+};
+
 export type CreateShopOrderResponse = {
   code: string;
   message: string;

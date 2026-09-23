@@ -28,11 +28,50 @@ import type {
   UpdateCurrentChurchAffiliationRequest,
   UpdateCurrentEducationRequest,
   UpdateCurrentBranchServicesRequest,
+  ChaplainServiceAvailabilityResponse,
+  CreateChaplainServiceAvailabilityRequest,
+  MemberServiceLicenseResponse,
+  UpdateMemberServiceLicenseRequest,
 } from "./member.types";
 
 export async function applyMember(payload: ApplyMemberRequest) {
   const { data } = await api.post<ApplyMemberResponse>("/members/apply", payload);
   return data;
+}
+
+export async function getPublicChaplainServiceAvailability(memberId: string) {
+  const { data } = await api.get<ChaplainServiceAvailabilityResponse>(
+    `/members/public/${encodeURIComponent(memberId)}/service-availability`,
+  );
+  return data.data;
+}
+
+export async function createCurrentChaplainServiceAvailability(
+  payload: CreateChaplainServiceAvailabilityRequest,
+) {
+  const { data } = await api.post("/members/current/service-availability", payload);
+  return data.data;
+}
+
+export async function deleteCurrentChaplainServiceAvailability(slotId: string) {
+  await api.delete(`/members/current/service-availability/${encodeURIComponent(slotId)}`);
+}
+
+export async function updateCurrentMemberServiceLicense(
+  payload: UpdateMemberServiceLicenseRequest,
+) {
+  const { data } = await api.put<MemberServiceLicenseResponse>(
+    "/members/current/service-license",
+    payload,
+  );
+  return data.data;
+}
+
+export async function deleteCurrentMemberServiceLicense() {
+  const { data } = await api.delete<MemberServiceLicenseResponse>(
+    "/members/current/service-license",
+  );
+  return data.data;
 }
 
 export async function getMemberFollowState(memberId: string) {

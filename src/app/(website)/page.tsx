@@ -61,7 +61,7 @@ const recognitionImages = [
     alt: "Pearl of the Orient certificate of recognition",
   },
   {
-    src: "/recognition/2.jpg",
+    src: "/recognition/2.png",
     alt: "Pearl of the Orient recognition document",
   },
   {

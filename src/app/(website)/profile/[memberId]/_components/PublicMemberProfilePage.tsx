@@ -52,6 +52,9 @@ import type { PublicServiceChaplain } from "@/lib/api-types";
 import { AppointmentSheet } from "@/app/(website)/book-a-service/ChaplainDirectory";
 import { PublicMemberProfileSidebar } from "./PublicMemberProfileSidebar";
 import { PublicMemberProfileTabs } from "./PublicMemberProfileTabs";
+import { ServiceAvailabilityCard } from "./ServiceAvailabilityCard";
+import { ServiceLicenseCard } from "./ServiceLicenseCard";
+import { ProviderBookingRequestsCard } from "./ProviderBookingRequestsCard";
 import type { PublicMember } from "./public-member-profile.shared";
 import {
   buildDetailedAboutEssay,
@@ -157,6 +160,9 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
     municipalityCity: member.municipalityCity,
     barangay: member.barangay,
     preferredBranchOther: member.preferredBranchOther,
+    serviceLicenseUrl: member.serviceLicenseUrl,
+    serviceLicenseFileName: member.serviceLicenseFileName,
+    serviceLicenseMimeType: member.serviceLicenseMimeType,
     createdAt: member.createdAt,
     user: {
       name: member.user.name,
@@ -182,6 +188,10 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
   );
   const canShowBookService = canBookService && !isOwnProfile;
   const canShowCallingCard = !isOwnProfile;
+  const isEligibleServiceChaplain =
+    member.memberType === "CERTIFIED_SPECIALIST_TRAINING_OFFICER_INSTRUCTOR" &&
+    member.status === "APPROVED" &&
+    member.isActive;
   const signInToFollowHref = `/sign-in?redirect=${encodeURIComponent(
     `/profile/${member.uniqueId ?? member.id}`,
   )}`;
@@ -802,7 +812,7 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                               </DialogTitle>
                             </DialogHeader>
                             <div className="flex justify-center py-2">
-                              <CreditCard className="max-w-3xl aspect-[1050/600] cursor-pointer">
+                              <CreditCard className="max-w-3xl aspect-1050/600 cursor-pointer">
                                 <CreditCardFlipper>
                                   <CreditCardFront
                                     safeArea={0}
@@ -937,6 +947,25 @@ export function PublicMemberProfilePage({ member }: { member: PublicMember }) {
                 analyticsBarData={analyticsBarData}
                 analyticsPieData={analyticsPieData}
                 onViewAllCertificates={() => setActiveTab("certificates")}
+                serviceManagementContent={
+                  isEligibleServiceChaplain ? (
+                    <>
+                      {isOwnProfile ? <ProviderBookingRequestsCard /> : null}
+                      <ServiceLicenseCard
+                        initialLicense={{
+                          url: member.serviceLicenseUrl,
+                          fileName: member.serviceLicenseFileName,
+                          mimeType: member.serviceLicenseMimeType,
+                        }}
+                        canManage={isOwnProfile}
+                      />
+                      <ServiceAvailabilityCard
+                        memberId={member.uniqueId ?? member.id}
+                        canManage={isOwnProfile}
+                      />
+                    </>
+                  ) : null
+                }
               />
             </div>
           </div>
