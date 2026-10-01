@@ -10,6 +10,7 @@ import {
   GraduationCap,
   HandHeart,
   Landmark,
+  LogIn,
   MapPinned,
   ShieldCheck,
   ShieldIcon,
@@ -96,14 +97,16 @@ const branchesOfService: Array<{
   },
   {
     title: "Corporate",
-    description: "Supporting professionals and workplaces with values and care.",
+    description:
+      "Supporting professionals and workplaces with values and care.",
     image:
       "https://images.pexels.com/photos/3184465/pexels-photo-3184465.jpeg?auto=compress&cs=tinysrgb&w=900",
     icon: BriefcaseBusiness,
   },
   {
     title: "Prison",
-    description: "Bringing hope, restoration, and second chances behind the walls.",
+    description:
+      "Bringing hope, restoration, and second chances behind the walls.",
     image:
       "https://images.pexels.com/photos/20620622/pexels-photo-20620622.jpeg?auto=compress&cs=tinysrgb&w=900",
     icon: Fence,
@@ -117,14 +120,16 @@ const branchesOfService: Array<{
   },
   {
     title: "Others",
-    description: "Reaching unique groups and special communities with Christ's love.",
+    description:
+      "Reaching unique groups and special communities with Christ's love.",
     image:
       "https://images.pexels.com/photos/6646770/pexels-photo-6646770.jpeg?auto=compress&cs=tinysrgb&w=900",
     icon: Ellipsis,
   },
   {
     title: "Hospital and Care",
-    description: "Providing spiritual comfort and strength in times of illness and recovery.",
+    description:
+      "Providing spiritual comfort and strength in times of illness and recovery.",
     image:
       "https://images.pexels.com/photos/6129685/pexels-photo-6129685.jpeg?auto=compress&cs=tinysrgb&w=900",
     icon: Cross,
@@ -138,21 +143,24 @@ const branchesOfService: Array<{
   },
   {
     title: "Disaster & Rescue Operations",
-    description: "Standing in the frontlines of crisis to bring hope and healing.",
+    description:
+      "Standing in the frontlines of crisis to bring hope and healing.",
     image:
       "https://images.pexels.com/photos/16105713/pexels-photo-16105713.jpeg?auto=compress&cs=tinysrgb&w=900",
     icon: Ambulance,
   },
   {
     title: "Security",
-    description: "Upholding safety and peace through integrity, vigilance, and compassion.",
+    description:
+      "Upholding safety and peace through integrity, vigilance, and compassion.",
     image:
       "https://images.pexels.com/photos/34680721/pexels-photo-34680721.jpeg?auto=compress&cs=tinysrgb&w=900",
     icon: ShieldIcon,
   },
   {
     title: "DSWD",
-    description: "Partnering in service to empower and uplift lives and families.",
+    description:
+      "Partnering in service to empower and uplift lives and families.",
     image:
       "https://images.pexels.com/photos/8205208/pexels-photo-8205208.jpeg?auto=compress&cs=tinysrgb&w=900",
     icon: HandHeart,
@@ -230,7 +238,12 @@ const chaplaincyRoadmap = [
     content: (
       <div>
         <div className="relative mb-6 flex aspect-4/3 w-full items-center justify-center lg:aspect-auto lg:h-105">
-          <Image src="/roadmap/phase1.png" alt="Phase 1" fill className="object-contain" />
+          <Image
+            src="/roadmap/phase1.png"
+            alt="Phase 1"
+            fill
+            className="object-contain"
+          />
         </div>
         <div className="mb-4">
           <h4 className="text-base md:text-lg font-semibold text-[#032a0d] mb-2">
@@ -270,7 +283,12 @@ const chaplaincyRoadmap = [
     content: (
       <div>
         <div className="relative mb-6 flex aspect-[4/3] w-full items-center justify-center lg:aspect-auto lg:h-105">
-          <Image src="/roadmap/phase2.png" alt="Phase 2" fill className="object-contain" />
+          <Image
+            src="/roadmap/phase2.png"
+            alt="Phase 2"
+            fill
+            className="object-contain"
+          />
         </div>
         <div className="mb-4">
           <h4 className="text-base md:text-lg font-semibold text-[#032a0d] mb-2">
@@ -306,7 +324,12 @@ const chaplaincyRoadmap = [
     content: (
       <div>
         <div className="relative mb-6 flex aspect-[4/3] w-full items-center justify-center lg:aspect-auto lg:h-105">
-          <Image src="/roadmap/phase3.png" alt="Phase 3" fill className="object-contain" />
+          <Image
+            src="/roadmap/phase3.png"
+            alt="Phase 3"
+            fill
+            className="object-contain"
+          />
         </div>
         <div className="mb-4">
           <h4 className="text-base md:text-lg font-semibold text-[#032a0d] mb-2">
@@ -345,7 +368,12 @@ const chaplaincyRoadmap = [
     content: (
       <div>
         <div className="relative mb-6 flex aspect-[4/3] w-full items-center justify-center lg:aspect-auto lg:h-105">
-          <Image src="/roadmap/phase4.png" alt="Phase 4" fill className="object-contain" />
+          <Image
+            src="/roadmap/phase4.png"
+            alt="Phase 4"
+            fill
+            className="object-contain"
+          />
         </div>
         <div className="mb-4">
           <h4 className="text-base md:text-lg font-semibold text-[#032a0d] mb-2">
@@ -518,17 +546,28 @@ export default async function Page() {
               development, and kingdom service
             </div>
             <h1 className="mt-12 font-serif text-2xl sm:text-3xl capitalize md:text-4xl lg:text-5xl xl:text-6xl px-4">
-
-              The Best Way to Find Yourself Is to Lose Yourself in the Service of Others
+              The Best Way to Find Yourself Is to Lose Yourself in the Service
+              of Others
             </h1>
-            <Button asChild
-              size="lg"
-              className="mt-4 sm:mt-5 bg-[#032a0d] text-white rounded-full items-center flex hover:bg-[#032a0d]/95 text-sm sm:text-base"
-            >
-              <Link href="/become-a-member" target="_blank">
-                Become a member <ArrowRightIcon className="size-4 sm:size-5" />
-              </Link>
-            </Button>
+            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row sm:gap-4">
+              <Button
+                asChild
+                size="lg"
+                className="h-14 min-w-52 rounded-full bg-[#032a0d] px-8 text-base font-semibold text-white shadow-lg hover:bg-[#032a0d]/95 sm:text-lg"
+              >
+                <Link href="/become-a-member" target="_blank">
+                  Become a member <ArrowRightIcon className="size-5" />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="h-14 min-w-40 rounded-full border-2 border-white bg-white px-8 text-base font-semibold text-black shadow-lg backdrop-blur-sm sm:text-lg"
+              >
+                <Link href="/sign-in">Sign in <ArrowRightIcon className="size-5" /></Link>
+              </Button>
+            </div>
           </div>
 
           {/* viewport 2: content revealed on scroll */}
@@ -911,9 +950,12 @@ export default async function Page() {
           ) : (
             <div className="flex min-h-80 items-center justify-center border border-dashed border-[#032a0d]/20 bg-[#032a0d]/3 px-6 text-center">
               <div>
-                <p className="font-serif text-2xl text-[#032a0d]">No events yet</p>
+                <p className="font-serif text-2xl text-[#032a0d]">
+                  No events yet
+                </p>
                 <p className="mt-2 text-sm text-[#032a0d]/70">
-                  Public events from the database will appear here once they are published.
+                  Public events from the database will appear here once they are
+                  published.
                 </p>
               </div>
             </div>
@@ -996,8 +1038,8 @@ export default async function Page() {
               Benefits of Being a Member
             </h2>
             <p className="mt-3 sm:mt-4 max-w-4xl mx-auto text-sm sm:text-base md:text-lg text-[#032a0d]/80 px-4">
-              Membership in Pearl of the Orient International Auxiliary
-              Chaplain Values Educators Inc. Inter-Faith Organization provides
+              Membership in Pearl of the Orient International Auxiliary Chaplain
+              Values Educators Inc. Inter-Faith Organization provides
               opportunities for spiritual growth, leadership development,
               community service, and chaplaincy training and education.
             </p>

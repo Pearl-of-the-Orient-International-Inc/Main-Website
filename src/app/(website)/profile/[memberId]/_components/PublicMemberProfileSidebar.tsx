@@ -12,6 +12,7 @@ import {
   Download,
   EditIcon,
   Mail,
+  MapPin,
   Plus,
   Share2,
   ShieldAlert,
@@ -133,6 +134,7 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
     member.currentPositionRole ??
     "Not publicly listed";
   const canBookService = canBookMemberService(member);
+  const officialAssignments = member.officerAssignments ?? [];
   const memberProfilePath = `/profile/${member.uniqueId ?? member.id}`;
   const signedInMemberProfile = currentUser?.memberProfile;
   const canEditChurchAffiliation = Boolean(
@@ -467,6 +469,50 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
             </div>
           </div>
         </div>
+
+        {officialAssignments.length > 0 ? (
+          <div className="overflow-hidden border border-[#032a0d]/20 bg-white text-neutral-900 shadow-sm">
+            <div className="flex items-center gap-3 border-b border-[#032a0d]/10 bg-[#032a0d]/5 p-4">
+              <span className="rounded-full bg-[#032a0d] p-2 text-white">
+                <BadgeCheck className="size-4" />
+              </span>
+              <div>
+                <p className="text-xs font-semibold tracking-[0.16em] text-[#032a0d]/70 uppercase">
+                  Official appointment
+                </p>
+                <h4 className="font-semibold">Organizational assignment</h4>
+              </div>
+            </div>
+            <div className="space-y-3 p-4">
+              {officialAssignments.map((assignment) => {
+                const scope = [
+                  assignment.department,
+                  assignment.region,
+                  assignment.province,
+                  assignment.cityMunicipality,
+                  assignment.barangay,
+                ].filter(Boolean);
+                return (
+                  <div
+                    key={assignment.id}
+                    className="rounded-lg border border-neutral-200 bg-neutral-50 p-3"
+                  >
+                    <p className="font-semibold text-neutral-950">
+                      {assignment.officeTitle.name}
+                    </p>
+                    <p className="mt-1 text-sm text-neutral-600">
+                      {formatEnumLabel(assignment.officeTitle.level)}
+                    </p>
+                    <div className="mt-3 flex items-start gap-2 text-sm text-neutral-700">
+                      <MapPin className="mt-0.5 size-4 shrink-0 text-[#032a0d]" />
+                      <span>{scope.length ? scope.join(", ") : "General organizational scope"}</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        ) : null}
 
         <div className="border bg-white p-4 text-neutral-900 shadow-sm">
           <div className="flex items-center justify-between">
