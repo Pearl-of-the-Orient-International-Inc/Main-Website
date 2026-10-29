@@ -7,6 +7,7 @@ import {
   LockKeyholeIcon,
   LogOutIcon,
   SettingsIcon,
+  ShieldCheckIcon,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { BadgeCheckIcon } from "lucide-react";
@@ -327,6 +328,15 @@ export const NavMenu = () => {
                   Become a Member
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/membership-builders"
+                  onClick={closeMenu}
+                  className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
+                >
+                  Membership Builders
+                </Link>
+              </li>
             </ul>
 
             {/* Secondary Links */}
@@ -503,6 +513,14 @@ export const NavMenu = () => {
                       <span>My Bookings</span>
                     </Link>
                   </DropdownMenuItem>
+                  {currentUser?.role === "OFFICER" && (
+                    <DropdownMenuItem asChild>
+                      <Link href="/officer-portal" onClick={closeMenu} className="flex w-full items-center gap-2">
+                        <ShieldCheckIcon className="size-4" />
+                        <span>Officer Workspace</span>
+                      </Link>
+                    </DropdownMenuItem>
+                  )}
                   {currentUser?.memberProfile?.memberType === "PROFESSIONAL_CHAPLAIN" && (
                     <DropdownMenuItem asChild>
                       <Link href="/ordination-application" onClick={closeMenu} className="flex w-full items-center gap-2">

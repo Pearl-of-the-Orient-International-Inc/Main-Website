@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { isValidPhoneNumber } from "libphonenumber-js/max";
 import {
   ArrowLeft,
@@ -23,6 +23,7 @@ import { Button } from "@/components/ui/button";
 import {
   toApiError,
   useApplyMemberMutation,
+  usePublicReferralQuery,
 } from "@/features/member/member.hooks";
 import { useOptionalCurrentUserQuery } from "@/features/auth/auth.hooks";
 import type { ApplyMemberRequest } from "@/features/member/member.types";
@@ -247,6 +248,7 @@ const getApiValidationError = (
 
 const getApplyPayloadValidationError = (
   form: ApplicationFormState,
+  hasVerifiedReferral = false,
 ): MembershipFormValidationError | null => {
   if (!form.firstName.trim()) {
     return new MembershipFormValidationError("First name is required.", {
@@ -330,11 +332,11 @@ const getApplyPayloadValidationError = (
     );
   }
   const endorsedBy = form.characterReferences[0];
-  if (
+  if (!hasVerifiedReferral && (
     !endorsedBy?.name.trim() ||
     !endorsedBy.position.trim() ||
     !endorsedBy.contactNumber.trim()
-  ) {
+  )) {
     return new MembershipFormValidationError(
       "Endorsed by name, relationship, and contact number are required.",
       {
@@ -367,6 +369,7 @@ const getApplyPayloadValidationError = (
 
 const mapFormToApplyPayload = (
   form: ApplicationFormState,
+  referralCode?: string,
 ): ApplyMemberRequest | null => {
   const location = splitRegionSummary(form.regionProvince);
   const mobilePhoneNumber = form.phoneNumber.trim();
@@ -382,11 +385,11 @@ const mapFormToApplyPayload = (
   if (!form.civilStatus) return null;
   if (!mobilePhoneNumber || !homeAddress || !nationality) return null;
   if (!emergencyContactName || !emergencyContactMobile) return null;
-  if (
+  if (!referralCode && (
     !endorsedBy?.name.trim() ||
     !endorsedBy.position.trim() ||
     !endorsedBy.contactNumber.trim()
-  ) {
+  )) {
     return null;
   }
 
@@ -423,6 +426,7 @@ const mapFormToApplyPayload = (
     );
 
   return {
+    referralCode,
     email: form.emailAddress.trim().toLowerCase(),
     firstName: form.firstName.trim(),
     middleInitial: form.middleInitial.trim() || undefined,
@@ -474,17 +478,21 @@ const mapFormToApplyPayload = (
 
 export function BecomeMemberWizard() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const applyMemberMutation = useApplyMemberMutation();
   const { data: currentUser } = useOptionalCurrentUserQuery();
+  const requestedReferralCode = searchParams.get("ref")?.trim().toUpperCase() || null;
+  const referralQuery = usePublicReferralQuery(requestedReferralCode);
+  const verifiedReferralCode = referralQuery.data ? requestedReferralCode ?? undefined : undefined;
   const existingApplication = currentUser?.memberProfile;
 
   const handleSubmit = async (form: ApplicationFormState) => {
-    const validationError = getApplyPayloadValidationError(form);
+    const validationError = getApplyPayloadValidationError(form, Boolean(verifiedReferralCode));
     if (validationError) {
       throw validationError;
     }
 
-    const payload = mapFormToApplyPayload(form);
+    const payload = mapFormToApplyPayload(form, verifiedReferralCode);
 
     if (!payload) {
       throw new Error(
@@ -583,6 +591,15 @@ export function BecomeMemberWizard() {
                 avatar: currentUser?.avatar,
               }}
               emailMode="editable"
+              verifiedReferral={referralQuery.data}
+              disableSubmit={Boolean(requestedReferralCode) && (referralQuery.isLoading || referralQuery.isError)}
+              disabledSubmitMessage={
+                referralQuery.isLoading
+                  ? "Checking the referral link before submission..."
+                  : referralQuery.isError
+                    ? "This referral link is invalid or no longer active. Ask the member for a new link, or remove it from the address bar to apply without a referral."
+                    : undefined
+              }
               onSubmitAction={handleSubmit}
             />
           )}

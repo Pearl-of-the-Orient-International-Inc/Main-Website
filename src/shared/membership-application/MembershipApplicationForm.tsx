@@ -31,6 +31,7 @@ export function MembershipApplicationForm({
   submitLabel = "Submit application",
   submittingLabel = "Submitting...",
   clearDraftOnSuccess = false,
+  verifiedReferral,
   onSubmitAction,
 }: {
   storageKey: string;
@@ -43,6 +44,11 @@ export function MembershipApplicationForm({
   submitLabel?: string;
   submittingLabel?: string;
   clearDraftOnSuccess?: boolean;
+  verifiedReferral?: {
+    name: string;
+    memberNumber: string | null;
+    title: string;
+  } | null;
   onSubmitAction: (form: ApplicationFormState) => Promise<void>;
 }) {
   const { toast } = useToast();
@@ -237,6 +243,7 @@ export function MembershipApplicationForm({
             updateFieldAction={updateField}
             handleSignatureChangeAction={handleSignatureChange}
             fieldErrors={fieldErrors}
+            verifiedReferral={verifiedReferral}
           />
         </section>
 

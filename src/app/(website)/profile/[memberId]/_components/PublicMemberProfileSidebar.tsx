@@ -3,6 +3,8 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import QRCode from "qrcode";
 import {
   BadgeCheck,
   CalendarCheck,
@@ -46,6 +48,8 @@ import {
   toApiError,
   useUpdateCurrentChurchAffiliationMutation,
   useUpdateCurrentEducationMutation,
+  useCurrentReferralQuery,
+  useRotateCurrentReferralMutation,
 } from "@/features/member/member.hooks";
 import { useToast } from "@/hooks/use-toast";
 import {
@@ -142,6 +146,10 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
     member.uniqueId &&
     signedInMemberProfile.uniqueId === member.uniqueId,
   );
+  const currentReferralQuery = useCurrentReferralQuery(canEditChurchAffiliation);
+  const rotateReferralMutation = useRotateCurrentReferralMutation();
+  const [referralQrCode, setReferralQrCode] = useState<string | null>(null);
+  const [isReferralCopied, setIsReferralCopied] = useState(false);
   const hasChurchAffiliationContent = Boolean(
     member.churchAffiliation ||
     member.churchAddress ||
@@ -165,6 +173,19 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
   const encodedShareText = encodeURIComponent(
     `View ${fullName}'s public member profile`,
   );
+  const referralUrl = currentReferralQuery.data?.referralCode
+    ? `${siteUrl || (typeof window === "undefined" ? "" : window.location.origin.replace(/\/$/, ""))}/become-a-member?ref=${encodeURIComponent(currentReferralQuery.data.referralCode)}`
+    : null;
+
+  useEffect(() => {
+    if (!referralUrl) {
+      setReferralQrCode(null);
+      return;
+    }
+    void QRCode.toDataURL(referralUrl, { width: 280, margin: 1, errorCorrectionLevel: "M" })
+      .then(setReferralQrCode)
+      .catch(() => setReferralQrCode(null));
+  }, [referralUrl]);
 
   async function handleDownloadPublicProfilePdf() {
     try {
@@ -272,6 +293,27 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
         description: "Unable to copy the public profile link right now.",
         variant: "error",
       });
+    }
+  };
+
+  const copyReferralUrl = async () => {
+    if (!referralUrl) return;
+    try {
+      await navigator.clipboard.writeText(referralUrl);
+      setIsReferralCopied(true);
+      toast({ title: "Referral link copied", description: "Send this link or let a person scan the QR code to apply under your referral.", variant: "success" });
+    } catch {
+      toast({ title: "Copy failed", description: "Unable to copy the referral link right now.", variant: "error" });
+    }
+  };
+
+  const rotateReferralLink = async () => {
+    try {
+      await rotateReferralMutation.mutateAsync();
+      toast({ title: "Referral link refreshed", description: "Your former referral link no longer works.", variant: "success" });
+    } catch (error) {
+      const apiError = toApiError(error);
+      toast({ title: "Could not refresh link", description: apiError.message ?? "Unable to refresh your referral link right now.", variant: "error" });
     }
   };
 
@@ -679,6 +721,63 @@ export function PublicMemberProfileSidebar({ member, fullName }: Props) {
             </div>
           )}
         </div>
+
+        {canEditChurchAffiliation ? (
+          <div className="overflow-hidden border border-[#032a0d]/20 bg-white text-neutral-900 shadow-sm">
+            <div className="bg-[#032a0d] px-5 py-4 text-white">
+              <p className="text-xs font-semibold tracking-[0.14em] uppercase text-green-100">
+                Membership Builders
+              </p>
+              <h4 className="mt-1 text-lg font-semibold">Your referral link</h4>
+              <p className="mt-1 text-sm text-green-50/90">
+                Invite a future member. You earn points when their application is submitted and approved.
+              </p>
+            </div>
+            <div className="space-y-4 p-5">
+              {currentReferralQuery.isLoading ? (
+                <p className="text-sm text-muted-foreground">Preparing your referral link…</p>
+              ) : currentReferralQuery.data && referralUrl ? (
+                <>
+                  <div className="flex items-center gap-4 rounded-lg border bg-neutral-50 p-3">
+                    {referralQrCode ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img src={referralQrCode} alt="Your membership referral QR code" className="size-24 rounded bg-white p-1" />
+                    ) : (
+                      <div className="size-24 animate-pulse rounded bg-neutral-200" />
+                    )}
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold">This month: {currentReferralQuery.data.monthPoints} points</p>
+                      <p className="mt-1 text-xs text-muted-foreground">
+                        {currentReferralQuery.data.referralCount} referred {currentReferralQuery.data.referralCount === 1 ? "member" : "members"} so far
+                      </p>
+                      <Link href="/membership-builders" className="mt-2 inline-block text-xs font-semibold text-[#032a0d] underline underline-offset-2">
+                        View public Top 3
+                      </Link>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 border bg-neutral-50">
+                    <p className="min-w-0 flex-1 truncate px-3 text-xs text-neutral-600">{referralUrl}</p>
+                    <Button type="button" variant="outline" size="icon" className="rounded-none" onClick={() => void copyReferralUrl()} aria-label="Copy referral link">
+                      {isReferralCopied ? <Check className="size-4 text-green-600" /> : <Copy className="size-4" />}
+                    </Button>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Button type="button" className="bg-[#032a0d] hover:bg-[#032a0d]/90" onClick={() => void copyReferralUrl()}>
+                      <Copy className="size-4" /> Copy referral link
+                    </Button>
+                    <Button type="button" variant="outline" onClick={() => void rotateReferralLink()} disabled={rotateReferralMutation.isPending}>
+                      {rotateReferralMutation.isPending ? "Refreshing…" : "Refresh link"}
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-muted-foreground">
+                  {currentReferralQuery.error ? "Referral access is available only to active, approved members." : "Your referral link is not available yet."}
+                </p>
+              )}
+            </div>
+          </div>
+        ) : null}
 
         <div className="overflow-hidden border bg-white text-neutral-900 shadow-sm">
           <div className="flex items-center gap-3 px-5 py-4">

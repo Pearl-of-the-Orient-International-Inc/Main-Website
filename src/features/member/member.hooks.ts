@@ -15,6 +15,48 @@ export const useApplyMemberMutation = () =>
     meta: { feature: "member.apply" },
   });
 
+export const useCurrentReferralQuery = (enabled = true) =>
+  useQuery({
+    queryKey: ["member", "current", "referral"],
+    queryFn: memberApi.getCurrentReferral,
+    enabled,
+    staleTime: 30_000,
+  });
+
+export const useRotateCurrentReferralMutation = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: memberApi.rotateCurrentReferral,
+    onSuccess: (referral) => {
+      queryClient.setQueryData(["member", "current", "referral"], referral);
+    },
+    meta: { feature: "member.referral.rotate" },
+  });
+};
+
+export const usePublicReferralQuery = (referralCode: string | null) =>
+  useQuery({
+    queryKey: ["member", "referral", "public", referralCode],
+    queryFn: () => memberApi.resolvePublicReferral(referralCode!),
+    enabled: Boolean(referralCode),
+    retry: false,
+    staleTime: 60_000,
+  });
+
+export const usePublicHonorRollQuery = (period?: string, scope: "month" | "all" = "month") =>
+  useQuery({
+    queryKey: ["member", "honor-roll", period ?? "current", scope],
+    queryFn: () => memberApi.getPublicHonorRoll(period, scope),
+    staleTime: 60_000,
+  });
+
+export const usePublicReferralCriteriaQuery = () =>
+  useQuery({
+    queryKey: ["member", "referral-criteria", "public"],
+    queryFn: memberApi.getPublicReferralCriteria,
+    staleTime: 60_000,
+  });
+
 export const usePublicChaplainServiceAvailabilityQuery = (
   memberId: string,
   enabled = true,

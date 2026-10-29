@@ -20,6 +20,7 @@ export function StepReferencesReview({
   updateFieldAction,
   handleSignatureChangeAction,
   fieldErrors = {},
+  verifiedReferral,
 }: {
   form: ApplicationFormState;
   updateFieldAction: <K extends keyof ApplicationFormState>(
@@ -28,6 +29,11 @@ export function StepReferencesReview({
   ) => void;
   handleSignatureChangeAction: (signature: string | null) => void;
   fieldErrors?: ApplicationFieldErrors;
+  verifiedReferral?: {
+    name: string;
+    memberNumber: string | null;
+    title: string;
+  } | null;
 }) {
   const [signatureMode, setSignatureMode] = useState<"draw" | "upload">("draw");
   const endorsedBy = form.characterReferences[0] ?? {
@@ -74,9 +80,21 @@ export function StepReferencesReview({
           Endorsed by
         </h3>
         <p className="text-xs text-[#032a0d]/70 sm:text-sm">
-          Please provide one person who endorses your application.
+          {verifiedReferral
+            ? "Your referral link has verified the member who endorsed your application."
+            : "Please provide one person who endorses your application."}
         </p>
-        <div
+        {verifiedReferral ? (
+          <div className="rounded-lg border border-[#032a0d]/20 bg-[#032a0d]/5 px-4 py-3 text-sm text-[#032a0d]">
+            <p className="font-semibold">{verifiedReferral.name}</p>
+            <p className="mt-1 text-xs text-[#032a0d]/70">
+              {verifiedReferral.title}
+              {verifiedReferral.memberNumber ? ` · ${verifiedReferral.memberNumber}` : ""}
+            </p>
+          </div>
+        ) : (
+          <>
+          <div
           className={cn(
             "grid gap-3 rounded-lg border border-dashed px-3 py-3 sm:grid-cols-3",
             fieldErrors.characterReferences
@@ -140,6 +158,8 @@ export function StepReferencesReview({
         {fieldErrors.characterReferences ? (
           <p className="text-xs text-red-600">{fieldErrors.characterReferences}</p>
         ) : null}
+          </>
+        )}
 
         <Field
           label="Applicant's signature"

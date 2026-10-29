@@ -32,11 +32,44 @@ import type {
   CreateChaplainServiceAvailabilityRequest,
   MemberServiceLicenseResponse,
   UpdateMemberServiceLicenseRequest,
+  ReferralProfileResponse,
+  PublicReferralResponse,
+  HonorRollResponse,
+  PublicReferralCriteriaResponse,
 } from "./member.types";
 
 export async function applyMember(payload: ApplyMemberRequest) {
   const { data } = await api.post<ApplyMemberResponse>("/members/apply", payload);
   return data;
+}
+
+export async function getCurrentReferral() {
+  const { data } = await api.get<ReferralProfileResponse>("/members/current/referral");
+  return data.data;
+}
+
+export async function rotateCurrentReferral() {
+  const { data } = await api.post<ReferralProfileResponse>("/members/current/referral/rotate");
+  return data.data;
+}
+
+export async function resolvePublicReferral(referralCode: string) {
+  const { data } = await api.get<PublicReferralResponse>(
+    `/members/referrals/resolve/${encodeURIComponent(referralCode)}`,
+  );
+  return data.data;
+}
+
+export async function getPublicHonorRoll(period?: string, scope: "month" | "all" = "month") {
+  const { data } = await api.get<HonorRollResponse>("/members/honor-roll", {
+    params: { ...(period ? { period } : {}), ...(scope === "all" ? { scope: "all" } : {}) },
+  });
+  return data.data;
+}
+
+export async function getPublicReferralCriteria() {
+  const { data } = await api.get<PublicReferralCriteriaResponse>("/members/referral-criteria/public");
+  return data.data;
 }
 
 export async function getPublicChaplainServiceAvailability(memberId: string) {

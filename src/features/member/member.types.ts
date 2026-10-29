@@ -1,4 +1,5 @@
 export interface ApplyMemberRequest {
+  referralCode?: string;
   email: string;
   firstName: string;
   middleInitial?: string;
@@ -46,6 +47,60 @@ export interface ApplyMemberRequest {
     type: "DRAWN" | "UPLOADED";
     signatureData: string;
   };
+}
+
+export interface ReferralProfile {
+  referralCode: string;
+  referralCount: number;
+  monthPoints: number;
+  periodKey: string;
+}
+
+export interface ReferralProfileResponse {
+  code: string;
+  message: string;
+  data: ReferralProfile;
+}
+
+export interface PublicReferralResponse {
+  code: string;
+  message: string;
+  data: {
+    name: string;
+    memberNumber: string | null;
+    title: string;
+  };
+}
+
+export interface HonorRollResponse {
+  code: string;
+  message: string;
+  data: {
+    periodKey: string;
+    isProvisional: boolean;
+    rankings: Array<{
+      rank: number;
+      memberNumber: string | null;
+      name: string;
+      avatar: string | null;
+      points: number;
+      milestones: number;
+    }>;
+  };
+}
+
+export interface PublicReferralCriterion {
+  key: string;
+  label: string;
+  description: string | null;
+  points: number;
+  sortOrder: number;
+}
+
+export interface PublicReferralCriteriaResponse {
+  code: string;
+  message: string;
+  data: PublicReferralCriterion[];
 }
 
 export interface ChaplainServiceAvailabilitySlot {
