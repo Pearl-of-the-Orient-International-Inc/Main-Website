@@ -40,6 +40,7 @@ export interface EventResource {
   visibility: EventVisibility;
   createdAt: string;
   updatedAt: string;
+  accessDetailsAvailable?: boolean;
 }
 
 export interface EventPagination {
@@ -56,4 +57,10 @@ export interface PublicEventsResponse {
   message: string;
   data: EventResource[];
   pagination: EventPagination;
+}
+
+export interface PublicEventResponse {
+  code: string;
+  message: string;
+  data: EventResource;
 }

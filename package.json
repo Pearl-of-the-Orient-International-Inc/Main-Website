@@ -61,6 +61,7 @@
     "@tiptap/react": "^3.26.1",
     "@tiptap/starter-kit": "^3.26.1",
     "@vapi-ai/web": "^2.5.2",
+    "@xyflow/react": "^12.12.1",
     "ai": "^6.0.205",
     "axios": "^1.13.6",
     "class-variance-authority": "^0.7.1",

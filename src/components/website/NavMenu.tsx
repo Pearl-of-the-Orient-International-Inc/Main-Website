@@ -33,20 +33,12 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const officeMenuLinks = [
   {
-    label: "Office of the Ministry/Services",
-    href: "/office-ministry-services",
-  },
-  {
     label: "Office of the Administration",
     href: "/office-administration",
   },
   {
     label: "Office of the National Director & Deputy Director",
     href: "/office-national-director",
-  },
-  {
-    label: "Office of the Churches/Ministerial",
-    href: "/office-churches-ministerial",
   },
   {
     label: "Office of the Partners-NGO",
@@ -299,6 +291,15 @@ export const NavMenu = () => {
                   className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
                 >
                   News & Announcement
+                </Link>
+              </li>
+              <li>
+                <Link
+                  href="/events"
+                  onClick={closeMenu}
+                  className="block text-xl tracking-wide transition-colors hover:underline sm:text-2xl"
+                >
+                  Events, Trainings & Seminars
                 </Link>
               </li>
               <li>

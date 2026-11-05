@@ -1,27 +1,11 @@
 import Link from "next/link";
 import { OrganizationalStructureView } from "./organizational-structure-view";
-import type { PublicOffice } from "./organizational-structure-view";
+import { getPublicOrganizationalStructure } from "@/lib/public-organizational-structure";
 
-const apiBaseUrl = process.env.NODE_ENV === "development"
-  ? process.env.NEXT_PUBLIC_API_BASE_URL_DEV
-  : process.env.NEXT_PUBLIC_API_BASE_URL_PROD;
-
-async function getOrganizationalStructure(): Promise<PublicOffice[]> {
-  if (!apiBaseUrl) return [];
-  try {
-    const response = await fetch(`${apiBaseUrl}/offices/public/organizational-structure`, {
-      next: { revalidate: 60 },
-    });
-    if (!response.ok) return [];
-    const payload = (await response.json()) as { data: PublicOffice[] };
-    return payload.data;
-  } catch {
-    return [];
-  }
-}
+export const dynamic = "force-dynamic";
 
 export default async function OrganizationalStructurePage() {
-  const offices = await getOrganizationalStructure();
+  const offices = await getPublicOrganizationalStructure();
   return (
     <div>
       <section className="relative bg-[#032a0d] text-white">

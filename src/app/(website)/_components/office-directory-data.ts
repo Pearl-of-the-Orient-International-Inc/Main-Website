@@ -1,28 +1,5 @@
 import type { OfficeDirectoryPageData, OfficePerson } from "./office-directory-page";
 
-const ministryServices: OfficePerson[] = [
-  { name: "Dr. Lelanie D. Perido", role: "School Chaplaincy / Education" },
-  { name: "Rev. Romel L. Abaca", role: "Training and Seminars / Training & Development" },
-  { name: "Dr. Emer Jason R. Grepo", role: "Community Development" },
-  { name: "To be announced", role: "Follow Up Visitation" },
-  { name: "To be announced", role: "Ordination" },
-  { name: "To be announced", role: "Devotion & Bible Study" },
-  { name: "To be announced", role: "Pastoral Care" },
-  { name: "To be announced", role: "Solemnize Marriage" },
-  { name: "To be announced", role: "Pastoral Counseling" },
-  { name: "To be announced", role: "Spiritual Enhancement" },
-  { name: "To be announced", role: "Moral Values & Spiritual Upliftment" },
-  { name: "To be announced", role: "House / Company Blessing" },
-];
-
-const administration: OfficePerson[] = [
-  { name: "To be announced", role: "Human Resource" },
-  { name: "To be announced", role: "Information Technology" },
-  { name: "To be announced", role: "Accounting" },
-  { name: "To be announced", role: "Logistic" },
-  { name: "To be announced", role: "Maintenance" },
-];
-
 const nationalDirector: OfficePerson[] = [
   { name: "Dr. Lelanie D. Perido", role: "National Chaplain Director, Education" },
   { name: "Dr. Bobby M. Brimon", role: "National Chaplain Director, Humanitarian" },
@@ -116,21 +93,6 @@ const nationalDirector: OfficePerson[] = [
   { name: "Chap Ramil R. Libarra", role: "City / Municipal Deputy Chaplain, Taguig" },
   { name: "Chap Rose Marie R. Reyes", role: "City / Municipal Deputy Chaplain, Angono, Rizal" },
   { name: "Rev. Roberto G. Parcasio", role: "Northern District Chaplain Director" },
-];
-
-const churchesMinisterial: OfficePerson[] = [
-  { name: "Dr. Lelanie D. Perido", role: "Education" },
-  { name: "Dr. Bobby M. Brimon", role: "Humanitarian" },
-  { name: "Dr. Analyn M. Tibio", role: "Political Affairs & Communication" },
-  { name: "Dr. Romel L. Abaca", role: "Training & Development" },
-  { name: "To be announced", role: "Social Welfare & Development" },
-  { name: "To be announced", role: "Human Resources" },
-  { name: "Dr. Lelanie C. Junio", role: "Membership & Recruitment" },
-  { name: "To be announced", role: "Prison Ministry" },
-  { name: "To be announced", role: "School / Colleges" },
-  { name: "Rev. Henry S. Bertumen", role: "Security Group" },
-  { name: "To be announced", role: "PNP" },
-  { name: "Rev. Rhenald L. Lagrimas", role: "Sport" },
 ];
 
 const createPartnerEntry = (
@@ -235,29 +197,17 @@ const partnersNgo: OfficePerson[] = [
 ];
 
 export const officeDirectoryPages: Record<string, OfficeDirectoryPageData> = {
-  "office-ministry-services": {
-    title: "Office of the Ministry/Services",
-    description:
-      "Ministry and Services offices coordinate spiritual care, training, pastoral support, and values-based service programs.",
-    people: ministryServices,
-  },
   "office-administration": {
     title: "Office of the Administration",
     description:
       "Administration offices support personnel, systems, records, logistics, finance, and maintenance needs of the organization.",
-    people: administration,
+    people: [],
   },
   "office-national-director": {
     title: "Office of the National Director & Deputy Director",
     description:
       "National, regional, provincial, city, municipal, and deputy chaplain leaders coordinate field operations and local chaplaincy work.",
     people: nationalDirector,
-  },
-  "office-churches-ministerial": {
-    title: "Office of the Churches/Ministerial",
-    description:
-      "Churches and Ministerial offices handle education, humanitarian work, recruitment, security, and other ministry assignments.",
-    people: churchesMinisterial,
   },
   "office-partners-ngo": {
     title: "Office of the Partners-NGO",

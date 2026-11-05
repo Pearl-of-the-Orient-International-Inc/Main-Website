@@ -1,7 +1,8 @@
 /* eslint-disable @next/next/no-img-element */
 "use client";
 
-import { useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { PDFDocument } from "pdf-lib";
 import {
   ArrowRight,
   AlertTriangle,
@@ -219,24 +220,56 @@ function CertificatePreview({ title, url }: { title: string; url: string }) {
   const [previewMode, setPreviewMode] = useState<CertificatePreviewMode>(
     isPdfCertificateUrl(url) ? "pdf" : "image",
   );
+  const [aspectRatio, setAspectRatio] = useState("4 / 3");
+
+  useEffect(() => {
+    if (previewMode !== "pdf") return;
+
+    const controller = new AbortController();
+
+    async function loadPdfDimensions() {
+      try {
+        const response = await fetch(url, { signal: controller.signal });
+        if (!response.ok) return;
+
+        const document = await PDFDocument.load(await response.arrayBuffer());
+        const firstPage = document.getPage(0);
+        const { width, height } = firstPage.getSize();
+
+        if (!controller.signal.aborted && width > 0 && height > 0) {
+          setAspectRatio(`${width} / ${height}`);
+        }
+      } catch {
+        // Keep the safe default frame when a remote PDF cannot be inspected.
+      }
+    }
+
+    void loadPdfDimensions();
+    return () => controller.abort();
+  }, [previewMode, url]);
 
   if (previewMode === "pdf") {
     return (
-      <iframe
-        src={getDocumentPreviewUrl(url, "application/pdf")}
-        title={title}
-        className="h-full w-full"
-      />
+      <div className="relative w-full overflow-hidden bg-white" style={{ aspectRatio }}>
+        <iframe
+          src={`${getDocumentPreviewUrl(url, "application/pdf")}&zoom=page-fit`}
+          title={title}
+          className="pointer-events-none absolute inset-0 h-full w-full"
+          scrolling="no"
+        />
+      </div>
     );
   }
 
   return (
-    <img
-      src={url}
-      alt={title}
-      className="h-full w-full object-contain"
-      onError={() => setPreviewMode("pdf")}
-    />
+    <div className="relative w-full overflow-hidden bg-white" style={{ aspectRatio }}>
+      <img
+        src={url}
+        alt={title}
+        className="absolute inset-0 h-full w-full object-contain"
+        onError={() => setPreviewMode("pdf")}
+      />
+    </div>
   );
 }
 
@@ -854,7 +887,7 @@ export function PublicMemberProfileTabs({
             ) : (
               <p className="mt-1 text-xs text-neutral-500">No expiration date</p>
             )}
-            <div className="mt-4 h-80 overflow-hidden border bg-white">
+            <div className="mt-4 overflow-hidden border bg-white">
               <CertificatePreview
                 title={certificate.title}
                 url={certificate.certificateUrl}
@@ -883,11 +916,10 @@ export function PublicMemberProfileTabs({
             <p className="mt-1 text-sm text-muted-foreground">
               Published on {formatDate(member.idGenerationAsset?.generatedAt)}
             </p>
-            <div className="mt-4 h-80 overflow-hidden border bg-white">
-              <iframe
-                src={getDocumentPreviewUrl(certificateUrl, "application/pdf")}
+            <div className="mt-4 overflow-hidden border bg-white">
+              <CertificatePreview
                 title="Official member certificate"
-                className="h-full w-full"
+                url={certificateUrl}
               />
             </div>
             <Button
