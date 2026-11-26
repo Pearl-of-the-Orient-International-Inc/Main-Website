@@ -44,7 +44,7 @@ export interface ApplyMemberRequest {
     contactNumber: string;
   }>;
   photoUrl: string;
-  signature?: {
+  signature: {
     type: "DRAWN" | "UPLOADED";
     signatureData: string;
   };

@@ -163,7 +163,9 @@ export function StepReferencesReview({
 
         <Field
           label="Applicant's signature"
+          required
           hint="Use your mouse, trackpad, or finger to sign inside the box."
+          error={Boolean(fieldErrors.signatureUrl)}
         >
           <div className="mt-1 space-y-3">
             <div className="inline-flex rounded-md border border-[#032a0d]/20 p-1">
@@ -225,6 +227,9 @@ export function StepReferencesReview({
                   ? "E-signature attached."
                   : "Signature captured. You may clear and redraw if needed."}
               </p>
+            ) : null}
+            {fieldErrors.signatureUrl ? (
+              <p className="text-xs text-red-600">{fieldErrors.signatureUrl}</p>
             ) : null}
           </div>
         </Field>

@@ -319,6 +319,14 @@ const getApplyPayloadValidationError = (
       photoUrl: "Upload a clear 2x2 ID picture before submitting.",
     });
   }
+  if (!form.signatureUrl.trim()) {
+    return new MembershipFormValidationError(
+      "Your digital signature is required before submitting the application.",
+      {
+        signatureUrl: "Draw or upload your signature before submitting.",
+      },
+    );
+  }
   if (!form.emergencyName.trim()) {
     return new MembershipFormValidationError("Emergency contact name is required.", {
       emergencyName: "Emergency contact name is required.",
@@ -390,7 +398,9 @@ const mapFormToApplyPayload = (
   if (!form.emailAddress.trim()) return null;
   if (!form.gender || !form.birthday) return null;
   if (!form.civilStatus) return null;
-  if (!mobilePhoneNumber || !homeAddress || !nationality) return null;
+  if (!mobilePhoneNumber || !homeAddress || !nationality || !form.signatureUrl.trim()) {
+    return null;
+  }
   if (!emergencyContactName || !emergencyContactMobile) return null;
   if (!referralCode && (
     !endorsedBy?.name.trim() ||
@@ -475,12 +485,10 @@ const mapFormToApplyPayload = (
     characterReferences:
       characterReferences.length > 0 ? characterReferences : undefined,
     photoUrl: form.photoUrl.trim(),
-    signature: form.signatureUrl.trim()
-      ? {
-          type: "DRAWN",
-          signatureData: form.signatureUrl.trim(),
-        }
-      : undefined,
+    signature: {
+      type: "DRAWN",
+      signatureData: form.signatureUrl.trim(),
+    },
   };
 };
 
