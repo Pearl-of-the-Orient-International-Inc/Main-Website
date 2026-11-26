@@ -14,10 +14,10 @@ const getProfileImageUrl = (
   member: PublicMemberProfileResponse["data"],
 ): string => {
   const imageUrl =
-    member.profileBannerUrl ||
     member.user.avatar ||
     member.applicantRequirements.find((item) => item.type === "PHOTO_2X2")
       ?.fileUrl ||
+    member.profileBannerUrl ||
     "/og-image.jpg";
 
   return new URL(imageUrl, siteUrl).toString();
