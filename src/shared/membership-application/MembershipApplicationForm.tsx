@@ -32,6 +32,7 @@ export function MembershipApplicationForm({
   submittingLabel = "Submitting...",
   clearDraftOnSuccess = false,
   verifiedReferral,
+  uploadPhotoAction,
   onSubmitAction,
 }: {
   storageKey: string;
@@ -49,6 +50,7 @@ export function MembershipApplicationForm({
     memberNumber: string | null;
     title: string;
   } | null;
+  uploadPhotoAction: (file: File) => Promise<string>;
   onSubmitAction: (form: ApplicationFormState) => Promise<void>;
 }) {
   const { toast } = useToast();
@@ -212,6 +214,7 @@ export function MembershipApplicationForm({
             emailMode={emailMode}
             emailHelperText={emailHelperText}
             fieldErrors={fieldErrors}
+            uploadPhotoAction={uploadPhotoAction}
           />
         </section>
 

@@ -27,6 +27,7 @@ import {
 } from "@/features/member/member.hooks";
 import { useOptionalCurrentUserQuery } from "@/features/auth/auth.hooks";
 import type { ApplyMemberRequest } from "@/features/member/member.types";
+import { uploadMembershipApplicationPhoto } from "@/features/member/membership-application-photo-upload.api";
 import { getBarangays } from "@/constants/barangay";
 import { getMunicipalities } from "@/constants/municipality";
 import { getProvinces } from "@/constants/province";
@@ -218,6 +219,7 @@ const API_FIELD_TO_FORM_FIELD: Record<string, keyof ApplicationFormState> = {
   ministerialExperiences: "ministerialWorkExperience",
   characterReferences: "characterReferences",
   signature: "signatureUrl",
+  photoUrl: "photoUrl",
 };
 
 const getApiValidationError = (
@@ -310,6 +312,11 @@ const getApplyPayloadValidationError = (
   if (!form.nationality.trim()) {
     return new MembershipFormValidationError("Nationality is required.", {
       nationality: "Nationality is required.",
+    });
+  }
+  if (!form.photoUrl.trim()) {
+    return new MembershipFormValidationError("A 2x2 ID picture is required.", {
+      photoUrl: "Upload a clear 2x2 ID picture before submitting.",
     });
   }
   if (!form.emergencyName.trim()) {
@@ -467,6 +474,7 @@ const mapFormToApplyPayload = (
       ministerialExperiences.length > 0 ? ministerialExperiences : undefined,
     characterReferences:
       characterReferences.length > 0 ? characterReferences : undefined,
+    photoUrl: form.photoUrl.trim(),
     signature: form.signatureUrl.trim()
       ? {
           type: "DRAWN",
@@ -592,6 +600,14 @@ export function BecomeMemberWizard() {
               }}
               emailMode="editable"
               verifiedReferral={referralQuery.data}
+              uploadPhotoAction={async (file) => {
+                const uploaded = await uploadMembershipApplicationPhoto(file);
+                const photoUrl = uploaded?.ufsUrl ?? uploaded?.url;
+                if (!photoUrl) {
+                  throw new Error("The picture upload did not return a file URL.");
+                }
+                return photoUrl;
+              }}
               disableSubmit={Boolean(requestedReferralCode) && (referralQuery.isLoading || referralQuery.isError)}
               disabledSubmitMessage={
                 referralQuery.isLoading

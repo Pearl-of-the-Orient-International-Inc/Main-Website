@@ -43,6 +43,7 @@ export interface ApplyMemberRequest {
     positionRelationship: string;
     contactNumber: string;
   }>;
+  photoUrl: string;
   signature?: {
     type: "DRAWN" | "UPLOADED";
     signatureData: string;

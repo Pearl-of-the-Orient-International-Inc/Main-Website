@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useId, useMemo, useState } from "react";
+import { ImagePlus, LoaderCircle, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -12,6 +13,7 @@ import {
 import { cn } from "@/lib/utils";
 import { Field } from "../Field";
 import { InternationalPhoneInput } from "../InternationalPhoneInput";
+import { useToast } from "@/hooks/use-toast";
 import type {
   ApplicationFieldErrors,
   ApplicationFormState,
@@ -163,6 +165,7 @@ export function StepPersonalDetails({
   emailMode = "editable",
   emailHelperText,
   fieldErrors = {},
+  uploadPhotoAction,
 }: {
   form: ApplicationFormState;
   updateFieldAction: <K extends keyof ApplicationFormState>(
@@ -173,7 +176,11 @@ export function StepPersonalDetails({
   emailMode?: "editable" | "locked";
   emailHelperText?: string;
   fieldErrors?: ApplicationFieldErrors;
+  uploadPhotoAction: (file: File) => Promise<string>;
 }) {
+  const { toast } = useToast();
+  const photoInputId = useId();
+  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
   const regions = useMemo(() => locationCatalog.getRegions(), [locationCatalog]);
   const [selectedLocation, setSelectedLocation] =
     useState<LocationSelection>(EMPTY_LOCATION_SELECTION);
@@ -205,8 +212,124 @@ export function StepPersonalDetails({
   };
   const today = new Date().toISOString().split("T")[0];
 
+  const handlePhotoChange = async (file: File | undefined) => {
+    if (!file) return;
+
+    const isSupportedImage = ["image/jpeg", "image/png"].includes(file.type);
+    if (!isSupportedImage) {
+      toast({
+        variant: "error",
+        title: "Unsupported picture format",
+        description: "Use a JPG, JPEG, or PNG file for the 2x2 ID picture.",
+      });
+      return;
+    }
+
+    if (file.size > 4 * 1024 * 1024) {
+      toast({
+        variant: "error",
+        title: "Picture is too large",
+        description: "The 2x2 ID picture must be 4 MB or smaller.",
+      });
+      return;
+    }
+
+    try {
+      setIsPhotoUploading(true);
+      const photoUrl = await uploadPhotoAction(file);
+      if (!photoUrl) {
+        throw new Error("The picture upload did not return a file URL.");
+      }
+
+      updateFieldAction("photoUrl", photoUrl);
+      toast({
+        variant: "success",
+        title: "2x2 ID picture uploaded",
+        description: "You can replace it any time before submitting your application.",
+      });
+    } catch (error) {
+      toast({
+        variant: "error",
+        title: "Picture upload failed",
+        description:
+          error instanceof Error
+            ? error.message
+            : "Please try uploading the 2x2 ID picture again.",
+      });
+    } finally {
+      setIsPhotoUploading(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
+      <Field
+        label="2x2 ID picture"
+        required
+        hint="Use a clear recent JPG, JPEG, or PNG portrait. This picture will be used for your membership profile and physical ID."
+        error={Boolean(fieldErrors.photoUrl)}
+      >
+        <div className="flex flex-col gap-4 rounded-lg border border-dashed border-[#032a0d]/30 bg-[#032a0d]/[0.03] p-4 sm:flex-row sm:items-center">
+          <div className="h-32 w-32 shrink-0 overflow-hidden rounded-md border bg-white">
+            {form.photoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img
+                src={form.photoUrl}
+                alt="2x2 ID picture preview"
+                className="h-full w-full object-cover"
+              />
+            ) : (
+              <div className="flex h-full w-full flex-col items-center justify-center gap-1 text-center text-xs text-neutral-500">
+                <ImagePlus className="size-6 text-[#032a0d]" />
+                <span>2x2 preview</span>
+              </div>
+            )}
+          </div>
+          <div className="min-w-0 space-y-2">
+            <p className="text-sm font-medium text-[#032a0d]">
+              {form.photoUrl ? "ID picture ready" : "Upload your 2x2 ID picture"}
+            </p>
+            <p className="text-xs leading-5 text-neutral-600">
+              JPG, JPEG, or PNG only, up to 4 MB. A clear front-facing portrait is recommended for physical ID printing.
+            </p>
+            <div className="flex flex-wrap gap-2">
+              <label
+                htmlFor={photoInputId}
+                className="inline-flex h-9 cursor-pointer items-center justify-center gap-2 rounded-md bg-[#032a0d] px-3 text-sm font-medium text-white transition-colors hover:bg-[#032a0d]/90"
+              >
+                {isPhotoUploading ? <LoaderCircle className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
+                {isPhotoUploading ? "Uploading..." : form.photoUrl ? "Replace picture" : "Choose picture"}
+              </label>
+              {form.photoUrl ? (
+                <button
+                  type="button"
+                  onClick={() => updateFieldAction("photoUrl", "")}
+                  className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-neutral-300 px-3 text-sm font-medium text-neutral-700 transition-colors hover:bg-neutral-100"
+                  disabled={isPhotoUploading}
+                >
+                  <X className="size-4" />
+                  Remove
+                </button>
+              ) : null}
+            </div>
+            <Input
+              id={photoInputId}
+              type="file"
+              accept="image/jpeg,image/png,.jpg,.jpeg,.png"
+              className="sr-only"
+              disabled={isPhotoUploading}
+              onChange={(event) => {
+                void handlePhotoChange(event.target.files?.[0]);
+                event.currentTarget.value = "";
+              }}
+            />
+            {fieldErrors.photoUrl ? (
+              <p className="text-xs text-red-600">{fieldErrors.photoUrl}</p>
+            ) : null}
+          </div>
+        </div>
+      </Field>
+
       <div className="grid gap-4 sm:grid-cols-12">
         <Field
           label="First name"
